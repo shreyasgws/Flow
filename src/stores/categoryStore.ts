@@ -1,0 +1,142 @@
+import { create } from 'zustand'
+import type { Category } from '@/types'
+import { db } from '@/lib/db'
+import { pushUndo } from '@/lib/undo'
+import { useErrorStore } from '@/stores/errorStore'
+import { retryWithBackoff } from '@/lib/retry'
+
+const PRESET_COLORS = [
+  '#E05454', '#E08054', '#E0B054', '#8AB854',
+  '#54B880', '#54B8B8', '#5488E0', '#8854E0',
+  '#C054C0', '#E05488', '#808080', '#505050',
+]
+
+interface CategoryStore {
+  categories: Category[]
+  isLoading: boolean
+  error: string | null
+  loadCategories: () => Promise<void>
+  addCategory: (name: string, color: string, emoji?: string) => Promise<Category | null>
+  updateCategory: (id: string, data: Partial<Pick<Category, 'name' | 'color' | 'emoji'>>) => Promise<void>
+  deleteCategory: (id: string) => Promise<void>
+  reorderCategories: (updates: { id: string; sortOrder: number }[]) => Promise<void>
+}
+
+export const useCategoryStore = create<CategoryStore>((set, get) => ({
+  categories: [],
+  isLoading: false,
+  error: null,
+
+  loadCategories: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const categories = await retryWithBackoff(() => db.categories.toArray())
+      categories.sort((a, b) => a.sortOrder - b.sortOrder)
+      set({ categories, isLoading: false })
+    } catch {
+      set({ isLoading: false, error: 'Failed to load categories' })
+      useErrorStore.getState().push('database')
+    }
+  },
+
+  addCategory: async (name, color, emoji) => {
+    set({ error: null })
+    const maxOrder = get().categories.reduce((m, c) => Math.max(m, c.sortOrder), -1)
+    const category: Category = {
+      id: crypto.randomUUID(),
+      name,
+      color,
+      emoji: emoji ?? null,
+      sortOrder: maxOrder + 1,
+      createdAt: Date.now(),
+    }
+    try {
+      await retryWithBackoff(() => db.categories.add(category))
+      set((s) => ({ categories: [...s.categories, category] }))
+      return category
+    } catch {
+      set({ error: 'Failed to add category' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t create category', description: 'Try again.' })
+      return null
+    }
+  },
+
+  updateCategory: async (id, data) => {
+    set({ error: null })
+    const prev = get().categories.find((c) => c.id === id)
+    if (!prev) return
+    try {
+      await retryWithBackoff(() => db.categories.update(id, data))
+      set((s) => ({
+        categories: s.categories.map((c) =>
+          c.id === id ? { ...c, ...data } : c
+        ),
+      }))
+      pushUndo(id, `Updated category "${prev.name}"`, async () => {
+        const revert = Object.fromEntries(Object.keys(data).map((k) => [k, (prev as unknown as Record<string, unknown>)[k]]))
+        await retryWithBackoff(() => db.categories.update(id, revert))
+        set((s) => ({
+          categories: s.categories.map((c) =>
+            c.id === id ? { ...c, ...revert } : c
+          ),
+        }))
+      })
+    } catch {
+      set({ error: 'Failed to update category' })
+      useErrorStore.getState().push('database')
+    }
+  },
+
+  deleteCategory: async (id) => {
+    const category = get().categories.find((c) => c.id === id)
+    if (!category) return
+    try {
+      await retryWithBackoff(() => db.categories.delete(id))
+      set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }))
+      pushUndo(id, `Deleted category "${category.name}"`, async () => {
+        const restored = { ...category, id: crypto.randomUUID() }
+        await retryWithBackoff(() => db.categories.add(restored))
+        set((s) => ({
+          categories: [...s.categories, restored].sort((a, b) => a.sortOrder - b.sortOrder),
+        }))
+      })
+    } catch {
+      set({ error: 'Failed to delete category' })
+      useErrorStore.getState().push('database')
+    }
+  },
+
+  reorderCategories: async (updates) => {
+    const prevStates = updates.map((u) => {
+      const c = get().categories.find((cat) => cat.id === u.id)
+      return c ? { id: c.id, sortOrder: c.sortOrder } : null
+    }).filter(Boolean) as { id: string; sortOrder: number }[]
+    try {
+      await retryWithBackoff(() => db.transaction('rw', db.categories, async () => {
+        for (const u of updates) {
+          await db.categories.update(u.id, { sortOrder: u.sortOrder })
+        }
+      }))
+      set((s) => ({
+        categories: s.categories
+          .map((c) => {
+            const update = updates.find((u) => u.id === c.id)
+            return update ? { ...c, sortOrder: update.sortOrder } : c
+          })
+          .sort((a, b) => a.sortOrder - b.sortOrder),
+      }))
+      pushUndo(`batch-cat-${Date.now()}`, 'Reordered categories', async () => {
+        await retryWithBackoff(() => db.transaction('rw', db.categories, async () => {
+          for (const p of prevStates) {
+            await db.categories.update(p.id, { sortOrder: p.sortOrder })
+          }
+        }))
+      })
+    } catch {
+      set({ error: 'Failed to reorder categories' })
+      useErrorStore.getState().push('database')
+    }
+  },
+}))
+
+export { PRESET_COLORS }

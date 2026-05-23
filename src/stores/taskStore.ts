@@ -10,7 +10,8 @@ interface TaskStore {
   isLoading: boolean
   error: string | null
   loadTasks: (date: string) => Promise<void>
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'status'>) => Promise<Task | null>
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'status' | 'categoryId'>) => Promise<Task | null>
+  updateTask: (id: string, data: Partial<Pick<Task, 'title' | 'categoryId' | 'estimatedMinutes' | 'frictionLevel' | 'focusWindowStart' | 'focusWindowEnd'>>) => Promise<void>
   completeTask: (id: string) => Promise<void>
   uncompleteTask: (id: string) => Promise<void>
   deleteTask: (id: string) => Promise<void>
@@ -42,6 +43,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       ...partial,
       id: crypto.randomUUID(),
       status: 'active',
+      categoryId: null,
       createdAt: Date.now(),
     }
     try {
@@ -52,6 +54,33 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       set({ error: 'Failed to add task' })
       useErrorStore.getState().push('database', { message: 'Couldn\'t save that task', description: 'Your task is kept locally. Try again.' })
       return null
+    }
+  },
+
+  updateTask: async (id, data) => {
+    set({ error: null })
+    const prev = get().tasks.find((t) => t.id === id)
+    if (!prev) return
+    try {
+      await retryWithBackoff(() => db.tasks.update(id, data))
+      set((s) => ({
+        tasks: s.tasks.map((t) =>
+          t.id === id ? { ...t, ...data } : t
+        ),
+      }))
+      const label = data.title ? `Renamed "${prev.title}"` : `Updated task`
+      pushUndo(id, label, async () => {
+        const revert = Object.fromEntries(Object.keys(data).map((k) => [k, (prev as unknown as Record<string, unknown>)[k]]))
+        await retryWithBackoff(() => db.tasks.update(id, revert))
+        set((s) => ({
+          tasks: s.tasks.map((t) =>
+            t.id === id ? { ...t, ...revert } : t
+          ),
+        }))
+      })
+    } catch {
+      set({ error: 'Failed to update task' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t update', description: 'Try again.' })
     }
   },
 

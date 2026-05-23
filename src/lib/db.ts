@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Task, FlowSection, DriftEntry, Reflection, UndoAction, AppSettings } from '@/types'
+import type { Task, FlowSection, DriftEntry, Reflection, UndoAction, AppSettings, Category } from '@/types'
 
 export class FlowDatabase extends Dexie {
   tasks!: EntityTable<Task, 'id'>
@@ -8,16 +8,18 @@ export class FlowDatabase extends Dexie {
   reflections!: EntityTable<Reflection, 'id'>
   undoHistory!: EntityTable<UndoAction, 'id'>
   settings!: EntityTable<AppSettings, 'id'>
+  categories!: EntityTable<Category, 'id'>
 
   constructor() {
     super('flow')
-    this.version(2).stores({
-      tasks: 'id, date, flowSectionId, status, sortOrder',
+    this.version(3).stores({
+      tasks: 'id, date, flowSectionId, categoryId, status, sortOrder',
       flowSections: 'id, sortOrder',
       driftEntries: 'id, createdAt',
       reflections: 'id, weekStart',
       undoHistory: 'id, timestamp',
       settings: 'id',
+      categories: 'id, sortOrder',
     })
   }
 }

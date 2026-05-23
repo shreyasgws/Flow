@@ -5,6 +5,7 @@ import { useTaskStore } from '@/stores/taskStore'
 import { useFlowSectionStore } from '@/stores/flowSectionStore'
 import { useDriftStore } from '@/stores/driftStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useCategoryStore } from '@/stores/categoryStore'
 import { useDatabase } from '@/hooks/useDatabase'
 import { Shell } from '@/components/layout/Shell'
 
@@ -14,6 +15,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const loadSections = useFlowSectionStore((s) => s.loadSections)
   const loadDrift = useDriftStore((s) => s.loadEntries)
   const loadSettings = useSettingsStore((s) => s.loadSettings)
+  const loadCategories = useCategoryStore((s) => s.loadCategories)
 
   useEffect(() => {
     if (!db.isReady) return
@@ -23,7 +25,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     loadSections()
     loadDrift()
     loadSettings()
-  }, [db.isReady, loadTasks, loadSections, loadDrift, loadSettings])
+    loadCategories()
+  }, [db.isReady, loadTasks, loadSections, loadDrift, loadSettings, loadCategories])
 
   if (db.error) {
     return (

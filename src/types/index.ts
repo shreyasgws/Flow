@@ -10,14 +10,29 @@ export type AtmosphereColor = string
 
 export type TaskStatus = 'active' | 'completed' | 'archived'
 
+export type FrictionLevel = 'light' | 'medium' | 'heavy'
+
+export interface Category {
+  id: string
+  name: string
+  color: string
+  emoji: string | null
+  sortOrder: number
+  createdAt: number
+}
+
 export interface Task {
   id: string
   title: string
   status: TaskStatus
   flowSectionId: string | null
-  date: string // YYYY-MM-DD
+  categoryId: string | null
+  date: string
   sortOrder: number
   estimatedMinutes: number | null
+  frictionLevel: FrictionLevel | null
+  focusWindowStart: string | null
+  focusWindowEnd: string | null
   createdAt: number
   completedAt: number | null
   isRecurring: boolean
@@ -27,8 +42,8 @@ export interface Task {
 export interface FlowSection {
   id: string
   name: string
-  startTime: string // HH:mm
-  endTime: string // HH:mm
+  startTime: string
+  endTime: string
   atmosphereColor: AtmosphereColor
   icon: string | null
   energyType: EnergyType | null
@@ -47,7 +62,7 @@ export interface DriftEntry {
 
 export interface Reflection {
   id: string
-  weekStart: string // YYYY-MM-DD
+  weekStart: string
   content: string
   categories: string[]
   createdAt: number
@@ -73,9 +88,9 @@ export interface AppSettings {
   environmentMode: EnvironmentMode
   ambientIntensity: AmbientIntensity
   motionPreference: MotionPreference
-  quietHoursStart: string // HH:mm
-  quietHoursEnd: string // HH:mm
-  dayStartHour: number // 0-23
+  quietHoursStart: string
+  quietHoursEnd: string
+  dayStartHour: number
   anonymousOnboarding: boolean
 }
 

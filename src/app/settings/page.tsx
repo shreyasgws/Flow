@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
+import { CategoryManager } from '@/components/category/CategoryManager'
 
 export default function Settings() {
   const settings = useSettingsStore((s) => s.settings)
@@ -126,6 +127,10 @@ export default function Settings() {
         <p className="mt-1 text-xs text-[var(--text-muted)]">
           Day starts at {settings.dayStartHour.toString().padStart(2, '0')}:00
         </p>
+      </section>
+
+      <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
+        <CategoryManager />
       </section>
     </div>
   )

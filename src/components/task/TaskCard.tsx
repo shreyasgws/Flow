@@ -1,16 +1,20 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'motion/react'
 import { useTaskStore } from '@/stores/taskStore'
 import { taskComplete } from '@/motions/variants'
-import { emotionalMotionProps, emotionalRingStyles } from '@/lib/emotionalStates'
+import { emotionalMotionProps } from '@/lib/emotionalStates'
+import { useCategoryStore } from '@/stores/categoryStore'
 
 interface TaskCardProps {
   id: string
   title: string
   status: 'active' | 'completed' | 'archived'
   estimatedMinutes?: number | null
+  categoryId?: string | null
+  frictionLevel?: string | null
   sortOrder: number
   onDragStart?: (e: React.DragEvent, id: string) => void
   onDragOver?: (e: React.DragEvent, id: string) => void
@@ -21,6 +25,7 @@ interface TaskCardProps {
   onMoveDown?: (id: string) => void
   isFirst?: boolean
   isLast?: boolean
+  onComplete?: (id: string) => void
 }
 
 export function TaskCard({
@@ -28,6 +33,8 @@ export function TaskCard({
   title,
   status,
   estimatedMinutes,
+  categoryId,
+  frictionLevel,
   onDragStart,
   onDragOver,
   onDrop,
@@ -37,17 +44,46 @@ export function TaskCard({
   onMoveDown,
   isFirst,
   isLast,
+  onComplete,
 }: TaskCardProps) {
+  const router = useRouter()
   const completeTask = useTaskStore((s) => s.completeTask)
   const uncompleteTask = useTaskStore((s) => s.uncompleteTask)
   const deleteTask = useTaskStore((s) => s.deleteTask)
   const [isPending, setIsPending] = useState(false)
   const [emotionalState, setEmotionalState] = useState<'idle' | 'completing' | 'error'>('idle')
+  const categories = useCategoryStore((s) => s.categories)
+  const taskCategory = categoryId ? categories.find((c) => c.id === categoryId) : null
   const isDone = status === 'completed'
   const dragRef = useRef<HTMLDivElement>(null)
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isLongPress = useRef(false)
 
-  async function handleToggle() {
-    if (isPending) return
+  function handlePointerDown() {
+    if (isDone || isPending) return
+    isLongPress.current = false
+    longPressRef.current = setTimeout(() => {
+      isLongPress.current = true
+      router.push(`/focus/${id}`)
+    }, 600)
+  }
+
+  function handlePointerUp() {
+    if (longPressRef.current) {
+      clearTimeout(longPressRef.current)
+      longPressRef.current = null
+    }
+  }
+
+  function handlePointerMove() {
+    if (longPressRef.current) {
+      clearTimeout(longPressRef.current)
+      longPressRef.current = null
+    }
+  }
+
+  const handleToggle = useCallback(async () => {
+    if (isPending || isLongPress.current) return
     setEmotionalState('completing')
     setIsPending(true)
     try {
@@ -56,6 +92,7 @@ export function TaskCard({
       } else {
         await completeTask(id)
       }
+      if (!isDone) onComplete?.(id)
       setEmotionalState('idle')
     } catch {
       setEmotionalState('error')
@@ -63,7 +100,7 @@ export function TaskCard({
     } finally {
       setIsPending(false)
     }
-  }
+  }, [isPending, isDone, id, uncompleteTask, completeTask, onComplete])
 
   async function handleDelete() {
     if (isPending) return
@@ -102,9 +139,14 @@ export function TaskCard({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onDragEnd={onDragEnd}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerUp}
         className={`group flex items-center gap-2 py-2 ${
           !isDone ? 'cursor-grab active:cursor-grabbing' : ''
         } ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
+        style={{ touchAction: 'pan-y' }}
       >
         {!isDone && (
           <span
@@ -148,15 +190,29 @@ export function TaskCard({
           )}
         </motion.button>
 
-        <span
-          className={`flex-1 text-sm transition-all ${
-            isDone
-              ? 'text-[var(--text-muted)] line-through'
-              : 'text-[var(--text-primary)]'
-          }`}
-        >
-          {title}
-        </span>
+        <div className="flex flex-1 items-center gap-2">
+          <span
+            className={`text-sm transition-all ${
+              isDone
+                ? 'text-[var(--text-muted)] line-through'
+                : 'text-[var(--text-primary)]'
+            }`}
+          >
+            {title}
+          </span>
+          {!isDone && taskCategory && (
+            <span
+              className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px]"
+              style={{
+                backgroundColor: `${taskCategory.color}18`,
+                color: taskCategory.color,
+              }}
+            >
+              {taskCategory.emoji && <span className="mr-0.5">{taskCategory.emoji}</span>}
+              {taskCategory.name}
+            </span>
+          )}
+        </div>
 
         {!isDone && estimatedMinutes && (
           <span className="text-[10px] text-[var(--text-ghost)]">

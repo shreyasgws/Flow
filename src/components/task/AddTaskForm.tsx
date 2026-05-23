@@ -47,6 +47,9 @@ export function AddTaskForm({
         estimatedMinutes: null,
         isRecurring: false,
         sourceDriftId: null,
+        frictionLevel: null,
+        focusWindowStart: null,
+        focusWindowEnd: null,
         completedAt: null,
       })
       if (task) {

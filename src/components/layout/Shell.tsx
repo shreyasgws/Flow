@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 import { useAmbientTime } from '@/hooks/useAmbientTime'
 import { AmbientLayer } from '@/components/ambient/AmbientLayer'
@@ -13,11 +14,17 @@ import { useUndo } from '@/hooks/useUndo'
 import { onUndo } from '@/lib/undo'
 
 export function Shell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const isFocus = pathname?.startsWith('/focus/')
+  const isLanding = pathname === '/'
   useAmbientTime()
   const env = useEnvironmentStore((s) => s.state)
   const { push, undo, dismiss, currentUndo, stack, undoFromStack } = useUndo()
   const pushRef = useRef(push)
-  pushRef.current = push
+
+  useEffect(() => {
+    pushRef.current = push
+  }, [push])
 
   useEffect(() => {
     const unsub = onUndo((entry) => pushRef.current(entry))
@@ -35,21 +42,23 @@ export function Shell({ children }: { children: React.ReactNode }) {
         '--transition-speed': `${env.transitionSpeed}s`,
       } as React.CSSProperties}
     >
-      <AmbientLayer />
+      {!isFocus && !isLanding && <AmbientLayer />}
       <AdaptivePerformance />
-      <ErrorToast />
-      <main className="relative z-10 mx-auto max-w-lg pb-24 pt-4">
+      {!isFocus && !isLanding && <ErrorToast />}
+      <main className={`relative z-10 mx-auto max-w-lg ${isFocus || isLanding ? '' : 'pb-24 pt-4'}`}>
         {children}
       </main>
-      <DriftButton />
-      <BottomNav />
-      <UndoSnackbar
-        currentUndo={currentUndo}
-        stack={stack}
-        onUndo={undo}
-        onUndoFromStack={undoFromStack}
-        onDismiss={dismiss}
-      />
+      {!isFocus && !isLanding && <DriftButton />}
+      {!isFocus && !isLanding && <BottomNav />}
+      {!isFocus && !isLanding && (
+        <UndoSnackbar
+          currentUndo={currentUndo}
+          stack={stack}
+          onUndo={undo}
+          onUndoFromStack={undoFromStack}
+          onDismiss={dismiss}
+        />
+      )}
     </div>
   )
 }

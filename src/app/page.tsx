@@ -1,203 +1,85 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useTaskStore } from '@/stores/taskStore'
-import { useFlowSectionStore } from '@/stores/flowSectionStore'
-import { useEnvironmentStore } from '@/stores/environmentStore'
-import { TaskSection } from '@/components/task/TaskSection'
-import { TaskCard } from '@/components/task/TaskCard'
-import { SectionEditor } from '@/components/section/SectionEditor'
-import type { FlowSection, EnergyType } from '@/types'
+import { motion } from 'motion/react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useSettingsStore } from '@/stores/settingsStore'
 
-function today() { return new Date().toISOString().slice(0, 10) }
+export default function Landing() {
+  const router = useRouter()
+  const settings = useSettingsStore((s) => s.settings)
+  const [showContent, setShowContent] = useState(false)
 
-const EMPTY_SECTION_FORM = {
-  name: '',
-  startTime: '09:00',
-  endTime: '10:00',
-  atmosphereColor: '#B8A88A',
-  energyType: null as EnergyType | null,
-  icon: null as string | null,
-}
-
-export default function Home() {
-  const tasks = useTaskStore((s) => s.tasks)
-  const sections = useFlowSectionStore((s) => s.sections)
-  const addSection = useFlowSectionStore((s) => s.addSection)
-  const updateSection = useFlowSectionStore((s) => s.updateSection)
-  const updateWorkload = useEnvironmentStore((s) => s.updateWorkload)
-  const [showCompleted, setShowCompleted] = useState(false)
-  const [editorOpen, setEditorOpen] = useState(false)
-  const [editingSection, setEditingSection] = useState<FlowSection | null>(null)
-
-  const activeTaskCount = tasks.filter((t) => t.status === 'active').length
   useEffect(() => {
-    updateWorkload(activeTaskCount)
-  }, [activeTaskCount, updateWorkload])
-
-  function handleEditSection(section: FlowSection) {
-    setEditingSection(section)
-    setEditorOpen(true)
-  }
-
-  async function handleSaveEditor(data: {
-    name: string
-    startTime: string
-    endTime: string
-    atmosphereColor: string
-    energyType: EnergyType | null
-    icon: string | null
-  }) {
-    if (editingSection) {
-      await updateSection(editingSection.id, data)
-    } else {
-      const maxOrder = sections.reduce((m, s) => Math.max(m, s.sortOrder), -1)
-      await addSection({ ...data, sortOrder: maxOrder + 1 })
+    if (settings?.anonymousOnboarding === false) {
+      router.replace('/home')
+      return
     }
-  }
+    const t = setTimeout(() => setShowContent(true), 400)
+    return () => clearTimeout(t)
+  }, [settings?.anonymousOnboarding, router])
 
-  function openNewSection() {
-    setEditingSection(null)
-    setEditorOpen(true)
+  function handleEnter() {
+    router.replace('/home')
   }
-
-  if (sections.length === 0) {
-    return (
-      <div className="px-4">
-        <header className="mb-6 mt-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-serif text-2xl tracking-tight text-[var(--text-primary)]">
-                Flow
-              </h1>
-              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                {new Date().toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-            </div>
-          </div>
-        </header>
-        <div className="mt-16 text-center">
-          <p className="mb-4 text-sm text-[var(--text-secondary)]">
-            A lighter day can still move gently.
-          </p>
-          <button
-            onClick={openNewSection}
-            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
-          >
-            Create your first section
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  const activeTasks = tasks.filter((t) => t.status === 'active')
-  const completedTasks = tasks.filter((t) => t.status === 'completed')
-  const hasNoActiveTasks = activeTasks.length === 0
 
   return (
-    <div className="px-4">
-      <header className="mb-6 mt-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight text-[var(--text-primary)]">
-              Flow
-            </h1>
-            <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
-          </div>
-          <button
-            onClick={openNewSection}
-            aria-label="Add section"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] transition-colors hover:bg-[var(--accent)] hover:text-white"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <path d="M6 2v8M2 6h8" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-      </header>
-
-      {hasNoActiveTasks && (
-        <p className="mb-6 text-center text-xs text-[var(--text-muted)]">
-          Nothing yet. Add what feels right.
-        </p>
-      )}
-
-      {sections.map((section) => {
-        const sectionTasks = activeTasks.filter(
-          (t) => t.flowSectionId === section.id,
-        )
-        return (
-          <TaskSection
-            key={section.id}
-            section={section}
-            tasks={sectionTasks}
-            date={today()}
-            onEditSection={handleEditSection}
-          />
-        )
-      })}
-
-      {completedTasks.length > 0 && (
-        <div className="mt-8 border-t border-[var(--bg-elevated)] pt-4">
-          <button
-            onClick={() => setShowCompleted(!showCompleted)}
-            aria-expanded={showCompleted}
-            className="flex items-center gap-2 text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
-          >
-            <span
-              className={`inline-block transition-transform ${showCompleted ? 'rotate-90' : ''}`}
-            >
-              ▶
-            </span>
-            {completedTasks.length} completed
-          </button>
-
-          {showCompleted && (
-            <div className="ml-4 mt-2 border-l border-[var(--bg-elevated)] pl-3">
-              {completedTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  id={task.id}
-                  title={task.title}
-                  status={task.status}
-                  estimatedMinutes={task.estimatedMinutes}
-                  sortOrder={task.sortOrder}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      <SectionEditor
-        open={editorOpen}
-        title={editingSection ? 'Edit Section' : 'New Section'}
-        initial={
-          editingSection
-            ? {
-                name: editingSection.name,
-                startTime: editingSection.startTime,
-                endTime: editingSection.endTime,
-                atmosphereColor: editingSection.atmosphereColor,
-                energyType: editingSection.energyType,
-                icon: editingSection.icon,
-              }
-            : EMPTY_SECTION_FORM
-        }
-        onSave={handleSaveEditor}
-        onClose={() => setEditorOpen(false)}
+    <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden bg-[var(--bg-base)]">
+      <motion.div
+        className="absolute inset-0 opacity-40"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(183,168,138,0.08) 0%, transparent 60%)',
+        }}
+        animate={{ opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
       />
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={showContent ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+        className="relative z-10 flex flex-col items-center px-6 text-center"
+      >
+        <p
+          className="mb-3 tracking-widest text-[var(--text-primary)]"
+          style={{ fontFamily: 'Fraunces, serif', fontSize: 48, fontWeight: 300, letterSpacing: '0.15em' }}
+        >
+          FLOW
+        </p>
+        <p
+          className="mb-10 leading-snug text-[var(--text-secondary)]"
+          style={{ fontFamily: 'Fraunces, serif', fontSize: 22, fontWeight: 300 }}
+        >
+          A calmer way
+          <br />
+          to move through your day.
+        </p>
+
+        <button
+          onClick={handleEnter}
+          className="mb-4 w-full max-w-[280px] rounded-full bg-white px-6 py-3 text-sm font-medium text-[#1a1a1e] transition-opacity hover:opacity-90"
+        >
+          Continue with Google
+        </button>
+
+        <p className="mb-6 text-xs text-[var(--text-ghost)]">
+          or continue without an account
+        </p>
+
+        <button
+          onClick={handleEnter}
+          className="rounded-full border border-[var(--bg-elevated)] px-6 py-2 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--text-ghost)]"
+        >
+          Enter anonymously
+        </button>
+
+        <p
+          className="mt-16 max-w-[240px] text-xs leading-relaxed text-[var(--text-ghost)]"
+          style={{ fontFamily: 'DM Sans, sans-serif' }}
+        >
+          Structure without pressure.
+        </p>
+      </motion.div>
     </div>
   )
 }

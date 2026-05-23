@@ -34,6 +34,9 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
         estimatedMinutes: null,
         isRecurring: false,
         sourceDriftId: driftId,
+        frictionLevel: null,
+        focusWindowStart: null,
+        focusWindowEnd: null,
         completedAt: null,
       })
       if (task) await archiveEntry(driftId)

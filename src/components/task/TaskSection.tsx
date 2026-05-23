@@ -14,9 +14,10 @@ interface TaskSectionProps {
   tasks: Task[]
   date: string
   onEditSection: (section: FlowSection) => void
+  onTaskComplete?: (taskId: string) => void
 }
 
-export function TaskSection({ section, tasks, date, onEditSection }: TaskSectionProps) {
+export function TaskSection({ section, tasks, date, onEditSection, onTaskComplete }: TaskSectionProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [sectionDragOverId, setSectionDragOverId] = useState<string | null>(null)
@@ -174,6 +175,8 @@ export function TaskSection({ section, tasks, date, onEditSection }: TaskSection
               title={task.title}
               status={task.status}
               estimatedMinutes={task.estimatedMinutes}
+              categoryId={task.categoryId}
+              frictionLevel={task.frictionLevel}
               sortOrder={task.sortOrder}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
@@ -184,6 +187,7 @@ export function TaskSection({ section, tasks, date, onEditSection }: TaskSection
               onMoveDown={handleMoveDown}
               isFirst={i === 0}
               isLast={i === tasks.length - 1}
+              onComplete={onTaskComplete}
             />
           ))}
         </AnimatePresence>
