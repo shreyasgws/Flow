@@ -13,17 +13,21 @@ interface ColorPickerProps {
 
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1">
       {COLORS.map((color) => (
         <button
           key={color}
           onClick={() => onChange(color)}
           aria-label={`Color ${color}`}
-          className={`h-5 w-5 rounded-full transition-all ${
-            value === color ? 'ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--bg-surface)]' : ''
-          }`}
-          style={{ backgroundColor: color }}
-        />
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-all hover:scale-110"
+        >
+          <span
+            className={`inline-block h-5 w-5 rounded-full ${
+              value === color ? 'ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--bg-surface)]' : ''
+            }`}
+            style={{ backgroundColor: color }}
+          />
+        </button>
       ))}
     </div>
   )

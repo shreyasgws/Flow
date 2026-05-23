@@ -7,17 +7,17 @@ export class FlowDatabase extends Dexie {
   driftEntries!: EntityTable<DriftEntry, 'id'>
   reflections!: EntityTable<Reflection, 'id'>
   undoHistory!: EntityTable<UndoAction, 'id'>
-  settings!: EntityTable<AppSettings, 'theme'>
+  settings!: EntityTable<AppSettings, 'id'>
 
   constructor() {
     super('flow')
-    this.version(1).stores({
+    this.version(2).stores({
       tasks: 'id, date, flowSectionId, status, sortOrder',
       flowSections: 'id, sortOrder',
       driftEntries: 'id, createdAt',
       reflections: 'id, weekStart',
       undoHistory: 'id, timestamp',
-      settings: 'theme',
+      settings: 'id',
     })
   }
 }

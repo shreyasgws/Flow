@@ -7,19 +7,21 @@ import { AmbientLayer } from '@/components/ambient/AmbientLayer'
 import { BottomNav } from './BottomNav'
 import { DriftButton } from '@/components/ui/DriftButton'
 import { UndoSnackbar } from '@/components/ui/UndoSnackbar'
+import { ErrorToast } from '@/components/ui/ErrorToast'
+import { AdaptivePerformance } from '@/components/ambient/AdaptivePerformance'
 import { useUndo } from '@/hooks/useUndo'
 import { onUndo } from '@/lib/undo'
 
 export function Shell({ children }: { children: React.ReactNode }) {
   useAmbientTime()
   const env = useEnvironmentStore((s) => s.state)
-  const { push, undo, dismiss, currentUndo } = useUndo()
+  const { push, undo, dismiss, currentUndo, stack, undoFromStack } = useUndo()
   const pushRef = useRef(push)
   pushRef.current = push
 
   useEffect(() => {
-    onUndo((entry) => pushRef.current(entry))
-    return () => { onUndo(() => {}) }
+    const unsub = onUndo((entry) => pushRef.current(entry))
+    return unsub
   }, [])
 
   return (
@@ -34,12 +36,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
       } as React.CSSProperties}
     >
       <AmbientLayer />
+      <AdaptivePerformance />
+      <ErrorToast />
       <main className="relative z-10 mx-auto max-w-lg pb-24 pt-4">
         {children}
       </main>
       <DriftButton />
       <BottomNav />
-      <UndoSnackbar currentUndo={currentUndo} onUndo={undo} onDismiss={dismiss} />
+      <UndoSnackbar
+        currentUndo={currentUndo}
+        stack={stack}
+        onUndo={undo}
+        onUndoFromStack={undoFromStack}
+        onDismiss={dismiss}
+      />
     </div>
   )
 }

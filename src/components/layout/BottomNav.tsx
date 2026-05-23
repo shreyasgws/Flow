@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { motion } from 'motion/react'
 
 const NAV_ITEMS = [
   { href: '/', label: 'Home', icon: '○' },
@@ -18,18 +19,24 @@ export function BottomNav() {
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href
           return (
-            <Link
+            <motion.div
               key={item.href}
-              href={item.href}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1 text-xs transition-colors ${
-                isActive
-                  ? 'text-[var(--accent)]'
-                  : 'text-[var(--text-muted)]'
-              }`}
+              whileHover={isActive ? {} : { scale: 1.08 }}
+              whileTap={{ scale: 0.94 }}
+              className="contents"
             >
-              <span className="text-lg" aria-hidden="true">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
+              <Link
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 px-4 py-1 text-xs transition-colors ${
+                  isActive
+                    ? 'text-[var(--accent)]'
+                    : 'text-[var(--text-muted)]'
+                }`}
+              >
+                <span className="text-lg" aria-hidden="true">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            </motion.div>
           )
         })}
       </div>

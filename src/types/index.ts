@@ -60,6 +60,7 @@ export interface UndoAction {
   entityId: string
   previousState: unknown
   timestamp: number
+  label: string
 }
 
 export type AmbientIntensity = 'minimal' | 'subtle' | 'full'
@@ -67,6 +68,7 @@ export type EnvironmentMode = 'static' | 'ambient'
 export type MotionPreference = 'standard' | 'reduced'
 
 export interface AppSettings {
+  id: string
   theme: 'light' | 'dark'
   environmentMode: EnvironmentMode
   ambientIntensity: AmbientIntensity
@@ -78,6 +80,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
+  id: 'singleton',
   theme: 'dark',
   environmentMode: 'ambient',
   ambientIntensity: 'subtle',
@@ -97,4 +100,5 @@ export interface EnvironmentState {
   ambientWarmth: number
   transitionSpeed: number
   visualNoise: number
+  hour: number
 }

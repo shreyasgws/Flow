@@ -7,8 +7,6 @@ import { useTaskStore } from '@/stores/taskStore'
 import { DriftCard } from './DriftCard'
 import { DriftInput } from './DriftInput'
 
-const TODAY = new Date().toISOString().slice(0, 10)
-
 interface DriftPanelProps {
   open: boolean
   onClose: () => void
@@ -17,6 +15,7 @@ interface DriftPanelProps {
 export function DriftPanel({ open, onClose }: DriftPanelProps) {
   const entries = useDriftStore((s) => s.entries)
   const loadEntries = useDriftStore((s) => s.loadEntries)
+  const archiveEntry = useDriftStore((s) => s.archiveEntry)
   const addTask = useTaskStore((s) => s.addTask)
   const [converting, setConverting] = useState<string | null>(null)
 
@@ -24,23 +23,24 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
     if (open) loadEntries()
   }, [open, loadEntries])
 
-  const handleConvert = useCallback(async (text: string) => {
+  const handleConvert = useCallback(async (text: string, driftId: string) => {
     setConverting(text)
     try {
-      await addTask({
+      const task = await addTask({
         title: text,
         flowSectionId: null,
-        date: TODAY,
+        date: new Date().toISOString().slice(0, 10),
         sortOrder: 0,
         estimatedMinutes: null,
         isRecurring: false,
-        sourceDriftId: null,
+        sourceDriftId: driftId,
         completedAt: null,
       })
+      if (task) await archiveEntry(driftId)
     } finally {
       setConverting(null)
     }
-  }, [addTask])
+  }, [addTask, archiveEntry])
 
   return (
     <AnimatePresence>

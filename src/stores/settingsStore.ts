@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type { AppSettings } from '@/types'
 import { DEFAULT_SETTINGS } from '@/types'
 import { db } from '@/lib/db'
+import { useErrorStore } from '@/stores/errorStore'
+import { retryWithBackoff } from '@/lib/retry'
 
 interface SettingsStore {
   settings: AppSettings
@@ -19,15 +21,16 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   loadSettings: async () => {
     set({ isLoading: true, error: null })
     try {
-      const stored = await db.settings.toArray()
+      const stored = await retryWithBackoff(() => db.settings.toArray())
       if (stored.length > 0) {
         set({ settings: stored[0], isLoading: false })
       } else {
-        await db.settings.add(DEFAULT_SETTINGS)
+        await retryWithBackoff(() => db.settings.add(DEFAULT_SETTINGS))
         set({ isLoading: false })
       }
     } catch {
       set({ isLoading: false, error: 'Failed to load settings' })
+      useErrorStore.getState().push('database')
     }
   },
 
@@ -35,10 +38,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     set({ error: null })
     try {
       const updated = { ...get().settings, ...partial }
-      await db.settings.put(updated)
+      await retryWithBackoff(() => db.settings.put(updated))
       set({ settings: updated })
     } catch {
       set({ error: 'Failed to save settings' })
+      useErrorStore.getState().push('database')
     }
   },
 }))

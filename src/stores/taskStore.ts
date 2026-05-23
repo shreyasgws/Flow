@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { db } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
+import { useErrorStore } from '@/stores/errorStore'
+import { retryWithBackoff } from '@/lib/retry'
 import type { Task } from '@/types'
 
 interface TaskStore {
@@ -25,11 +27,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   loadTasks: async (date: string) => {
     set({ isLoading: true, error: null })
     try {
-      const tasks = await db.tasks.where({ date }).toArray()
+      const tasks = await retryWithBackoff(() => db.tasks.where({ date }).toArray())
       tasks.sort((a, b) => a.sortOrder - b.sortOrder)
       set({ tasks, isLoading: false })
-    } catch (err) {
+    } catch {
       set({ isLoading: false, error: 'Failed to load tasks' })
+      useErrorStore.getState().push('database')
     }
   },
 
@@ -42,11 +45,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       createdAt: Date.now(),
     }
     try {
-      await db.tasks.add(task)
+      await retryWithBackoff(() => db.tasks.add(task))
       set((s) => ({ tasks: [...s.tasks, task] }))
       return task
-    } catch (err) {
+    } catch {
       set({ error: 'Failed to add task' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t save that task', description: 'Your task is kept locally. Try again.' })
       return null
     }
   },
@@ -56,22 +60,23 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const task = get().tasks.find((t) => t.id === id)
     if (!task) return
     try {
-      await db.tasks.update(id, { status: 'active', completedAt: null })
+      await retryWithBackoff(() => db.tasks.update(id, { status: 'active', completedAt: null }))
       set((s) => ({
         tasks: s.tasks.map((t) =>
           t.id === id ? { ...t, status: 'active' as const, completedAt: null } : t
         ),
       }))
       pushUndo(id, `Uncompleted "${task.title}"`, async () => {
-        await db.tasks.update(id, { status: 'completed', completedAt: Date.now() })
+        await retryWithBackoff(() => db.tasks.update(id, { status: 'completed', completedAt: Date.now() }))
         set((s) => ({
           tasks: s.tasks.map((t) =>
             t.id === id ? { ...t, status: 'completed' as const, completedAt: Date.now() } : t
           ),
         }))
       })
-    } catch (err) {
+    } catch {
       set({ error: 'Failed to uncomplete task' })
+      useErrorStore.getState().push('database')
     }
   },
 
@@ -81,22 +86,23 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     if (!task) return
     const now = Date.now()
     try {
-      await db.tasks.update(id, { status: 'completed', completedAt: now })
+      await retryWithBackoff(() => db.tasks.update(id, { status: 'completed', completedAt: now }))
       set((s) => ({
         tasks: s.tasks.map((t) =>
           t.id === id ? { ...t, status: 'completed' as const, completedAt: now } : t
         ),
       }))
       pushUndo(id, `Completed "${task.title}"`, async () => {
-        await db.tasks.update(id, { status: 'active' as const, completedAt: null })
+        await retryWithBackoff(() => db.tasks.update(id, { status: 'active' as const, completedAt: null }))
         set((s) => ({
           tasks: s.tasks.map((t) =>
             t.id === id ? { ...t, status: 'active' as const, completedAt: null } : t
           ),
         }))
       })
-    } catch (err) {
+    } catch {
       set({ error: 'Failed to complete task' })
+      useErrorStore.getState().push('database')
     }
   },
 
@@ -105,43 +111,58 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const task = get().tasks.find((t) => t.id === id)
     if (!task) return
     try {
-      await db.tasks.delete(id)
+      await retryWithBackoff(() => db.tasks.delete(id))
       set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
       pushUndo(id, `Deleted "${task.title}"`, async () => {
         const restored = { ...task, id: crypto.randomUUID() }
-        await db.tasks.add(restored)
+        await retryWithBackoff(() => db.tasks.add(restored))
         set((s) => ({
           tasks: [...s.tasks, restored].sort((a, b) => a.sortOrder - b.sortOrder),
         }))
       })
-    } catch (err) {
+    } catch {
       set({ error: 'Failed to delete task' })
+      useErrorStore.getState().push('database')
     }
   },
 
   reorderTask: async (id: string, sortOrder: number, flowSectionId: string) => {
     set({ error: null })
+    const prev = get().tasks.find((t) => t.id === id)
+    if (!prev) return
     try {
-      await db.tasks.update(id, { sortOrder, flowSectionId })
+      await retryWithBackoff(() => db.tasks.update(id, { sortOrder, flowSectionId }))
       set((s) => ({
         tasks: s.tasks
           .map((t) => (t.id === id ? { ...t, sortOrder, flowSectionId } : t))
           .sort((a, b) => a.sortOrder - b.sortOrder),
       }))
-    } catch (err) {
+      pushUndo(id, `Moved "${prev.title}"`, async () => {
+        await retryWithBackoff(() => db.tasks.update(id, { sortOrder: prev.sortOrder, flowSectionId: prev.flowSectionId }))
+        set((s) => ({
+          tasks: s.tasks
+            .map((t) => (t.id === id ? { ...t, sortOrder: prev.sortOrder, flowSectionId: prev.flowSectionId } : t))
+            .sort((a, b) => a.sortOrder - b.sortOrder),
+        }))
+      })
+    } catch {
       set({ error: 'Failed to reorder task' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t reorder', description: 'The order may not have saved. Try again.' })
     }
   },
 
   batchReorder: async (updates) => {
     set({ error: null })
+    const prevStates = updates.map((u) => {
+      const t = get().tasks.find((task) => task.id === u.id)
+      return t ? { id: t.id, sortOrder: t.sortOrder, flowSectionId: t.flowSectionId } : null
+    }).filter(Boolean) as { id: string; sortOrder: number; flowSectionId: string }[]
     try {
-      await db.transaction('rw', db.tasks, async () => {
+      await retryWithBackoff(() => db.transaction('rw', db.tasks, async () => {
         for (const u of updates) {
           await db.tasks.update(u.id, { sortOrder: u.sortOrder, flowSectionId: u.flowSectionId })
         }
-      })
-      const ids = new Set(updates.map((u) => u.id))
+      }))
       set((s) => ({
         tasks: s.tasks
           .map((t) => {
@@ -150,8 +171,22 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           })
           .sort((a, b) => a.sortOrder - b.sortOrder),
       }))
-    } catch (err) {
+      pushUndo(`batch-${Date.now()}`, `Reordered tasks`, async () => {
+        await retryWithBackoff(() => db.transaction('rw', db.tasks, async () => {
+          for (const p of prevStates) {
+            await db.tasks.update(p.id, { sortOrder: p.sortOrder, flowSectionId: p.flowSectionId })
+          }
+        }))
+        set((s) => ({
+          tasks: s.tasks.map((t) => {
+            const prev = prevStates.find((p) => p.id === t.id)
+            return prev ? { ...t, sortOrder: prev.sortOrder, flowSectionId: prev.flowSectionId } : t
+          }).sort((a, b) => a.sortOrder - b.sortOrder),
+        }))
+      })
+    } catch {
       set({ error: 'Failed to reorder tasks' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t reorder', description: 'The order may not have saved. Try again.' })
     }
   },
 

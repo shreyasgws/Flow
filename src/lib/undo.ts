@@ -1,3 +1,5 @@
+import { db } from '@/lib/db'
+
 type UndoFn = () => void | Promise<void>
 
 interface UndoRegistration {
@@ -8,16 +10,39 @@ interface UndoRegistration {
 
 type Listener = (entry: UndoRegistration) => void
 
-let listener: Listener | null = null
+const listeners: Set<Listener> = new Set()
 
 export function onUndo(fn: Listener) {
-  listener = fn
+  listeners.add(fn)
+  return () => { listeners.delete(fn) }
 }
 
-export function pushUndo(id: string, label: string, undo: UndoFn) {
-  listener?.({ id, label, undo })
+export async function pushUndo(id: string, label: string, undo: UndoFn) {
+  listeners.forEach((fn) => fn({ id, label, undo }))
+
+  try {
+    await db.undoHistory.add({
+      id,
+      type: 'user_action',
+      entityType: 'unknown',
+      entityId: id,
+      previousState: null,
+      timestamp: Date.now(),
+      label,
+    })
+  } catch (e) {
+    console.error('Failed to persist undo:', e)
+  }
+}
+
+export async function removeUndoFromDb(id: string) {
+  try {
+    await db.undoHistory.delete(id)
+  } catch (e) {
+    console.error('Failed to remove undo:', e)
+  }
 }
 
 export function clearListener() {
-  listener = null
+  listeners.clear()
 }

@@ -15,8 +15,6 @@ export const themeTokens = {
   warn: 'var(--warn)',
   ambient: {
     glow: 'var(--ambient-glow)',
-    noise: 'var(--ambient-noise)',
-    tint: 'var(--ambient-tint)',
   },
   spacing: {
     density: 'var(--spacing-density)',

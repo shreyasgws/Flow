@@ -1,19 +1,26 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 
 export default function Settings() {
   const settings = useSettingsStore((s) => s.settings)
   const updateSettings = useSettingsStore((s) => s.updateSettings)
-  const env = useEnvironmentStore((s) => s.state)
   const setIntensity = useEnvironmentStore((s) => s.setIntensity)
   const setMode = useEnvironmentStore((s) => s.setMode)
+  const synced = useRef(false)
 
   useEffect(() => {
     document.documentElement.classList.toggle('theme-light', settings.theme === 'light')
   }, [settings.theme])
+
+  useEffect(() => {
+    if (synced.current) return
+    synced.current = true
+    setMode(settings.environmentMode)
+    setIntensity(settings.ambientIntensity)
+  }, [settings.environmentMode, settings.ambientIntensity, setMode, setIntensity])
 
   return (
     <div className="px-4">

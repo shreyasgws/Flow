@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTaskStore } from '@/stores/taskStore'
 import { taskComplete } from '@/motions/variants'
+import { emotionalMotionProps, emotionalRingStyles } from '@/lib/emotionalStates'
 
 interface TaskCardProps {
   id: string
@@ -41,11 +42,13 @@ export function TaskCard({
   const uncompleteTask = useTaskStore((s) => s.uncompleteTask)
   const deleteTask = useTaskStore((s) => s.deleteTask)
   const [isPending, setIsPending] = useState(false)
+  const [emotionalState, setEmotionalState] = useState<'idle' | 'completing' | 'error'>('idle')
   const isDone = status === 'completed'
   const dragRef = useRef<HTMLDivElement>(null)
 
   async function handleToggle() {
     if (isPending) return
+    setEmotionalState('completing')
     setIsPending(true)
     try {
       if (isDone) {
@@ -53,6 +56,10 @@ export function TaskCard({
       } else {
         await completeTask(id)
       }
+      setEmotionalState('idle')
+    } catch {
+      setEmotionalState('error')
+      setTimeout(() => setEmotionalState('idle'), 600)
     } finally {
       setIsPending(false)
     }
@@ -115,15 +122,18 @@ export function TaskCard({
           </span>
         )}
 
-        <button
+        <motion.button
           onClick={handleToggle}
           disabled={isPending}
           aria-label={isDone ? `Uncomplete "${title}"` : `Complete "${title}"`}
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          animate={emotionalMotionProps(emotionalState)}
           className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
             isDone
               ? 'border-[var(--accent)] bg-[var(--accent)]'
               : 'border-[var(--text-muted)] hover:border-[var(--accent)]'
-          }`}
+          } ${isPending ? 'opacity-50' : ''}`}
         >
           {isDone && (
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
@@ -136,7 +146,7 @@ export function TaskCard({
               />
             </svg>
           )}
-        </button>
+        </motion.button>
 
         <span
           className={`flex-1 text-sm transition-all ${
@@ -155,12 +165,12 @@ export function TaskCard({
         )}
 
         {!isDone && (
-          <span className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="flex gap-0 opacity-0 transition-opacity group-hover:opacity-100">
             {!isFirst && (
               <button
                 onClick={() => onMoveUp?.(id)}
                 aria-label="Move task up"
-                className="text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+                className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true">
                   <path d="M6 9V3M3 6l3-3 3 3" strokeLinecap="round" strokeLinejoin="round" />
@@ -171,7 +181,7 @@ export function TaskCard({
               <button
                 onClick={() => onMoveDown?.(id)}
                 aria-label="Move task down"
-                className="text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+                className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true">
                   <path d="M6 3v6M3 6l3 3 3-3" strokeLinecap="round" strokeLinejoin="round" />

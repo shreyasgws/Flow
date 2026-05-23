@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
 import { useDriftStore } from '@/stores/driftStore'
+import { emotionalMotionProps } from '@/lib/emotionalStates'
 import type { DriftEntry } from '@/types'
 
 interface DriftCardProps {
   entry: DriftEntry
-  onConvert: (text: string) => void
+  onConvert: (text: string, driftId: string) => void
 }
 
 function formatTime(ts: number) {
@@ -80,44 +81,52 @@ export function DriftCard({ entry, onConvert }: DriftCardProps) {
         <span className="text-[10px] text-[var(--text-ghost)]">{formatTime(entry.createdAt)}</span>
       </div>
 
-      <span className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <button
+      <span className="flex shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
+        <motion.button
           onClick={() => { setEditText(entry.text); setIsEditing(true) }}
           aria-label="Edit drift"
-          className="text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
             <path d="M8.5 1.5l2 2L4 10H2V8l6.5-6.5z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </button>
-        <button
-          onClick={() => onConvert(entry.text)}
+        </motion.button>
+        <motion.button
+          onClick={() => onConvert(entry.text, entry.id)}
           aria-label="Convert to task"
-          className="text-[var(--text-ghost)] hover:text-[var(--accent)]"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--accent)]"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
             <circle cx="6" cy="6" r="4.5" />
             <path d="M4 6l1.5 1.5L8 4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={() => archiveEntry(entry.id)}
           aria-label="Archive drift"
-          className="text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
             <path d="M2 3h8M4 3V2a1 1 0 011-1h2a1 1 0 011 1v1M3 4v5a1 1 0 001 1h4a1 1 0 001-1V4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={() => deleteEntry(entry.id)}
           aria-label="Delete drift"
-          className="text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
             <path d="M3 3l6 6M9 3l-6 6" strokeLinecap="round" />
           </svg>
-        </button>
+        </motion.button>
       </span>
     </motion.div>
   )

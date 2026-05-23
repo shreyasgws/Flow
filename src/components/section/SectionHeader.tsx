@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
+import { emotionalMotionProps } from '@/lib/emotionalStates'
 import type { FlowSection, EnergyType } from '@/types'
 
 const ENERGY_LABELS: Record<EnergyType, string> = {
@@ -35,14 +36,25 @@ export function SectionHeader({
   onDragEnd,
   isDragTarget,
 }: SectionHeaderProps) {
+  function handleDragStart(e: React.DragEvent) {
+    onDragStart?.(e, section.id)
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    onDragOver?.(e, section.id)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    onDrop?.(e, section.id)
+  }
+
   return (
-    <motion.div
-      layout
+    <div
       draggable
-      onDragStart={(e) => onDragStart?.(e as unknown as React.DragEvent, section.id)}
-      onDragOver={(e) => onDragOver?.(e as unknown as React.DragEvent, section.id)}
-      onDrop={(e) => onDrop?.(e as unknown as React.DragEvent, section.id)}
-      onDragEnd={(e) => onDragEnd?.(e as unknown as React.DragEvent)}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onDragEnd={onDragEnd}
       className={`group -mx-4 mb-2 flex cursor-grab items-center gap-2 px-4 py-1.5 active:cursor-grabbing ${
         isDragTarget ? 'rounded-lg bg-[var(--ambient-glow)]' : ''
       }`}
@@ -75,26 +87,30 @@ export function SectionHeader({
         <span className="ml-auto text-[10px] text-[var(--text-ghost)]">{taskCount}</span>
       )}
 
-      <span className="ml-auto flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <button
+      <span className="ml-auto flex gap-0 opacity-0 transition-opacity group-hover:opacity-100">
+        <motion.button
           onClick={() => onEdit(section)}
           aria-label="Edit section"
-          className="text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true">
             <path d="M8.5 1.5l2 2L4 10H2V8l6.5-6.5z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={() => onDelete(section.id)}
           aria-label="Delete section"
-          className="text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true">
             <path d="M2 3h8M4.5 3V2a1 1 0 011-1h1a1 1 0 011 1v1M3 3v7a1 1 0 001 1h4a1 1 0 001-1V3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </button>
+        </motion.button>
       </span>
-    </motion.div>
+    </div>
   )
 }

@@ -30,10 +30,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen items-center justify-center bg-[var(--bg-base)] p-8 text-center">
         <div>
           <h2 className="mb-2 text-lg font-semibold text-[var(--text-primary)]">
-            Something didn&apos;t go through
+            Something unexpected happened
           </h2>
           <p className="text-sm text-[var(--text-secondary)]">
-            The local database couldn&apos;t open. Try refreshing.
+            No data was lost. Try refreshing.
           </p>
         </div>
       </div>

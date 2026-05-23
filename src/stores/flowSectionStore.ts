@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type { FlowSection } from '@/types'
 import { db } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
+import { useErrorStore } from '@/stores/errorStore'
+import { retryWithBackoff } from '@/lib/retry'
 
 interface FlowSectionStore {
   sections: FlowSection[]
@@ -23,11 +25,12 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
   loadSections: async () => {
     set({ isLoading: true, error: null })
     try {
-      const sections = await db.flowSections.toArray()
+      const sections = await retryWithBackoff(() => db.flowSections.toArray())
       sections.sort((a, b) => a.sortOrder - b.sortOrder)
       set({ sections, isLoading: false })
     } catch {
       set({ isLoading: false, error: 'Failed to load sections' })
+      useErrorStore.getState().push('database')
     }
   },
 
@@ -39,11 +42,12 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
       createdAt: Date.now(),
     }
     try {
-      await db.flowSections.add(section)
+      await retryWithBackoff(() => db.flowSections.add(section))
       set((s) => ({ sections: [...s.sections, section] }))
       return section
     } catch {
       set({ error: 'Failed to add section' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t create section', description: 'Try again.' })
       return null
     }
   },
@@ -53,7 +57,7 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
     const prev = get().sections.find((s) => s.id === id)
     if (!prev) return
     try {
-      await db.flowSections.update(id, data)
+      await retryWithBackoff(() => db.flowSections.update(id, data))
       set((s) => ({
         sections: s.sections.map((sec) =>
           sec.id === id ? { ...sec, ...data } : sec
@@ -61,7 +65,7 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
       }))
       const label = data.name ? `Renamed "${prev.name}"` : `Updated "${prev.name}"`
       pushUndo(id, label, async () => {
-        await db.flowSections.update(id, prev)
+        await retryWithBackoff(() => db.flowSections.update(id, prev))
         set((s) => ({
           sections: s.sections.map((sec) =>
             sec.id === id ? { ...sec, ...prev } : sec
@@ -70,6 +74,7 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
       })
     } catch {
       set({ error: 'Failed to update section' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t update section', description: 'Try again.' })
     }
   },
 
@@ -78,29 +83,33 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
     const section = get().sections.find((s) => s.id === id)
     if (!section) return
     try {
-      await db.flowSections.delete(id)
+      await retryWithBackoff(() => db.flowSections.delete(id))
       set((s) => ({ sections: s.sections.filter((sec) => sec.id !== id) }))
       pushUndo(id, `Deleted section "${section.name}"`, async () => {
         const restored = { ...section, id: crypto.randomUUID() }
-        await db.flowSections.add(restored)
+        await retryWithBackoff(() => db.flowSections.add(restored))
         set((s) => ({
           sections: [...s.sections, restored].sort((a, b) => a.sortOrder - b.sortOrder),
         }))
       })
     } catch {
       set({ error: 'Failed to delete section' })
+      useErrorStore.getState().push('database')
     }
   },
 
   batchReorder: async (updates) => {
     set({ error: null })
+    const prevStates = updates.map((u) => {
+      const s = get().sections.find((sec) => sec.id === u.id)
+      return s ? { id: s.id, sortOrder: s.sortOrder } : null
+    }).filter(Boolean) as { id: string; sortOrder: number }[]
     try {
-      await db.transaction('rw', db.flowSections, async () => {
+      await retryWithBackoff(() => db.transaction('rw', db.flowSections, async () => {
         for (const u of updates) {
           await db.flowSections.update(u.id, { sortOrder: u.sortOrder })
         }
-      })
-      const ids = new Set(updates.map((u) => u.id))
+      }))
       set((s) => ({
         sections: s.sections
           .map((sec) => {
@@ -109,22 +118,47 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
           })
           .sort((a, b) => a.sortOrder - b.sortOrder),
       }))
+      pushUndo(`batch-section-${Date.now()}`, `Reordered sections`, async () => {
+        await retryWithBackoff(() => db.transaction('rw', db.flowSections, async () => {
+          for (const p of prevStates) {
+            await db.flowSections.update(p.id, { sortOrder: p.sortOrder })
+          }
+        }))
+        set((s) => ({
+          sections: s.sections.map((sec) => {
+            const prev = prevStates.find((p) => p.id === sec.id)
+            return prev ? { ...sec, sortOrder: prev.sortOrder } : sec
+          }).sort((a, b) => a.sortOrder - b.sortOrder),
+        }))
+      })
     } catch {
       set({ error: 'Failed to reorder sections' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t reorder', description: 'The order may not have saved.' })
     }
   },
 
   reorderSection: async (id: string, sortOrder: number) => {
     set({ error: null })
+    const prev = get().sections.find((s) => s.id === id)
+    if (!prev) return
     try {
-      await db.flowSections.update(id, { sortOrder })
+      await retryWithBackoff(() => db.flowSections.update(id, { sortOrder }))
       set((s) => ({
         sections: s.sections
           .map((sec) => (sec.id === id ? { ...sec, sortOrder } : sec))
           .sort((a, b) => a.sortOrder - b.sortOrder),
       }))
+      pushUndo(id, `Moved section "${prev.name}"`, async () => {
+        await retryWithBackoff(() => db.flowSections.update(id, { sortOrder: prev.sortOrder }))
+        set((s) => ({
+          sections: s.sections
+            .map((sec) => (sec.id === id ? { ...sec, sortOrder: prev.sortOrder } : sec))
+            .sort((a, b) => a.sortOrder - b.sortOrder),
+        }))
+      })
     } catch {
       set({ error: 'Failed to reorder section' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t reorder', description: 'The order may not have saved.' })
     }
   },
 }))

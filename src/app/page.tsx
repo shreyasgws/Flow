@@ -9,7 +9,7 @@ import { TaskCard } from '@/components/task/TaskCard'
 import { SectionEditor } from '@/components/section/SectionEditor'
 import type { FlowSection, EnergyType } from '@/types'
 
-const TODAY = new Date().toISOString().slice(0, 10)
+function today() { return new Date().toISOString().slice(0, 10) }
 
 const EMPTY_SECTION_FORM = {
   name: '',
@@ -142,7 +142,7 @@ export default function Home() {
             key={section.id}
             section={section}
             tasks={sectionTasks}
-            date={TODAY}
+            date={today()}
             onEditSection={handleEditSection}
           />
         )

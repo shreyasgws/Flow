@@ -35,8 +35,7 @@ function getTimeGradients(hour: number, warmth: number, isAmbient: boolean) {
 
 export function AmbientLayer() {
   const env = useEnvironmentStore((s) => s.state)
-  const hour = new Date().getHours()
-  const grad = getTimeGradients(hour, env.ambientWarmth, env.mode === 'ambient')
+  const grad = getTimeGradients(env.hour, env.ambientWarmth, env.mode === 'ambient')
   const noiseOpacity = env.mode === 'ambient' ? 0.03 + env.visualNoise * 0.04 : 0.005
 
   return (

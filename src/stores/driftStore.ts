@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { db } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
+import { useErrorStore } from '@/stores/errorStore'
+import { retryWithBackoff } from '@/lib/retry'
 import type { DriftEntry } from '@/types'
 
 interface DriftStore {
@@ -23,12 +25,13 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
   loadEntries: async () => {
     set({ isLoading: true, error: null })
     try {
-      const all = await db.driftEntries.toArray()
+      const all = await retryWithBackoff(() => db.driftEntries.toArray())
       const entries = all.filter((e) => e.isArchived !== true)
       entries.sort((a, b) => b.createdAt - a.createdAt)
       set({ entries, isLoading: false })
     } catch {
       set({ isLoading: false, error: 'Failed to load drift' })
+      useErrorStore.getState().push('database')
     }
   },
 
@@ -43,11 +46,12 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
       source,
     }
     try {
-      await db.driftEntries.add(entry)
+      await retryWithBackoff(() => db.driftEntries.add(entry))
       set((s) => ({ entries: [entry, ...s.entries] }))
       return entry
     } catch {
       set({ error: 'Failed to save drift' })
+      useErrorStore.getState().push('database', { message: 'Couldn\'t save that thought', description: 'It\'s still here. Try again.' })
       return null
     }
   },
@@ -58,14 +62,23 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
     if (!prev) return
     const now = Date.now()
     try {
-      await db.driftEntries.update(id, { text, updatedAt: now })
+      await retryWithBackoff(() => db.driftEntries.update(id, { text, updatedAt: now }))
       set((s) => ({
         entries: s.entries.map((e) =>
           e.id === id ? { ...e, text, updatedAt: now } : e
         ),
       }))
+      pushUndo(id, `Edited drift`, async () => {
+        await retryWithBackoff(() => db.driftEntries.update(id, { text: prev.text, updatedAt: Date.now() }))
+        set((s) => ({
+          entries: s.entries.map((e) =>
+            e.id === id ? { ...e, text: prev.text, updatedAt: Date.now() } : e
+          ),
+        }))
+      })
     } catch {
       set({ error: 'Failed to update drift' })
+      useErrorStore.getState().push('database')
     }
   },
 
@@ -74,18 +87,19 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
     const entry = get().entries.find((e) => e.id === id)
     if (!entry) return
     try {
-      await db.driftEntries.update(id, { isArchived: true })
+      await retryWithBackoff(() => db.driftEntries.update(id, { isArchived: true }))
       set((s) => ({
         entries: s.entries.filter((e) => e.id !== id),
       }))
       pushUndo(id, `Archived drift`, async () => {
-        await db.driftEntries.update(id, { isArchived: false })
+        await retryWithBackoff(() => db.driftEntries.update(id, { isArchived: false }))
         set((s) => ({
           entries: [{ ...entry, isArchived: false }, ...s.entries],
         }))
       })
     } catch {
       set({ error: 'Failed to archive drift' })
+      useErrorStore.getState().push('database')
     }
   },
 
@@ -94,17 +108,18 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
     const entry = get().entries.find((e) => e.id === id)
     if (!entry) return
     try {
-      await db.driftEntries.delete(id)
+      await retryWithBackoff(() => db.driftEntries.delete(id))
       set((s) => ({ entries: s.entries.filter((e) => e.id !== id) }))
       pushUndo(id, `Deleted drift`, async () => {
         const restored = { ...entry, id: crypto.randomUUID() }
-        await db.driftEntries.add(restored)
+        await retryWithBackoff(() => db.driftEntries.add(restored))
         set((s) => ({
           entries: [restored, ...s.entries],
         }))
       })
     } catch {
       set({ error: 'Failed to delete drift' })
+      useErrorStore.getState().push('database')
     }
   },
 
