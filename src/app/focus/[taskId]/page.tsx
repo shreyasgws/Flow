@@ -9,6 +9,7 @@ import { AmbientBackground } from '@/components/focus/AmbientBackground'
 import { FocusTimer } from '@/components/focus/TimerSetup'
 import { FocusControls } from '@/components/focus/FocusControls'
 import { useFlowSectionStore } from '@/stores/flowSectionStore'
+import { useUiStateStore } from '@/stores/uiStateStore'
 import type { Task } from '@/types'
 
 export default function FocusPage({
@@ -33,13 +34,16 @@ export default function FocusPage({
   const task: Task | undefined = tasks.find((t) => t.id === taskId)
   const section = sections.find((s) => s.id === task?.flowSectionId)
 
+  const setLastFocusTaskId = useUiStateStore((s) => s.setLastFocusTaskId)
+
   useEffect(() => {
     enterFocus(taskId)
+    setLastFocusTaskId(taskId)
     const backTimer = setTimeout(() => setShowBack(true), 2000)
     return () => {
       clearTimeout(backTimer)
     }
-  }, [taskId, enterFocus])
+  }, [taskId, enterFocus, setLastFocusTaskId])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -215,6 +219,9 @@ export default function FocusPage({
               >
                 Return to plan
               </button>
+              <p className="mt-6 text-[10px] text-[var(--text-ghost)]">
+                Session started at {new Date().toLocaleTimeString()}
+              </p>
             </div>
           </motion.div>
         )}

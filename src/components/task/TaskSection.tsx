@@ -185,6 +185,8 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
                 categoryId={task.categoryId}
                 frictionLevel={task.frictionLevel}
                 sortOrder={task.sortOrder}
+                isRecurring={task.isRecurring}
+                recurrenceType={task.recurrenceType}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}

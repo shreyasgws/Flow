@@ -18,18 +18,33 @@ function getTimePeriod(hour: number): string {
   return 'night'
 }
 
+function isLightTheme(): boolean {
+  if (typeof document === 'undefined') return false
+  return document.documentElement.classList.contains('theme-light')
+}
+
 export function AmbientBackground() {
   const mode = useEnvironmentStore((s) => s.state.mode)
   const hour = new Date().getHours()
   const period = useMemo(() => getTimePeriod(hour), [hour])
+  const light = isLightTheme()
+  const motionIntensity = useEnvironmentStore((s) => s.state.motionIntensity)
+
+  const breathe = mode === 'ambient' && !light
+  const dur = light ? 7.2 : 6
 
   return (
     <div className="fixed inset-0 overflow-hidden">
       <motion.div
         className="absolute inset-0"
         style={{ background: GRADIENT_VARS[period] }}
-        animate={mode === 'ambient' ? { scale: [1, 1.02, 1] } : {}}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        animate={breathe ? { scale: [1, 1.02, 1] } : {}}
+        transition={{
+          duration: dur,
+          repeat: Infinity,
+          ease: 'easeInOut',
+          ...(motionIntensity < 0.5 ? { duration: 0.01 } : {}),
+        }}
       />
       <div className="absolute inset-0" style={{ background: 'var(--vignette)' }} />
     </div>

@@ -34,6 +34,8 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
         sortOrder: 0,
         estimatedMinutes: null,
         isRecurring: false,
+        recurrenceType: 'none',
+        recurrenceBaseId: null,
         sourceDriftId: driftId,
         frictionLevel: null,
         focusWindowStart: null,

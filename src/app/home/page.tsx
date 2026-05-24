@@ -20,6 +20,8 @@ import { EmptyDay } from '@/components/empty/EmptyDay'
 import { SignInBanner } from '@/components/onboarding/SignInBanner'
 import { TemplatePicker } from '@/components/template/TemplatePicker'
 import { useTemplateStore } from '@/stores/templateStore'
+import { CarryForwardBanner } from '@/components/home/CarryForwardBanner'
+import { useUiStateStore } from '@/stores/uiStateStore'
 import type { TemplateTask } from '@/types'
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -228,7 +230,8 @@ export default function Home() {
         </div>
       )}
 
-      <DayPulse tasks={dateTasks} date={selectedDate} />
+      <DayPulse tasks={dateTasks} date={selectedDate} allTasks={tasks} />
+      <CarryForwardBanner />
       <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
       <CategoryFilterBar activeId={filterCategoryId} onChange={setFilterCategoryId} />
 
@@ -329,6 +332,8 @@ export default function Home() {
                     categoryId={task.categoryId}
                     frictionLevel={task.frictionLevel}
                     sortOrder={task.sortOrder}
+                    isRecurring={task.isRecurring}
+                    recurrenceType={task.recurrenceType}
                   />
                 ))}
               </AnimatePresence>

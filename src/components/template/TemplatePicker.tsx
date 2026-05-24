@@ -34,6 +34,8 @@ export function TemplatePicker({ open, onClose, date, onApplied }: TemplatePicke
           sortOrder: i,
           estimatedMinutes: null,
           isRecurring: false,
+          recurrenceType: 'none',
+          recurrenceBaseId: null,
           sourceDriftId: null,
           frictionLevel: null,
           focusWindowStart: null,

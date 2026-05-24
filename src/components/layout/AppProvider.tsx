@@ -10,6 +10,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { useDatabase } from '@/hooks/useDatabase'
 import { useSync } from '@/hooks/useSync'
 import { useServiceWorker } from '@/hooks/useServiceWorker'
+import { processRecurringTasks } from '@/lib/recurring'
+import { useUiStateStore } from '@/stores/uiStateStore'
 import { Shell } from '@/components/layout/Shell'
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -20,6 +22,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const loadSettings = useSettingsStore((s) => s.loadSettings)
   const loadCategories = useCategoryStore((s) => s.loadCategories)
   const initAuth = useAuthStore((s) => s.init)
+  const loadUiState = useUiStateStore((s) => s.load)
   const initialized = useRef(false)
 
   useSync()
@@ -30,6 +33,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     initialized.current = true
 
     initAuth()
+    loadUiState()
 
     const today = new Date().toISOString().slice(0, 10)
     loadTasks(today)
@@ -37,7 +41,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     loadDrift()
     loadSettings()
     loadCategories()
-  }, [db.isReady, initAuth, loadTasks, loadSections, loadDrift, loadSettings, loadCategories])
+  }, [db.isReady, initAuth, loadTasks, loadSections, loadDrift, loadSettings, loadCategories, loadUiState])
+
+  useEffect(() => {
+    if (!db.isReady) return
+    const hourMs = 3600000
+    const now = new Date()
+    const dayStartHour = 4
+    const nextCheck = new Date(now)
+    nextCheck.setHours(dayStartHour, 0, 0, 0)
+    if (nextCheck <= now) nextCheck.setDate(nextCheck.getDate() + 1)
+
+    const msUntilCheck = nextCheck.getTime() - now.getTime()
+
+    const timer = setTimeout(async () => {
+      await processRecurringTasks(dayStartHour)
+      const today = new Date().toISOString().slice(0, 10)
+      loadTasks(today)
+    }, msUntilCheck)
+
+    return () => clearTimeout(timer)
+  }, [db.isReady, loadTasks])
 
   if (db.error) {
     return (

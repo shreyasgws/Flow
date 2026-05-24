@@ -25,6 +25,8 @@ export function InlineComposer() {
       sortOrder: maxOrder + 1,
       estimatedMinutes: null,
       isRecurring: false,
+      recurrenceType: 'none',
+      recurrenceBaseId: null,
       sourceDriftId: null,
       frictionLevel: null,
       focusWindowStart: null,

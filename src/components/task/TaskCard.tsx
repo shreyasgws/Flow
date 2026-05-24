@@ -16,6 +16,8 @@ interface TaskCardProps {
   categoryId?: string | null
   frictionLevel?: string | null
   sortOrder: number
+  isRecurring?: boolean
+  recurrenceType?: 'none' | 'daily' | 'weekdays' | 'weekly'
   onDragStart?: (e: React.DragEvent, id: string) => void
   onDragOver?: (e: React.DragEvent, id: string) => void
   onDrop?: (e: React.DragEvent, id: string) => void
@@ -35,6 +37,8 @@ export function TaskCard({
   estimatedMinutes,
   categoryId,
   frictionLevel,
+  isRecurring,
+  recurrenceType,
   onDragStart,
   onDragOver,
   onDrop,
@@ -229,6 +233,11 @@ export function TaskCard({
         {!isDone && estimatedMinutes && (
           <span className="text-[10px] text-[var(--text-ghost)]">
             {estimatedMinutes}m
+          </span>
+        )}
+        {!isDone && isRecurring && recurrenceType && recurrenceType !== 'none' && (
+          <span className="text-[10px] text-[var(--accent)]/60">
+            {recurrenceType === 'daily' ? 'Daily' : recurrenceType === 'weekdays' ? 'Weekdays' : 'Weekly'}
           </span>
         )}
 

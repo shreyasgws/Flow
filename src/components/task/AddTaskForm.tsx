@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useTaskStore } from '@/stores/taskStore'
 import { slideUp } from '@/motions/variants'
+import { RecurrencePicker } from './RecurrencePicker'
 
 interface AddTaskFormProps {
   sectionId: string | null
@@ -13,6 +14,8 @@ interface AddTaskFormProps {
   onActivate: () => void
   onDeactivate: () => void
 }
+
+type RecurrenceType = 'none' | 'daily' | 'weekdays' | 'weekly'
 
 export function AddTaskForm({
   sectionId,
@@ -24,6 +27,7 @@ export function AddTaskForm({
 }: AddTaskFormProps) {
   const [text, setText] = useState('')
   const [isPending, setIsPending] = useState(false)
+  const [recurrence, setRecurrence] = useState<RecurrenceType>('none')
   const inputRef = useRef<HTMLInputElement>(null)
   const addTask = useTaskStore((s) => s.addTask)
 
@@ -39,13 +43,16 @@ export function AddTaskForm({
     if (!trimmed) return
     setIsPending(true)
     try {
+      const isRecurring = recurrence !== 'none'
       const task = await addTask({
         title: trimmed,
         flowSectionId: sectionId,
         date,
         sortOrder,
         estimatedMinutes: null,
-        isRecurring: false,
+        isRecurring,
+        recurrenceType: recurrence,
+        recurrenceBaseId: null,
         sourceDriftId: null,
         frictionLevel: null,
         focusWindowStart: null,
@@ -54,6 +61,7 @@ export function AddTaskForm({
       })
       if (task) {
         setText('')
+        setRecurrence('none')
         inputRef.current?.focus()
       }
     } finally {
@@ -68,8 +76,15 @@ export function AddTaskForm({
     }
     if (e.key === 'Escape') {
       setText('')
+      setRecurrence('none')
       onDeactivate()
     }
+  }
+
+  function handleCancel() {
+    setText('')
+    setRecurrence('none')
+    onDeactivate()
   }
 
   if (!isActive) {
@@ -93,34 +108,39 @@ export function AddTaskForm({
       variants={slideUp}
       initial="hidden"
       animate="visible"
-      className="flex items-center gap-3 py-2"
+      className="py-2"
     >
-      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[var(--accent)]">
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-          <path d="M4 1v6M1 4h6" stroke="var(--accent)" strokeWidth="1" strokeLinecap="round" />
-        </svg>
-      </span>
-      <input
-        ref={inputRef}
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => {
-          if (!text.trim() && !isPending) onDeactivate()
-        }}
-        placeholder="What is one thing?"
-        disabled={isPending}
-        className="flex-1 bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-ghost)] disabled:opacity-50"
-      />
-      <button
-        onClick={() => { setText(''); onDeactivate() }}
-        disabled={isPending}
-        aria-label="Cancel"
-        className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] disabled:opacity-50"
-      >
-        Esc
-      </button>
+      <div className="flex items-center gap-3">
+        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[var(--accent)]">
+          <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+            <path d="M4 1v6M1 4h6" stroke="var(--accent)" strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => {
+            if (!text.trim() && !isPending) handleCancel()
+          }}
+          placeholder="What is one thing?"
+          disabled={isPending}
+          className="flex-1 bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-ghost)] disabled:opacity-50"
+        />
+        <button
+          onClick={handleCancel}
+          disabled={isPending}
+          aria-label="Cancel"
+          className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] disabled:opacity-50"
+        >
+          Esc
+        </button>
+      </div>
+      <div className="ml-7 mt-1.5">
+        <RecurrencePicker value={recurrence} onChange={setRecurrence} />
+      </div>
     </motion.div>
   )
 }

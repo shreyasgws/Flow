@@ -36,6 +36,8 @@ export interface Task {
   createdAt: number
   completedAt: number | null
   isRecurring: boolean
+  recurrenceType: 'none' | 'daily' | 'weekdays' | 'weekly'
+  recurrenceBaseId: string | null
   sourceDriftId: string | null
 }
 
@@ -96,6 +98,7 @@ export interface AppSettings {
   focusWindowAlertsEnabled: boolean
   installPromptDismissed: boolean
   googleLinked: boolean
+  carryForwardDismissedFor: string | null
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -112,6 +115,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   focusWindowAlertsEnabled: false,
   installPromptDismissed: false,
   googleLinked: false,
+  carryForwardDismissedFor: null,
 }
 
 export interface TemplateTask {
