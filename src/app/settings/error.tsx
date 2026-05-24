@@ -7,7 +7,6 @@ export default function SettingsError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  console.error('Settings error boundary caught:', error)
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg-base)] p-8">
       <div className="max-w-sm text-center">
@@ -16,6 +15,9 @@ export default function SettingsError({
         </h2>
         <p className="mb-4 text-sm text-[var(--text-secondary)]">
           Your preferences are saved locally. Try again.
+        </p>
+        <p className="mb-4 text-xs text-red-400">
+          {error.message}
         </p>
         <button
           onClick={reset}
