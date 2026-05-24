@@ -8,6 +8,7 @@ import { useCategoryStore } from '@/stores/categoryStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 import { useFocusStore } from '@/stores/focusStore'
+import { useAuthStore } from '@/stores/authStore'
 import { TaskSection } from '@/components/task/TaskSection'
 import { TaskCard } from '@/components/task/TaskCard'
 import { SectionEditor } from '@/components/section/SectionEditor'
@@ -56,6 +57,7 @@ export default function Home() {
   const [saveTemplatePrompt, setSaveTemplatePrompt] = useState(false)
   const [saveTemplateName, setSaveTemplateName] = useState('')
   const addTemplate = useTemplateStore((s) => s.addTemplate)
+  const authUser = useAuthStore((s) => s.user)
 
   const activeTaskCount = tasks.filter((t) => t.status === 'active').length
   useEffect(() => {
@@ -65,6 +67,12 @@ export default function Home() {
   useEffect(() => {
     loadCategories()
   }, [loadCategories])
+
+  useEffect(() => {
+    if (authUser && authUser.is_anonymous === false && !settings.googleLinked) {
+      updateSettings({ googleLinked: true })
+    }
+  }, [authUser, settings.googleLinked, updateSettings])
 
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -222,7 +230,9 @@ export default function Home() {
         </div>
       </header>
 
-      {!settings.googleLinked && <SignInBanner onLinked={() => updateSettings({ googleLinked: true })} />}
+      {!settings.googleLinked && authUser?.is_anonymous ? (
+        <SignInBanner onLinked={() => updateSettings({ googleLinked: true })} />
+      ) : null}
 
       {templateAppliedMsg && (
         <div className="mb-3 rounded-lg bg-[var(--bg-surface)] p-3 text-xs text-[var(--text-secondary)]">
