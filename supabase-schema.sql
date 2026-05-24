@@ -130,35 +130,9 @@ CREATE POLICY "Users can manage their own templates"
 CREATE POLICY "Users can manage their own settings"
   ON settings FOR ALL USING (auth.uid() = user_id);
 
-CREATE TABLE focus_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  task_id UUID NOT NULL,
-  date TEXT NOT NULL,
-  started_at BIGINT NOT NULL,
-  ended_at BIGINT,
-  elapsed_seconds BIGINT NOT NULL DEFAULT 0,
-  completed_task_on_exit BOOLEAN NOT NULL DEFAULT false,
-  updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM now()) * 1000
-);
-
-ALTER TABLE focus_sessions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can manage their own focus_sessions"
-  ON focus_sessions FOR ALL USING (auth.uid() = user_id);
-
--- Add recurrence fields to tasks
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_type TEXT NOT NULL DEFAULT 'none';
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_base_id UUID;
-
--- Add carry_forward_dismissed_for to settings
-ALTER TABLE settings ADD COLUMN IF NOT EXISTS carry_forward_dismissed_for TEXT;
-
 -- Indexes
 CREATE INDEX idx_tasks_user_date ON tasks(user_id, date);
 CREATE INDEX idx_tasks_user_status ON tasks(user_id, status);
 CREATE INDEX idx_flow_sections_user_sort ON flow_sections(user_id, sort_order);
 CREATE INDEX idx_drift_entries_user_created ON drift_entries(user_id, created_at);
 CREATE INDEX idx_reflections_user_week ON reflections(user_id, week_start);
-CREATE INDEX idx_focus_sessions_user_task ON focus_sessions(user_id, task_id);
-CREATE INDEX idx_focus_sessions_user_date ON focus_sessions(user_id, date);

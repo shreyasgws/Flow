@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Task, FlowSection, DriftEntry, Reflection, UndoAction, AppSettings, Category, Template, FocusSession } from '@/types'
+import type { Task, FlowSection, DriftEntry, Reflection, UndoAction, AppSettings, Category, Template } from '@/types'
 
 export interface SyncQueueItem {
   id?: number
@@ -22,11 +22,10 @@ export class FlowDatabase extends Dexie {
   categories!: EntityTable<Category, 'id'>
   templates!: EntityTable<Template, 'id'>
   syncQueue!: EntityTable<SyncQueueItem, 'id'>
-  focusSessions!: EntityTable<FocusSession, 'id'>
 
   constructor() {
     super('flow')
-    this.version(6).stores({
+    this.version(5).stores({
       tasks: 'id, date, flowSectionId, categoryId, status, sortOrder',
       flowSections: 'id, sortOrder',
       driftEntries: 'id, createdAt',
@@ -36,7 +35,6 @@ export class FlowDatabase extends Dexie {
       categories: 'id, sortOrder',
       templates: 'id, sortOrder',
       syncQueue: '++id, status, timestamp',
-      focusSessions: 'id, taskId, date, startedAt',
     })
   }
 }

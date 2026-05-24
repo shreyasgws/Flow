@@ -99,7 +99,6 @@ function mapTable(local: string): string {
     categories: 'categories',
     templates: 'templates',
     settings: 'settings',
-    focusSessions: 'focus_sessions',
   }
   return map[local] ?? local
 }
