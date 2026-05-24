@@ -21,7 +21,8 @@ export async function shouldCreateNewInstance(task: Task, today: string, yesterd
 
   if (task.recurrenceType === 'weekly') {
     const dayOfWeek = new Date(today + 'T12:00:00').getDay()
-    if (dayOfWeek !== dayStartHour % 7) return false
+    const baseDayOfWeek = new Date(task.createdAt).getDay()
+    if (dayOfWeek !== baseDayOfWeek) return false
     const existing = await db.tasks.where({ recurrenceBaseId: task.id, date: today }).toArray()
     if (existing.length > 0) return false
     return task.completedAt !== null

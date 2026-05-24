@@ -5,6 +5,9 @@ const STATIC_ASSETS = [
   '/settings',
   '/weekly',
   '/offline',
+  '/focus',
+  '/review',
+  '/plan',
   '/manifest.json',
 ]
 

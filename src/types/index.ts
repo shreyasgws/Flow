@@ -131,6 +131,16 @@ export interface Template {
   createdAt: number
 }
 
+export interface FocusSession {
+  id: string
+  taskId: string
+  date: string
+  startedAt: number
+  endedAt: number | null
+  elapsedSeconds: number
+  completedTaskOnExit: boolean
+}
+
 export interface EnvironmentState {
   mode: EnvironmentMode
   intensity: AmbientIntensity

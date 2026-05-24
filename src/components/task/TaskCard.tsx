@@ -7,6 +7,7 @@ import { useTaskStore } from '@/stores/taskStore'
 import { taskComplete } from '@/motions/variants'
 import { emotionalMotionProps } from '@/lib/emotionalStates'
 import { useCategoryStore } from '@/stores/categoryStore'
+import { useGestures } from '@/hooks/useGestures'
 
 interface TaskCardProps {
   id: string
@@ -60,46 +61,29 @@ export function TaskCard({
   const taskCategory = categoryId ? categories.find((c) => c.id === categoryId) : null
   const isDone = status === 'completed'
   const dragRef = useRef<HTMLDivElement>(null)
-  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isLongPress = useRef(false)
 
-  const gestureStartRef = useRef<{ x: number; y: number } | null>(null)
-  const gestureConsumedRef = useRef(false)
-
-  function handlePointerDown(e: React.PointerEvent) {
-    if (isDone || isPending) return
-    isLongPress.current = false
-    gestureConsumedRef.current = false
-    gestureStartRef.current = { x: e.clientX, y: e.clientY }
-    longPressRef.current = setTimeout(() => {
-      isLongPress.current = true
-      gestureConsumedRef.current = true
+  const {
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerCancel,
+  } = useGestures({
+    onLongPress: () => {
+      if (isDone || isPending) return
       router.push(`/focus/${id}`)
-    }, 300)
-  }
+    },
+    onSwipe: (direction) => {
+      if (isDone || isPending || direction !== 'right') return
+      handleToggleComplete()
+    },
+    onTap: () => {
+      if (isDone || isPending) return
+      handleToggleComplete()
+    },
+  })
 
-  function handlePointerUp(e: React.PointerEvent) {
-    if (longPressRef.current) {
-      clearTimeout(longPressRef.current)
-      longPressRef.current = null
-    }
-    gestureStartRef.current = null
-  }
-
-  function handlePointerMove(e: React.PointerEvent) {
-    if (!gestureStartRef.current) return
-    const dy = e.clientY - gestureStartRef.current.y
-    if (Math.abs(dy) > 15) {
-      if (longPressRef.current) {
-        clearTimeout(longPressRef.current)
-        longPressRef.current = null
-      }
-      gestureStartRef.current = null
-    }
-  }
-
-  const handleToggle = useCallback(async () => {
-    if (isPending || isLongPress.current) return
+  const handleToggleComplete = useCallback(async () => {
+    if (isPending) return
     setEmotionalState('completing')
     setIsPending(true)
     try {
@@ -158,7 +142,7 @@ export function TaskCard({
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
-        onPointerLeave={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         className={`group flex items-center gap-2 py-2 ${
           !isDone ? 'cursor-grab active:cursor-grabbing' : ''
         } ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
@@ -181,7 +165,7 @@ export function TaskCard({
         )}
 
         <motion.button
-          onClick={handleToggle}
+          onClick={handleToggleComplete}
           disabled={isPending}
           aria-label={isDone ? `Uncomplete "${title}"` : `Complete "${title}"`}
           whileHover={{ scale: 1.15 }}

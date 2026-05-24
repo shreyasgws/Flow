@@ -8,6 +8,7 @@ import { useTaskStore } from '@/stores/taskStore'
 import { AmbientBackground } from '@/components/focus/AmbientBackground'
 import { FocusTimer } from '@/components/focus/TimerSetup'
 import { FocusControls } from '@/components/focus/FocusControls'
+import { SessionTransition } from '@/components/focus/SessionTransition'
 import { useFlowSectionStore } from '@/stores/flowSectionStore'
 import { useUiStateStore } from '@/stores/uiStateStore'
 import type { Task } from '@/types'
@@ -190,39 +191,21 @@ export default function FocusPage({
             transition={{ duration: 0.4 }}
             className="relative z-10 flex w-full max-w-md flex-col items-center px-6 text-center"
           >
-            <motion.p
-              className="mb-6 font-serif text-3xl text-[var(--text-primary)]"
-              style={{ fontFamily: 'Fraunces, serif' }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              Done.
-            </motion.p>
-
-            <div className="flex flex-wrap justify-center gap-3">
-              <button
-                onClick={handleWhatNext}
-                className="rounded-full bg-[var(--accent)] px-6 py-2 text-sm text-white transition-opacity hover:opacity-90"
-              >
-                What next?
-              </button>
+            <SessionTransition
+              onWhatNext={handleWhatNext}
+              onReturnToPlan={handleReturnToPlan}
+            />
+            <div className="mt-3 flex justify-center gap-3">
               <button
                 onClick={handleTakeBreak}
-                className="rounded-full bg-[var(--bg-elevated)] px-6 py-2 text-sm text-[var(--text-secondary)] transition-opacity hover:opacity-80"
+                className="rounded-full bg-[var(--bg-elevated)] px-5 py-2 text-sm text-[var(--text-secondary)] transition-opacity hover:opacity-80"
               >
                 Take a break
               </button>
-              <button
-                onClick={handleReturnToPlan}
-                className="rounded-full bg-[var(--bg-elevated)] px-6 py-2 text-sm text-[var(--text-secondary)] transition-opacity hover:opacity-80"
-              >
-                Return to plan
-              </button>
-              <p className="mt-6 text-[10px] text-[var(--text-ghost)]">
-                Session started at {new Date().toLocaleTimeString()}
-              </p>
             </div>
+            <p className="mt-6 text-[10px] text-[var(--text-ghost)]">
+              Session started at {new Date().toLocaleTimeString()}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

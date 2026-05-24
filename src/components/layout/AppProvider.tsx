@@ -43,11 +43,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     loadCategories()
   }, [db.isReady, initAuth, loadTasks, loadSections, loadDrift, loadSettings, loadCategories, loadUiState])
 
+  const settings = useSettingsStore((s) => s.settings)
+
   useEffect(() => {
     if (!db.isReady) return
-    const hourMs = 3600000
+    const dayStartHour = settings.dayStartHour
     const now = new Date()
-    const dayStartHour = 4
     const nextCheck = new Date(now)
     nextCheck.setHours(dayStartHour, 0, 0, 0)
     if (nextCheck <= now) nextCheck.setDate(nextCheck.getDate() + 1)
@@ -61,7 +62,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }, msUntilCheck)
 
     return () => clearTimeout(timer)
-  }, [db.isReady, loadTasks])
+  }, [db.isReady, loadTasks, settings.dayStartHour])
 
   if (db.error) {
     return (
