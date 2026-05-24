@@ -23,6 +23,7 @@ export default function Settings() {
   const signOut = useAuthStore((s) => s.signOut)
   const router = useRouter()
   const [signInPending, setSignInPending] = useState(false)
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const synced = useRef(false)
 
   const notifSupported = isNotificationSupported()
@@ -92,7 +93,7 @@ export default function Settings() {
               </p>
             </div>
             <button
-              onClick={async () => { await signOut(); router.replace('/') }}
+              onClick={() => setShowSignOutConfirm(true)}
               className="rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[10px] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
             >
               Sign out
@@ -129,6 +130,39 @@ export default function Settings() {
             </button>
           </div>
         </section>
+      )}
+
+      {showSignOutConfirm && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setShowSignOutConfirm(false)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-[var(--bg-surface)] p-5 pb-8 shadow-xl">
+            <div className="mx-auto mb-4 h-1 w-8 rounded-full bg-[var(--text-ghost)]" />
+            <h2 className="mb-1 text-sm font-medium text-[var(--text-primary)]">
+              Sign out?
+            </h2>
+            <p className="mb-4 text-xs text-[var(--text-secondary)]">
+              Your local data stays on this device. Signing out clears your session.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSignOutConfirm(false)}
+                className="flex-1 rounded-full bg-[var(--bg-elevated)] py-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setShowSignOutConfirm(false)
+                  await signOut()
+                  router.replace('/')
+                }}
+                className="flex-1 rounded-full bg-[var(--accent)] py-2 text-sm text-white transition-opacity hover:opacity-90"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       <section className="mb-6">
