@@ -1,0 +1,81 @@
+import { create } from 'zustand'
+import { db } from '@/lib/db'
+import { retryWithBackoff } from '@/lib/retry'
+import { useErrorStore } from '@/stores/errorStore'
+import type { Reflection } from '@/types'
+
+interface ReflectionStore {
+  reflections: Reflection[]
+  isLoading: boolean
+  error: string | null
+  loadReflections: () => Promise<void>
+  getReflectionForWeek: (weekStart: string) => Reflection | undefined
+  saveReflection: (weekStart: string, content: string, categories: string[]) => Promise<void>
+  deleteReflection: (id: string) => Promise<void>
+}
+
+export const useReflectionStore = create<ReflectionStore>((set, get) => ({
+  reflections: [],
+  isLoading: false,
+  error: null,
+
+  loadReflections: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const reflections = await retryWithBackoff(() => db.reflections.toArray())
+      reflections.sort((a, b) => b.createdAt - a.createdAt)
+      set({ reflections, isLoading: false })
+    } catch {
+      set({ isLoading: false, error: 'Failed to load reflections' })
+      useErrorStore.getState().push('database')
+    }
+  },
+
+  getReflectionForWeek: (weekStart: string) => {
+    return get().reflections.find((r) => r.weekStart === weekStart)
+  },
+
+  saveReflection: async (weekStart: string, content: string, categories: string[]) => {
+    set({ error: null })
+    const existing = get().reflections.find((r) => r.weekStart === weekStart)
+    if (existing) {
+      try {
+        await retryWithBackoff(() => db.reflections.update(existing.id, { content, categories }))
+        set((s) => ({
+          reflections: s.reflections.map((r) =>
+            r.id === existing.id ? { ...r, content, categories } : r
+          ),
+        }))
+      } catch {
+        set({ error: 'Failed to update reflection' })
+        useErrorStore.getState().push('database')
+      }
+    } else {
+      try {
+        const reflection: Reflection = {
+          id: crypto.randomUUID(),
+          weekStart,
+          content,
+          categories,
+          createdAt: Date.now(),
+        }
+        await retryWithBackoff(() => db.reflections.add(reflection))
+        set((s) => ({ reflections: [reflection, ...s.reflections] }))
+      } catch {
+        set({ error: 'Failed to save reflection' })
+        useErrorStore.getState().push('database')
+      }
+    }
+  },
+
+  deleteReflection: async (id: string) => {
+    set({ error: null })
+    try {
+      await retryWithBackoff(() => db.reflections.delete(id))
+      set((s) => ({ reflections: s.reflections.filter((r) => r.id !== id) }))
+    } catch {
+      set({ error: 'Failed to delete reflection' })
+      useErrorStore.getState().push('database')
+    }
+  },
+}))
