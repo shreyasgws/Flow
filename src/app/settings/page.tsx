@@ -92,7 +92,7 @@ export default function Settings() {
               </p>
             </div>
             <button
-              onClick={signOut}
+              onClick={async () => { await signOut(); router.replace('/') }}
               className="rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[10px] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
             >
               Sign out
