@@ -4,7 +4,8 @@ import { motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'
+const supabase = getSupabase()
 
 export default function Landing() {
   const router = useRouter()

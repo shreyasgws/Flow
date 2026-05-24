@@ -44,7 +44,8 @@ export async function flushQueue() {
   }
 
   useSyncStore.getState().setStatus('syncing')
-  const { supabase } = await import('@/lib/supabase')
+  const { getSupabase } = await import('@/lib/supabase')
+  const supabase = getSupabase()
 
   for (const item of pending) {
     const success = await processItem(item, supabase)
