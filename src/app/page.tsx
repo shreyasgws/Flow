@@ -17,6 +17,7 @@ export default function Landing() {
   const updateSettings = useSettingsStore((s) => s.updateSettings)
   const [showContent, setShowContent] = useState(false)
   const [authPending, setAuthPending] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
     if (settings?.anonymousOnboarding === false) {
@@ -29,18 +30,22 @@ export default function Landing() {
 
   async function handleAnonymous() {
     if (!supabase) return
+    setAuthError(null)
     setAuthPending(true)
     try {
-      await supabase.auth.signInAnonymously()
+      const { error } = await supabase.auth.signInAnonymously()
+      if (error) throw error
       await updateSettings({ anonymousOnboarding: false })
       router.replace('/home')
-    } catch {
+    } catch (e) {
+      setAuthError((e as Error).message)
       setAuthPending(false)
     }
   }
 
   async function handleGoogleSignIn() {
     if (!supabase) return
+    setAuthError(null)
     setAuthPending(true)
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -49,7 +54,8 @@ export default function Landing() {
       })
       if (error) throw error
       await updateSettings({ anonymousOnboarding: false })
-    } catch {
+    } catch (e) {
+      setAuthError((e as Error).message)
       setAuthPending(false)
     }
   }
@@ -83,6 +89,10 @@ export default function Landing() {
           <br />
           to move through your day.
         </p>
+
+        {authError && (
+          <p className="mb-4 max-w-[280px] text-xs text-red-400">{authError}</p>
+        )}
 
         <button
           onClick={handleGoogleSignIn}
