@@ -19,7 +19,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   setSession: (session) => set({ session, user: session?.user ?? null }),
 
   signOut: async () => {
-    await getSupabase().auth.signOut()
+    try { await getSupabase().auth.signOut() } catch { /* ignore network errors */ }
     set({ session: null, user: null })
   },
 
