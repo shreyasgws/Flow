@@ -18,15 +18,24 @@ export default function Landing() {
   const [showContent, setShowContent] = useState(false)
   const [authPending, setAuthPending] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
+  const [checkedSession, setCheckedSession] = useState(false)
 
   useEffect(() => {
-    if (settings?.anonymousOnboarding === false) {
-      router.replace('/home')
-      return
-    }
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace('/home')
+      } else {
+        setCheckedSession(true)
+      }
+    })
+  }, [supabase, router])
+
+  useEffect(() => {
+    if (!checkedSession) return
     const t = setTimeout(() => setShowContent(true), 400)
     return () => clearTimeout(t)
-  }, [settings?.anonymousOnboarding, router])
+  }, [checkedSession])
 
   async function handleAnonymous() {
     if (!supabase) return
