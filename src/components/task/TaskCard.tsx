@@ -59,26 +59,38 @@ export function TaskCard({
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLongPress = useRef(false)
 
-  function handlePointerDown() {
+  const gestureStartRef = useRef<{ x: number; y: number } | null>(null)
+  const gestureConsumedRef = useRef(false)
+
+  function handlePointerDown(e: React.PointerEvent) {
     if (isDone || isPending) return
     isLongPress.current = false
+    gestureConsumedRef.current = false
+    gestureStartRef.current = { x: e.clientX, y: e.clientY }
     longPressRef.current = setTimeout(() => {
       isLongPress.current = true
+      gestureConsumedRef.current = true
       router.push(`/focus/${id}`)
-    }, 600)
+    }, 300)
   }
 
-  function handlePointerUp() {
+  function handlePointerUp(e: React.PointerEvent) {
     if (longPressRef.current) {
       clearTimeout(longPressRef.current)
       longPressRef.current = null
     }
+    gestureStartRef.current = null
   }
 
-  function handlePointerMove() {
-    if (longPressRef.current) {
-      clearTimeout(longPressRef.current)
-      longPressRef.current = null
+  function handlePointerMove(e: React.PointerEvent) {
+    if (!gestureStartRef.current) return
+    const dy = e.clientY - gestureStartRef.current.y
+    if (Math.abs(dy) > 15) {
+      if (longPressRef.current) {
+        clearTimeout(longPressRef.current)
+        longPressRef.current = null
+      }
+      gestureStartRef.current = null
     }
   }
 

@@ -6,6 +6,7 @@ import { useDriftStore } from '@/stores/driftStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { DriftCard } from './DriftCard'
 import { DriftInput } from './DriftInput'
+import { EmptyDrift } from '@/components/empty/EmptyDrift'
 
 interface DriftPanelProps {
   open: boolean
@@ -71,11 +72,7 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
               <DriftInput />
 
               <div className="mt-2 max-h-[50vh] space-y-1 overflow-y-auto">
-                {entries.length === 0 && (
-                  <p className="py-6 text-center text-xs text-[var(--text-muted)]">
-                    No drift yet. Thoughts appear here.
-                  </p>
-                )}
+                {entries.length === 0 && <EmptyDrift />}
 
                 <AnimatePresence mode="popLayout">
                   {entries.map((entry) => (

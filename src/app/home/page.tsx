@@ -15,6 +15,7 @@ import { DayPulse } from '@/components/home/DayPulse'
 import { DateStrip } from '@/components/home/DateStrip'
 import { InlineComposer } from '@/components/home/InlineComposer'
 import type { FlowSection, EnergyType } from '@/types'
+import { EmptyDay } from '@/components/empty/EmptyDay'
 
 function today() { return new Date().toISOString().slice(0, 10) }
 
@@ -171,10 +172,11 @@ export default function Home() {
       <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
       <CategoryFilterBar activeId={filterCategoryId} onChange={setFilterCategoryId} />
 
-      {filteredActive.length === 0 && (
-        <p className="mb-6 text-center text-xs text-[var(--text-muted)]">
-          Nothing yet. Add what feels right.
-        </p>
+      {filteredActive.length === 0 && completedTasks.length > 0 && (
+        <EmptyDay variant="completed" completedCount={completedTasks.length} sectionCount={sections.length} />
+      )}
+      {filteredActive.length === 0 && completedTasks.length === 0 && sections.length > 0 && (
+        <EmptyDay variant="zero-task" />
       )}
 
       {sections.map((section) => {

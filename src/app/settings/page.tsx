@@ -4,13 +4,21 @@ import { useEffect, useRef } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 import { CategoryManager } from '@/components/category/CategoryManager'
+import { requestPermission, getStoredPermission, isNotificationSupported, cancelDailyNudge, scheduleDailyNudge } from '@/lib/notifications'
+import { useTaskStore } from '@/stores/taskStore'
+import { useDriftStore } from '@/stores/driftStore'
 
 export default function Settings() {
   const settings = useSettingsStore((s) => s.settings)
   const updateSettings = useSettingsStore((s) => s.updateSettings)
   const setIntensity = useEnvironmentStore((s) => s.setIntensity)
   const setMode = useEnvironmentStore((s) => s.setMode)
+  const allTasks = useTaskStore((s) => s.tasks)
+  const driftEntries = useDriftStore((s) => s.entries)
   const synced = useRef(false)
+
+  const notifSupported = isNotificationSupported()
+  const notifPermission = getStoredPermission()
 
   useEffect(() => {
     document.documentElement.classList.toggle('theme-light', settings.theme === 'light')
@@ -22,6 +30,25 @@ export default function Settings() {
     setMode(settings.environmentMode)
     setIntensity(settings.ambientIntensity)
   }, [settings.environmentMode, settings.ambientIntensity, setMode, setIntensity])
+
+  async function handleRequestNotification() {
+    if (!notifSupported) return
+    const perm = await requestPermission()
+    if (perm === 'granted') {
+      const activeCount = allTasks.filter((t) => t.status === 'active').length
+      scheduleDailyNudge(settings.dayStartHour, activeCount, driftEntries.length)
+    }
+  }
+
+  function handleToggleNudge(val: boolean) {
+    updateSettings({ dailyNudgeEnabled: val })
+    if (!val) {
+      cancelDailyNudge()
+    } else if (notifPermission === 'granted') {
+      const activeCount = allTasks.filter((t) => t.status === 'active').length
+      scheduleDailyNudge(settings.dayStartHour, activeCount, driftEntries.length)
+    }
+  }
 
   return (
     <div className="px-4">
@@ -127,6 +154,114 @@ export default function Settings() {
         <p className="mt-1 text-xs text-[var(--text-muted)]">
           Day starts at {settings.dayStartHour.toString().padStart(2, '0')}:00
         </p>
+      </section>
+
+      <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
+        <h2 className="mb-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
+          Notifications
+        </h2>
+
+        {!notifSupported && (
+          <p className="text-xs text-[var(--text-muted)]">
+            Notifications are not supported on this device.
+          </p>
+        )}
+
+        {notifSupported && notifPermission !== 'granted' && (
+          <div className="mb-3 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+            <p className="mb-2 text-xs text-[var(--text-secondary)]">
+              Flow can send a quiet daily nudge so you never lose track of your day.
+            </p>
+            <button
+              onClick={handleRequestNotification}
+              className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+            >
+              Enable notifications
+            </button>
+          </div>
+        )}
+
+        {notifSupported && (
+          <div className="space-y-3">
+            <label className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-[var(--text-primary)]">Daily nudge</p>
+                <p className="text-[10px] text-[var(--text-ghost)]">
+                  A quiet reminder at {((settings.dayStartHour + 2) % 24).toString().padStart(2, '0')}:00
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings.dailyNudgeEnabled && notifPermission === 'granted'}
+                onClick={() => handleToggleNudge(!settings.dailyNudgeEnabled)}
+                disabled={notifPermission !== 'granted'}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  settings.dailyNudgeEnabled && notifPermission === 'granted'
+                    ? 'bg-[var(--accent)]'
+                    : 'bg-[var(--bg-elevated)]'
+                } disabled:opacity-40`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                  settings.dailyNudgeEnabled && notifPermission === 'granted'
+                    ? 'translate-x-[18px]'
+                    : 'translate-x-[3px]'
+                }`} />
+              </button>
+            </label>
+
+            <label className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-[var(--text-primary)]">Focus window alerts</p>
+                <p className="text-[10px] text-[var(--text-ghost)]">
+                  Remind when a focus window has passed
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings.focusWindowAlertsEnabled && notifPermission === 'granted'}
+                onClick={() => updateSettings({ focusWindowAlertsEnabled: !settings.focusWindowAlertsEnabled })}
+                disabled={notifPermission !== 'granted'}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  settings.focusWindowAlertsEnabled && notifPermission === 'granted'
+                    ? 'bg-[var(--accent)]'
+                    : 'bg-[var(--bg-elevated)]'
+                } disabled:opacity-40`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                  settings.focusWindowAlertsEnabled && notifPermission === 'granted'
+                    ? 'translate-x-[18px]'
+                    : 'translate-x-[3px]'
+                }`} />
+              </button>
+            </label>
+
+            <div className="mt-3 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+              <p className="mb-1 text-[10px] text-[var(--text-ghost)]">
+                Quiet hours
+              </p>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-[10px] text-[var(--text-muted)]">From</label>
+                  <input
+                    type="time"
+                    value={settings.quietHoursStart}
+                    onChange={(e) => updateSettings({ quietHoursStart: e.target.value })}
+                    className="mt-1 w-full rounded-md border border-[var(--bg-elevated)] bg-[var(--bg-base)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] text-[var(--text-muted)]">To</label>
+                  <input
+                    type="time"
+                    value={settings.quietHoursEnd}
+                    onChange={(e) => updateSettings({ quietHoursEnd: e.target.value })}
+                    className="mt-1 w-full rounded-md border border-[var(--bg-elevated)] bg-[var(--bg-base)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">

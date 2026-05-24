@@ -8,6 +8,7 @@ import { useFlowSectionStore } from '@/stores/flowSectionStore'
 import { CompletionRing } from '@/components/weekly/CompletionRing'
 import { calculateDayWeight, getCompletionLabel } from '@/lib/dayWeight'
 import type { Task } from '@/types'
+import { EmptyReview } from '@/components/empty/EmptyReview'
 
 function formatDate(dateStr: string): { display: string; dayName: string } {
   const d = new Date(dateStr + 'T00:00:00')
@@ -176,11 +177,7 @@ export default function DayReview({
       </div>
 
       {dateTasks.length === 0 && (
-        <div className="mt-8 text-center">
-          <p className="text-sm text-[var(--text-muted)]">
-            Nothing was planned this day. That is fine.
-          </p>
-        </div>
+        <EmptyReview hasHistory={allTasks.length > dateTasks.length} />
       )}
 
       {today && active.length > 0 && showCarryForward && (

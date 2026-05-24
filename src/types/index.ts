@@ -92,6 +92,9 @@ export interface AppSettings {
   quietHoursEnd: string
   dayStartHour: number
   anonymousOnboarding: boolean
+  dailyNudgeEnabled: boolean
+  focusWindowAlertsEnabled: boolean
+  installPromptDismissed: boolean
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -104,6 +107,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   quietHoursEnd: '07:00',
   dayStartHour: 4,
   anonymousOnboarding: true,
+  dailyNudgeEnabled: true,
+  focusWindowAlertsEnabled: false,
+  installPromptDismissed: false,
 }
 
 export interface EnvironmentState {

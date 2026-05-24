@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { AnimatePresence } from 'motion/react'
+import { useState, useCallback } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { TaskCard } from './TaskCard'
 import { AddTaskForm } from './AddTaskForm'
 import { SectionHeader } from '@/components/section/SectionHeader'
@@ -21,6 +21,7 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
   const [isAdding, setIsAdding] = useState(false)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [sectionDragOverId, setSectionDragOverId] = useState<string | null>(null)
+  const [dragCancelKey, setDragCancelKey] = useState(0)
   const batchReorder = useTaskStore((s) => s.batchReorder)
   const deleteSection = useFlowSectionStore((s) => s.deleteSection)
   const batchSectionReorder = useFlowSectionStore((s) => s.batchReorder)
@@ -78,6 +79,7 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
 
   function handleDragEnd() {
     setDragOverId(null)
+    setDragCancelKey((k) => k + 1)
   }
 
   function handleMoveUp(id: string) {
@@ -167,30 +169,36 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
           </p>
         )}
 
-        <AnimatePresence mode="popLayout">
-          {tasks.map((task, i) => (
-            <TaskCard
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              status={task.status}
-              estimatedMinutes={task.estimatedMinutes}
-              categoryId={task.categoryId}
-              frictionLevel={task.frictionLevel}
-              sortOrder={task.sortOrder}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDragEnd={handleDragEnd}
-              isDragTarget={dragOverId === task.id}
-              onMoveUp={handleMoveUp}
-              onMoveDown={handleMoveDown}
-              isFirst={i === 0}
-              isLast={i === tasks.length - 1}
-              onComplete={onTaskComplete}
-            />
-          ))}
-        </AnimatePresence>
+        <motion.div
+          key={dragCancelKey}
+          animate={{ x: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20, mass: 1 }}
+        >
+          <AnimatePresence mode="popLayout">
+            {tasks.map((task, i) => (
+              <TaskCard
+                key={task.id}
+                id={task.id}
+                title={task.title}
+                status={task.status}
+                estimatedMinutes={task.estimatedMinutes}
+                categoryId={task.categoryId}
+                frictionLevel={task.frictionLevel}
+                sortOrder={task.sortOrder}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+                isDragTarget={dragOverId === task.id}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
+                isFirst={i === 0}
+                isLast={i === tasks.length - 1}
+                onComplete={onTaskComplete}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
         <AddTaskForm
           sectionId={section.id}

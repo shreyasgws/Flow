@@ -10,6 +10,7 @@ import { useDriftStore } from '@/stores/driftStore'
 import { DayCard } from '@/components/weekly/DayCard'
 import { WeekReflection } from '@/components/weekly/WeekReflection'
 import { getCompactCompletionLabel } from '@/lib/dayWeight'
+import { EmptyWeek } from '@/components/empty/EmptyWeek'
 
 function getWeekStart(date: Date): string {
   const d = new Date(date)
@@ -214,6 +215,7 @@ export default function Weekly() {
         )}
       </AnimatePresence>
 
+      {weekTotalTasks === 0 && <EmptyWeek hasHistory={allTasks.length > 0} />}
       <WeekReflection weekStart={weekStart} />
     </div>
   )
