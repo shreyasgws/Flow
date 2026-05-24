@@ -1,12 +1,15 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTaskStore } from '@/stores/taskStore'
 import { useFlowSectionStore } from '@/stores/flowSectionStore'
 import { useDriftStore } from '@/stores/driftStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useCategoryStore } from '@/stores/categoryStore'
+import { useAuthStore } from '@/stores/authStore'
 import { useDatabase } from '@/hooks/useDatabase'
+import { useSync } from '@/hooks/useSync'
+import { useServiceWorker } from '@/hooks/useServiceWorker'
 import { Shell } from '@/components/layout/Shell'
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -16,9 +19,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const loadDrift = useDriftStore((s) => s.loadEntries)
   const loadSettings = useSettingsStore((s) => s.loadSettings)
   const loadCategories = useCategoryStore((s) => s.loadCategories)
+  const initAuth = useAuthStore((s) => s.init)
+  const initialized = useRef(false)
+
+  useSync()
+  useServiceWorker()
 
   useEffect(() => {
-    if (!db.isReady) return
+    if (!db.isReady || initialized.current) return
+    initialized.current = true
+
+    initAuth()
 
     const today = new Date().toISOString().slice(0, 10)
     loadTasks(today)
@@ -26,7 +37,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     loadDrift()
     loadSettings()
     loadCategories()
-  }, [db.isReady, loadTasks, loadSections, loadDrift, loadSettings, loadCategories])
+  }, [db.isReady, initAuth, loadTasks, loadSections, loadDrift, loadSettings, loadCategories])
 
   if (db.error) {
     return (

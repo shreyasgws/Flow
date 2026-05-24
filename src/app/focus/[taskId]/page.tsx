@@ -119,9 +119,7 @@ export default function FocusPage({
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0"
-        style={{
-          background: 'radial-gradient(ellipse at center, transparent 50%, rgba(14,14,16,0.6) 100%)',
-        }}
+        style={{ background: 'var(--vignette)' }}
       />
 
       {showBack && (
@@ -187,9 +185,6 @@ export default function FocusPage({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
             className="relative z-10 flex w-full max-w-md flex-col items-center px-6 text-center"
-            style={{
-              background: 'radial-gradient(ellipse at center, transparent 30%, rgba(91,140,255,0.03) 100%)',
-            }}
           >
             <motion.p
               className="mb-6 font-serif text-3xl text-[var(--text-primary)]"

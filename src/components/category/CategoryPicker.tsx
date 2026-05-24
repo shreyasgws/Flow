@@ -85,7 +85,7 @@ export function CategoryPicker({ value, onChange }: CategoryPickerProps) {
               <button
                 key={c}
                 onClick={() => setNewColor(c)}
-                className={`h-5 w-5 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-2 ring-white' : ''}`}
+                className={`h-5 w-5 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-2 ring-[var(--bg-surface)]' : ''}`}
                 style={{ backgroundColor: c }}
               />
             ))}

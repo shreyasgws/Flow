@@ -1,5 +1,16 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Task, FlowSection, DriftEntry, Reflection, UndoAction, AppSettings, Category } from '@/types'
+import type { Task, FlowSection, DriftEntry, Reflection, UndoAction, AppSettings, Category, Template } from '@/types'
+
+export interface SyncQueueItem {
+  id?: number
+  action: 'upsert' | 'delete'
+  table: string
+  recordId: string
+  payload: unknown
+  timestamp: number
+  retries: number
+  status: 'pending' | 'synced' | 'failed'
+}
 
 export class FlowDatabase extends Dexie {
   tasks!: EntityTable<Task, 'id'>
@@ -9,10 +20,12 @@ export class FlowDatabase extends Dexie {
   undoHistory!: EntityTable<UndoAction, 'id'>
   settings!: EntityTable<AppSettings, 'id'>
   categories!: EntityTable<Category, 'id'>
+  templates!: EntityTable<Template, 'id'>
+  syncQueue!: EntityTable<SyncQueueItem, 'id'>
 
   constructor() {
     super('flow')
-    this.version(3).stores({
+    this.version(5).stores({
       tasks: 'id, date, flowSectionId, categoryId, status, sortOrder',
       flowSections: 'id, sortOrder',
       driftEntries: 'id, createdAt',
@@ -20,6 +33,8 @@ export class FlowDatabase extends Dexie {
       undoHistory: 'id, timestamp',
       settings: 'id',
       categories: 'id, sortOrder',
+      templates: 'id, sortOrder',
+      syncQueue: '++id, status, timestamp',
     })
   }
 }

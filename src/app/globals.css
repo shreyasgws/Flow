@@ -25,23 +25,39 @@
 
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   color-scheme: dark;
+
+  /* Time-based ambient gradients */
+  --gradient-morning: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 30%, #3d2b1a 60%, #2a1f1f 100%);
+  --gradient-afternoon: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #1a1a2e 60%, #16213e 100%);
+  --gradient-evening: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 30%, #1a1a2e 60%, #0f0f1a 100%);
+  --gradient-night: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 30%, #0f0f1a 60%, #050510 100%);
+  --vignette: radial-gradient(ellipse at center, transparent 50%, rgba(14,14,16,0.6) 100%);
+  --landing-glow: radial-gradient(ellipse at 50% 40%, rgba(183,168,138,0.08) 0%, transparent 60%);
 }
 
 .theme-light {
-  --bg-base: #f5f5f0;
-  --bg-surface: #ffffff;
-  --bg-elevated: #ecece5;
-  --bg-overlay: rgba(255, 255, 255, 0.85);
+  /* === Spec-matching warm paper light theme (Sections 36-46) === */
+  --bg-base: #F6F2EA;
+  --bg-surface: #FFFDF8;
+  --bg-elevated: #EDE8DD;
+  --bg-overlay: rgba(255, 253, 248, 0.85);
 
-  --text-primary: #1a1a1e;
-  --text-secondary: #5a5a65;
-  --text-muted: #8a8a95;
-  --text-ghost: #b0b0ba;
+  --text-primary: #2A2822;
+  --text-secondary: #6B6559;
+  --text-muted: #9E9686;
+  --text-ghost: #C2BDB1;
 
   --accent: #5b8cff;
   --warn: #d4a017;
 
   --ambient-glow: rgba(91, 140, 255, 0.04);
+
+  --gradient-morning: linear-gradient(135deg, #EDE8DD 0%, #FFFDF8 30%, #F6F2EA 60%, #EDE8DD 100%);
+  --gradient-afternoon: linear-gradient(135deg, #F6F2EA 0%, #FFFDF8 30%, #EDE8DD 60%, #F6F2EA 100%);
+  --gradient-evening: linear-gradient(135deg, #EDE8DD 0%, #F6F2EA 30%, #EDE8DD 60%, #E8E3D8 100%);
+  --gradient-night: linear-gradient(135deg, #E8E3D8 0%, #EDE8DD 30%, #F6F2EA 60%, #E8E3D8 100%);
+  --vignette: radial-gradient(ellipse at center, transparent 50%, rgba(237,232,221,0.4) 100%);
+  --landing-glow: radial-gradient(ellipse at 50% 40%, rgba(183,168,138,0.06) 0%, transparent 60%);
 
   color-scheme: light;
 }
@@ -71,4 +87,28 @@ body {
   50% { opacity: calc(var(--visual-noise) * 0.6); }
 }
 
+@keyframes completePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.7; }
+}
 
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-intensity: 0;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -10,6 +10,8 @@ import { DriftButton } from '@/components/ui/DriftButton'
 import { UndoSnackbar } from '@/components/ui/UndoSnackbar'
 import { ErrorToast } from '@/components/ui/ErrorToast'
 import { AdaptivePerformance } from '@/components/ambient/AdaptivePerformance'
+import { SyncStatus } from '@/components/ui/SyncStatus'
+import { InstallPrompt } from '@/components/ui/InstallPrompt'
 import { useUndo } from '@/hooks/useUndo'
 import { onUndo } from '@/lib/undo'
 
@@ -46,9 +48,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <AdaptivePerformance />
       {!isFocus && !isLanding && <ErrorToast />}
       <main className={`relative z-10 mx-auto max-w-lg ${isFocus || isLanding ? '' : 'pb-24 pt-4'}`}>
+        {!isFocus && !isLanding && (
+          <div className="fixed right-4 top-2 z-30">
+            <SyncStatus />
+          </div>
+        )}
         {children}
       </main>
       {!isFocus && !isLanding && <DriftButton />}
+      {!isFocus && !isLanding && <InstallPrompt />}
       {!isFocus && !isLanding && <BottomNav />}
       {!isFocus && !isLanding && (
         <UndoSnackbar

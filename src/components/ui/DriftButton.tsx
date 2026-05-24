@@ -61,9 +61,8 @@ export function DriftButton() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onClick={handleOpen}
-        className="fixed bottom-20 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bg-overlay)] shadow-lg backdrop-blur-md"
+        className="fixed bottom-20 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--accent)]/35 bg-[var(--bg-overlay)] shadow-lg backdrop-blur-md"
         style={{
-          border: '1px solid rgba(91,140,255,0.35)',
           right: 16,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
           cursor: isDragging ? 'grabbing' : 'grab',

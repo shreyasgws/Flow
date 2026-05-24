@@ -4,11 +4,14 @@ import { motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { supabase } from '@/lib/supabase'
 
 export default function Landing() {
   const router = useRouter()
   const settings = useSettingsStore((s) => s.settings)
+  const updateSettings = useSettingsStore((s) => s.updateSettings)
   const [showContent, setShowContent] = useState(false)
+  const [authPending, setAuthPending] = useState(false)
 
   useEffect(() => {
     if (settings?.anonymousOnboarding === false) {
@@ -19,17 +22,36 @@ export default function Landing() {
     return () => clearTimeout(t)
   }, [settings?.anonymousOnboarding, router])
 
-  function handleEnter() {
-    router.replace('/home')
+  async function handleAnonymous() {
+    setAuthPending(true)
+    try {
+      await supabase.auth.signInAnonymously()
+      await updateSettings({ anonymousOnboarding: false })
+      router.replace('/home')
+    } catch {
+      setAuthPending(false)
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setAuthPending(true)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${location.origin}/auth/callback` },
+      })
+      if (error) throw error
+      await updateSettings({ anonymousOnboarding: false })
+    } catch {
+      setAuthPending(false)
+    }
   }
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden bg-[var(--bg-base)]">
       <motion.div
-        className="absolute inset-0 opacity-40"
-        style={{
-          background: 'radial-gradient(ellipse at 50% 40%, rgba(183,168,138,0.08) 0%, transparent 60%)',
-        }}
+        className="absolute inset-0"
+        style={{ background: 'var(--landing-glow)' }}
         animate={{ opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
       />
@@ -56,10 +78,11 @@ export default function Landing() {
         </p>
 
         <button
-          onClick={handleEnter}
-          className="mb-4 w-full max-w-[280px] rounded-full bg-white px-6 py-3 text-sm font-medium text-[#1a1a1e] transition-opacity hover:opacity-90"
+          onClick={handleGoogleSignIn}
+          disabled={authPending}
+          className="mb-4 w-full max-w-[280px] rounded-full bg-[var(--bg-surface)] px-6 py-3 text-sm font-medium text-[var(--text-primary)] transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          Continue with Google
+          {authPending ? 'Signing in…' : 'Continue with Google'}
         </button>
 
         <p className="mb-6 text-xs text-[var(--text-ghost)]">
@@ -67,10 +90,11 @@ export default function Landing() {
         </p>
 
         <button
-          onClick={handleEnter}
-          className="rounded-full border border-[var(--bg-elevated)] px-6 py-2 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--text-ghost)]"
+          onClick={handleAnonymous}
+          disabled={authPending}
+          className="rounded-full border border-[var(--bg-elevated)] px-6 py-2 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--text-ghost)] disabled:opacity-50"
         >
-          Enter anonymously
+          {authPending ? 'Signing in…' : 'Enter anonymously'}
         </button>
 
         <p

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useTaskStore } from '@/stores/taskStore'
 import { useFlowSectionStore } from '@/stores/flowSectionStore'
 import { useCategoryStore } from '@/stores/categoryStore'
+import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 import { useFocusStore } from '@/stores/focusStore'
 import { TaskSection } from '@/components/task/TaskSection'
@@ -16,6 +17,10 @@ import { DateStrip } from '@/components/home/DateStrip'
 import { InlineComposer } from '@/components/home/InlineComposer'
 import type { FlowSection, EnergyType } from '@/types'
 import { EmptyDay } from '@/components/empty/EmptyDay'
+import { SignInBanner } from '@/components/onboarding/SignInBanner'
+import { TemplatePicker } from '@/components/template/TemplatePicker'
+import { useTemplateStore } from '@/stores/templateStore'
+import type { TemplateTask } from '@/types'
 
 function today() { return new Date().toISOString().slice(0, 10) }
 
@@ -31,6 +36,8 @@ const EMPTY_SECTION_FORM = {
 export default function Home() {
   const tasks = useTaskStore((s) => s.tasks)
   const sections = useFlowSectionStore((s) => s.sections)
+  const settings = useSettingsStore((s) => s.settings)
+  const updateSettings = useSettingsStore((s) => s.updateSettings)
   const addSection = useFlowSectionStore((s) => s.addSection)
   const updateSection = useFlowSectionStore((s) => s.updateSection)
   const updateWorkload = useEnvironmentStore((s) => s.updateWorkload)
@@ -42,6 +49,11 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(today())
   const [lastCompletedId, setLastCompletedId] = useState<string | null>(null)
   const [showTransition, setShowTransition] = useState(false)
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
+  const [templateAppliedMsg, setTemplateAppliedMsg] = useState(false)
+  const [saveTemplatePrompt, setSaveTemplatePrompt] = useState(false)
+  const [saveTemplateName, setSaveTemplateName] = useState('')
+  const addTemplate = useTemplateStore((s) => s.addTemplate)
 
   const activeTaskCount = tasks.filter((t) => t.status === 'active').length
   useEffect(() => {
@@ -109,6 +121,22 @@ export default function Home() {
     setEditorOpen(true)
   }
 
+  function handleSaveAsTemplate() {
+    if (activeTasks.length === 0) return
+    setSaveTemplateName('')
+    setSaveTemplatePrompt(true)
+  }
+
+  async function handleConfirmSaveTemplate() {
+    const templateTasks: TemplateTask[] = activeTasks.map((t) => ({
+      title: t.title,
+      flowSectionId: t.flowSectionId,
+    }))
+    const name = saveTemplateName.trim() || `Day (${new Date().toLocaleDateString()})`
+    await addTemplate(name, templateTasks)
+    setSaveTemplatePrompt(false)
+  }
+
   async function handleSaveEditor(data: {
     name: string
     startTime: string
@@ -156,17 +184,49 @@ export default function Home() {
           <h1 className="font-serif text-2xl tracking-tight text-[var(--text-primary)]">
             Flow
           </h1>
-          <button
-            onClick={openNewSection}
-            aria-label="Add section"
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] transition-colors hover:bg-[var(--accent)] hover:text-white"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <path d="M6 2v8M2 6h8" strokeLinecap="round" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setTemplatePickerOpen(true)}
+              aria-label="Apply template"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+                <path d="M3 2h8a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" />
+                <path d="M5 5h4M5 8h4" strokeLinecap="round" />
+              </svg>
+            </button>
+            {activeTasks.length > 0 && (
+              <button
+                onClick={handleSaveAsTemplate}
+                aria-label="Save as template"
+                className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+                  <path d="M11 2H3a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z" strokeLinecap="round" />
+                  <path d="M7 4v6M4 7h6" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={openNewSection}
+              aria-label="Add section"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] transition-colors hover:bg-[var(--accent)] hover:text-white"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                <path d="M6 2v8M2 6h8" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
+
+      {!settings.googleLinked && <SignInBanner onLinked={() => updateSettings({ googleLinked: true })} />}
+
+      {templateAppliedMsg && (
+        <div className="mb-3 rounded-lg bg-[var(--bg-surface)] p-3 text-xs text-[var(--text-secondary)]">
+          Template applied.
+        </div>
+      )}
 
       <DayPulse tasks={dateTasks} date={selectedDate} />
       <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
@@ -278,6 +338,65 @@ export default function Home() {
       )}
 
       <InlineComposer />
+
+      <AnimatePresence>
+        {saveTemplatePrompt && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              onClick={() => setSaveTemplatePrompt(false)}
+            />
+            <motion.div
+              initial={{ y: '60%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '60%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-[var(--bg-surface)] p-5 pb-8 shadow-xl"
+            >
+              <div className="mx-auto mb-4 h-1 w-8 rounded-full bg-[var(--text-ghost)]" />
+              <h2 className="mb-3 text-sm font-medium text-[var(--text-primary)]">
+                Save as Template
+              </h2>
+              <input
+                value={saveTemplateName}
+                onChange={(e) => setSaveTemplateName(e.target.value)}
+                placeholder="Template name (e.g. Deep Work Day)"
+                className="mb-4 w-full rounded-lg bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-ghost)]"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmSaveTemplate() }}
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSaveTemplatePrompt(false)}
+                  className="flex-1 rounded-full bg-[var(--bg-elevated)] py-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmSaveTemplate}
+                  className="flex-1 rounded-full bg-[var(--accent)] py-2 text-sm text-white transition-opacity hover:opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <TemplatePicker
+        open={templatePickerOpen}
+        onClose={() => setTemplatePickerOpen(false)}
+        date={selectedDate}
+        onApplied={() => {
+          setTemplateAppliedMsg(true)
+          setTimeout(() => setTemplateAppliedMsg(false), 3000)
+        }}
+      />
 
       <SectionEditor
         open={editorOpen}

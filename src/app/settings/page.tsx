@@ -4,7 +4,9 @@ import { useEffect, useRef } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 import { CategoryManager } from '@/components/category/CategoryManager'
+import { TemplateManager } from '@/components/template/TemplateManager'
 import { requestPermission, getStoredPermission, isNotificationSupported, cancelDailyNudge, scheduleDailyNudge } from '@/lib/notifications'
+import { useAuthStore } from '@/stores/authStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { useDriftStore } from '@/stores/driftStore'
 
@@ -15,6 +17,8 @@ export default function Settings() {
   const setMode = useEnvironmentStore((s) => s.setMode)
   const allTasks = useTaskStore((s) => s.tasks)
   const driftEntries = useDriftStore((s) => s.entries)
+  const authUser = useAuthStore((s) => s.user)
+  const signOut = useAuthStore((s) => s.signOut)
   const synced = useRef(false)
 
   const notifSupported = isNotificationSupported()
@@ -60,6 +64,38 @@ export default function Settings() {
           Shape the space
         </p>
       </header>
+
+      {authUser && (
+        <section className="mb-6 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+          <div className="flex items-center gap-3">
+            {authUser.user_metadata?.avatar_url ? (
+              <img
+                src={authUser.user_metadata.avatar_url}
+                alt=""
+                className="h-8 w-8 rounded-full"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-xs text-[var(--text-muted)]">
+                {(authUser.email ?? authUser.id)[0].toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1">
+              <p className="text-sm text-[var(--text-primary)]">
+                {authUser.user_metadata?.full_name ?? authUser.email ?? 'Signed in'}
+              </p>
+              <p className="text-[10px] text-[var(--text-muted)]">
+                {authUser.is_anonymous ? 'Anonymous' : 'Synced to account'}
+              </p>
+            </div>
+            <button
+              onClick={signOut}
+              className="rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[10px] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+            >
+              Sign out
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="mb-6">
         <h2 className="mb-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
@@ -266,6 +302,10 @@ export default function Settings() {
 
       <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
         <CategoryManager />
+      </section>
+
+      <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
+        <TemplateManager />
       </section>
     </div>
   )

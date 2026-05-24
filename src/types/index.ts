@@ -95,6 +95,7 @@ export interface AppSettings {
   dailyNudgeEnabled: boolean
   focusWindowAlertsEnabled: boolean
   installPromptDismissed: boolean
+  googleLinked: boolean
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -110,6 +111,20 @@ export const DEFAULT_SETTINGS: AppSettings = {
   dailyNudgeEnabled: true,
   focusWindowAlertsEnabled: false,
   installPromptDismissed: false,
+  googleLinked: false,
+}
+
+export interface TemplateTask {
+  title: string
+  flowSectionId: string | null
+}
+
+export interface Template {
+  id: string
+  name: string
+  tasks: TemplateTask[]
+  sortOrder: number
+  createdAt: number
 }
 
 export interface EnvironmentState {

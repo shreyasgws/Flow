@@ -69,7 +69,7 @@ export function CategoryManager() {
                     <button
                       key={c}
                       onClick={() => setEditColor(c)}
-                      className={`h-4 w-4 rounded-full ${editColor === c ? 'ring-2 ring-white' : ''}`}
+                        className={`h-4 w-4 rounded-full ${editColor === c ? 'ring-2 ring-[var(--bg-surface)]' : ''}`}
                       style={{ backgroundColor: c }}
                     />
                   ))}
@@ -113,7 +113,7 @@ export function CategoryManager() {
             <button
               key={c}
               onClick={() => setNewColor(c)}
-              className={`h-4 w-4 rounded-full ${newColor === c ? 'ring-2 ring-white' : ''}`}
+               className={`h-4 w-4 rounded-full ${newColor === c ? 'ring-2 ring-[var(--bg-surface)]' : ''}`}
               style={{ backgroundColor: c }}
             />
           ))}
