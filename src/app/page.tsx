@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { getSupabase } from '@/lib/supabase'
-const supabase = getSupabase()
 
 export default function Landing() {
+  const [supabase, setSupabase] = useState<ReturnType<typeof getSupabase> | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    try { setSupabase(getSupabase()) } catch { /* env vars not ready */ }
+  }, [])
   const settings = useSettingsStore((s) => s.settings)
   const updateSettings = useSettingsStore((s) => s.updateSettings)
   const [showContent, setShowContent] = useState(false)
@@ -24,6 +28,7 @@ export default function Landing() {
   }, [settings?.anonymousOnboarding, router])
 
   async function handleAnonymous() {
+    if (!supabase) return
     setAuthPending(true)
     try {
       await supabase.auth.signInAnonymously()
@@ -35,6 +40,7 @@ export default function Landing() {
   }
 
   async function handleGoogleSignIn() {
+    if (!supabase) return
     setAuthPending(true)
     try {
       const { error } = await supabase.auth.signInWithOAuth({

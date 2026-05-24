@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { getSupabase } from '@/lib/supabase'
-const supabase = getSupabase()
 import type { User, Session } from '@supabase/supabase-js'
 
 interface AuthStore {
@@ -20,15 +19,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   setSession: (session) => set({ session, user: session?.user ?? null }),
 
   signOut: async () => {
-    await supabase.auth.signOut()
+    await getSupabase().auth.signOut()
     set({ session: null, user: null })
   },
 
   init: async () => {
-    const { data: { session } } = await supabase.auth.getSession()
+    const sb = getSupabase()
+    const { data: { session } } = await sb.auth.getSession()
     set({ session, user: session?.user ?? null, isReady: true })
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    sb.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null })
     })
   },

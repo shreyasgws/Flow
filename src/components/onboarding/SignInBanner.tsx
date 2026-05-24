@@ -1,20 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getSupabase } from '@/lib/supabase'
-const supabase = getSupabase()
 
 interface SignInBannerProps {
   onLinked: () => void
 }
 
 export function SignInBanner({ onLinked }: SignInBannerProps) {
+  const [supabase, setSupabase] = useState<ReturnType<typeof getSupabase> | null>(null)
   const [isPending, setIsPending] = useState(false)
+  useEffect(() => { try { setSupabase(getSupabase()) } catch { /* not ready */ } }, [])
   const [status, setStatus] = useState<'idle' | 'done' | 'error'>('idle')
 
   if (status === 'done') return null
 
   async function handleSignIn() {
+    if (!supabase) return
     setIsPending(true)
     try {
       const { error } = await supabase.auth.linkIdentity({ provider: 'google' })

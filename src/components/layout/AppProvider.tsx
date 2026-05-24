@@ -74,6 +74,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           <p className="text-sm text-[var(--text-secondary)]">
             No data was lost. Try refreshing.
           </p>
+          <p className="mt-4 text-xs text-[var(--text-muted)]">
+            {db.error.message}
+          </p>
         </div>
       </div>
     )
