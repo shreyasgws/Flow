@@ -104,21 +104,30 @@ export default function Settings() {
           <p className="mb-3 text-xs text-[var(--text-secondary)]">
             Your data only lives on this device. Sign in to keep it safe.
           </p>
-          <button
-            onClick={async () => {
-              setSignInPending(true)
-              try {
-                const sb = getSupabase()
-                await sb.auth.signInAnonymously()
-                await updateSettings({ anonymousOnboarding: false })
-                router.replace('/home')
-              } catch { setSignInPending(false) }
-            }}
-            disabled={signInPending}
-            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {signInPending ? 'Signing in…' : 'Continue without account'}
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={async () => {
+                setSignInPending(true)
+                try {
+                  const sb = getSupabase()
+                  const { error } = await sb.auth.signInAnonymously()
+                  if (error) throw error
+                  await updateSettings({ anonymousOnboarding: false })
+                  router.replace('/home')
+                } catch { setSignInPending(false) }
+              }}
+              disabled={signInPending}
+              className="rounded-full bg-[var(--bg-elevated)] px-4 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] disabled:opacity-50"
+            >
+              {signInPending ? 'Signing in…' : 'Continue without account'}
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+            >
+              Sign in with Google
+            </button>
+          </div>
         </section>
       )}
 

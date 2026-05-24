@@ -9,6 +9,7 @@ export default function AuthCallback() {
   const [status, setStatus] = useState('Signing in…')
 
   useEffect(() => {
+    let cancelled = false
     async function handleCallback() {
       try {
         const supabase = getSupabase()
@@ -21,14 +22,31 @@ export default function AuthCallback() {
           if (error) throw error
         }
 
-        router.replace(next)
+        if (!cancelled) router.replace(next)
       } catch {
-        setStatus('Sign-in failed. Try again.')
+        if (!cancelled) setStatus('Sign-in failed. Try again.')
       }
     }
 
     handleCallback()
+    return () => { cancelled = true }
   }, [router])
+
+  if (status === 'Sign-in failed. Try again.') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-base)]">
+        <div className="text-center">
+          <p className="mb-4 text-sm text-[var(--text-secondary)]">{status}</p>
+          <button
+            onClick={() => router.replace('/')}
+            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg-base)]">

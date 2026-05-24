@@ -10,21 +10,19 @@ interface SignInBannerProps {
 export function SignInBanner({ onLinked }: SignInBannerProps) {
   const [supabase, setSupabase] = useState<ReturnType<typeof getSupabase> | null>(null)
   const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   useEffect(() => { try { setSupabase(getSupabase()) } catch { /* not ready */ } }, [])
-  const [status, setStatus] = useState<'idle' | 'done' | 'error'>('idle')
-
-  if (status === 'done') return null
 
   async function handleSignIn() {
     if (!supabase) return
+    setError(null)
     setIsPending(true)
     try {
       const { error } = await supabase.auth.linkIdentity({ provider: 'google' })
       if (error) throw error
-      setStatus('done')
       onLinked()
-    } catch {
-      setStatus('error')
+    } catch (e) {
+      setError((e as Error).message)
     } finally {
       setIsPending(false)
     }
@@ -35,6 +33,7 @@ export function SignInBanner({ onLinked }: SignInBannerProps) {
       <p className="mb-2 text-xs text-[var(--text-secondary)]">
         Your data only lives on this device. Sign in to keep it safe.
       </p>
+      {error && <p className="mb-2 text-[10px] text-red-400">{error}</p>}
       <button
         onClick={handleSignIn}
         disabled={isPending}
