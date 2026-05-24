@@ -76,7 +76,7 @@ export default function Settings() {
               />
             ) : (
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-xs text-[var(--text-muted)]">
-                {(authUser.email ?? authUser.id)[0].toUpperCase()}
+                {(authUser.email || authUser.id || '?')[0].toUpperCase()}
               </div>
             )}
             <div className="flex-1">
