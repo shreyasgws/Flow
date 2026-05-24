@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 import { CategoryManager } from '@/components/category/CategoryManager'
@@ -9,6 +9,8 @@ import { requestPermission, getStoredPermission, isNotificationSupported, cancel
 import { useAuthStore } from '@/stores/authStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { useDriftStore } from '@/stores/driftStore'
+import { getSupabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 
 export default function Settings() {
   const settings = useSettingsStore((s) => s.settings)
@@ -19,6 +21,8 @@ export default function Settings() {
   const driftEntries = useDriftStore((s) => s.entries)
   const authUser = useAuthStore((s) => s.user)
   const signOut = useAuthStore((s) => s.signOut)
+  const router = useRouter()
+  const [signInPending, setSignInPending] = useState(false)
   const synced = useRef(false)
 
   const notifSupported = isNotificationSupported()
@@ -65,7 +69,7 @@ export default function Settings() {
         </p>
       </header>
 
-      {authUser && (
+      {authUser ? (
         <section className="mb-6 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
           <div className="flex items-center gap-3">
             {authUser.user_metadata?.avatar_url ? (
@@ -94,6 +98,27 @@ export default function Settings() {
               Sign out
             </button>
           </div>
+        </section>
+      ) : (
+        <section className="mb-6 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+          <p className="mb-3 text-xs text-[var(--text-secondary)]">
+            Your data only lives on this device. Sign in to keep it safe.
+          </p>
+          <button
+            onClick={async () => {
+              setSignInPending(true)
+              try {
+                const sb = getSupabase()
+                await sb.auth.signInAnonymously()
+                await updateSettings({ anonymousOnboarding: false })
+                router.replace('/home')
+              } catch { setSignInPending(false) }
+            }}
+            disabled={signInPending}
+            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {signInPending ? 'Signing in…' : 'Continue without account'}
+          </button>
         </section>
       )}
 

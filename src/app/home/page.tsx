@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTaskStore } from '@/stores/taskStore'
 import { useFlowSectionStore } from '@/stores/flowSectionStore'
@@ -37,6 +38,7 @@ const EMPTY_SECTION_FORM = {
 }
 
 export default function Home() {
+  const router = useRouter()
   const tasks = useTaskStore((s) => s.tasks)
   const sections = useFlowSectionStore((s) => s.sections)
   const settings = useSettingsStore((s) => s.settings)
@@ -230,7 +232,19 @@ export default function Home() {
         </div>
       </header>
 
-      {!settings.googleLinked && authUser?.is_anonymous ? (
+      {!authUser ? (
+        <div className="mb-4 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+          <p className="mb-2 text-xs text-[var(--text-secondary)]">
+            Your data only lives on this device. Sign in to keep it safe.
+          </p>
+          <button
+            onClick={() => router.push('/')}
+            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+          >
+            Sign in
+          </button>
+        </div>
+      ) : !settings.googleLinked && authUser.is_anonymous ? (
         <SignInBanner onLinked={() => updateSettings({ googleLinked: true })} />
       ) : null}
 
