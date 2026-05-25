@@ -40,6 +40,47 @@ function getOpacityVar(name: string): string {
   return `var(${name})`
 }
 
+const landscapePaths = [
+  'M0,320 Q120,260 240,290 T480,250 T720,280 T960,240 T1200,270 T1440,250 L1440,400 L0,400Z',
+  'M0,350 Q100,300 200,330 T400,290 T600,310 T800,270 T1000,300 T1200,280 T1440,300 L1440,400 L0,400Z',
+  'M0,380 Q80,340 160,360 T320,330 T480,350 T640,320 T800,340 T960,310 T1120,340 T1280,320 T1440,350 L1440,400 L0,400Z',
+]
+
+function LandscapeSilhouette({ color, opacity }: { color: string; opacity: string }) {
+  return (
+    <div
+      className="ambient-silhouette"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        opacity,
+        animation: 'ambientDrift1 30s ease-in-out infinite',
+        animationPlayState: getOpacityVar('--ambient-play-state'),
+        willChange: 'transform',
+      }}
+    >
+      {landscapePaths.map((d, i) => (
+        <svg
+          key={i}
+          viewBox="0 0 1440 400"
+          preserveAspectRatio="xMidYMax slice"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            width: '100%',
+            height: `${55 + i * 10}%`,
+            filter: `blur(${20 + i * 12}px)`,
+            opacity: 1 - i * 0.15,
+          }}
+          aria-hidden="true"
+        >
+          <path d={d} fill={color} />
+        </svg>
+      ))}
+    </div>
+  )
+}
+
 export function AmbientLayer() {
   const tier = useDeviceTier()
   const { isMinimal, isStandard, isFull } = getTierBooleans(tier)
@@ -86,19 +127,7 @@ export function AmbientLayer() {
         transition: `background-color var(--dur-ambient) linear`,
       }}
     >
-      <div
-        className="ambient-silhouette"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: `radial-gradient(ellipse 80% 40% at 50% 70%, ${config.bloom}14 0%, transparent 60%)`,
-          filter: 'blur(40px)',
-          opacity: getOpacityVar('--ambient-silhouette-op'),
-          animation: 'ambientDrift1 30s ease-in-out infinite',
-          animationPlayState: getOpacityVar('--ambient-play-state'),
-          willChange: 'transform',
-        }}
-      />
+      <LandscapeSilhouette color={config.bloom} opacity={getOpacityVar('--ambient-silhouette-op')} />
       <div
         className="ambient-haze"
         style={{
