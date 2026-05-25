@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
+import { queueWrite } from '@/lib/sync'
 import type { DriftEntry } from '@/types'
 
 interface DriftStore {
@@ -14,6 +15,7 @@ interface DriftStore {
   updateEntry: (id: string, text: string) => Promise<void>
   archiveEntry: (id: string) => Promise<void>
   deleteEntry: (id: string) => Promise<void>
+  purgeArchived: () => Promise<void>
   getActiveEntries: () => DriftEntry[]
 }
 
@@ -47,6 +49,7 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
     }
     try {
       await retryWithBackoff(() => db.driftEntries.add(entry))
+      queueWrite('upsert', 'driftEntries', entry.id, entry)
       set((s) => ({ entries: [entry, ...s.entries] }))
       return entry
     } catch {
@@ -63,6 +66,7 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
     const now = Date.now()
     try {
       await retryWithBackoff(() => db.driftEntries.update(id, { text, updatedAt: now }))
+      queueWrite('upsert', 'driftEntries', id, { ...prev, text, updatedAt: now })
       set((s) => ({
         entries: s.entries.map((e) =>
           e.id === id ? { ...e, text, updatedAt: now } : e
@@ -70,6 +74,7 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
       }))
       pushUndo(id, `Edited drift`, async () => {
         await retryWithBackoff(() => db.driftEntries.update(id, { text: prev.text, updatedAt: Date.now() }))
+        queueWrite('upsert', 'driftEntries', id, { ...prev, text: prev.text, updatedAt: Date.now() })
         set((s) => ({
           entries: s.entries.map((e) =>
             e.id === id ? { ...e, text: prev.text, updatedAt: Date.now() } : e
@@ -88,11 +93,13 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
     if (!entry) return
     try {
       await retryWithBackoff(() => db.driftEntries.update(id, { isArchived: true }))
+      queueWrite('upsert', 'driftEntries', id, { ...entry, isArchived: true })
       set((s) => ({
         entries: s.entries.filter((e) => e.id !== id),
       }))
       pushUndo(id, `Archived drift`, async () => {
         await retryWithBackoff(() => db.driftEntries.update(id, { isArchived: false }))
+        queueWrite('upsert', 'driftEntries', id, { ...entry, isArchived: false })
         set((s) => ({
           entries: [{ ...entry, isArchived: false }, ...s.entries],
         }))
@@ -109,16 +116,41 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
     if (!entry) return
     try {
       await retryWithBackoff(() => db.driftEntries.delete(id))
+      queueWrite('delete', 'driftEntries', id, {})
       set((s) => ({ entries: s.entries.filter((e) => e.id !== id) }))
       pushUndo(id, `Deleted drift`, async () => {
         const restored = { ...entry, id: crypto.randomUUID() }
         await retryWithBackoff(() => db.driftEntries.add(restored))
+        queueWrite('upsert', 'driftEntries', restored.id, restored)
         set((s) => ({
           entries: [restored, ...s.entries],
         }))
       })
     } catch {
       set({ error: 'Failed to delete drift' })
+      useErrorStore.getState().push('database')
+    }
+  },
+
+  purgeArchived: async () => {
+    set({ error: null })
+    try {
+      const all = await retryWithBackoff(() => db.driftEntries.toArray())
+      const archived = all.filter((e) => e.isArchived)
+      if (archived.length === 0) return
+      const ids = archived.map((e) => e.id)
+      await retryWithBackoff(() => db.driftEntries.bulkDelete(ids))
+      for (const entry of archived) {
+        queueWrite('delete', 'driftEntries', entry.id, {})
+      }
+      pushUndo(`purge-${Date.now()}`, `Purged ${archived.length} archived drifts`, async () => {
+        await retryWithBackoff(() => db.driftEntries.bulkAdd(archived))
+        for (const entry of archived) {
+          queueWrite('upsert', 'driftEntries', entry.id, entry)
+        }
+      })
+    } catch {
+      set({ error: 'Failed to purge drift' })
       useErrorStore.getState().push('database')
     }
   },

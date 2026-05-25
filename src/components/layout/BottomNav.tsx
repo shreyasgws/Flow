@@ -19,8 +19,8 @@ export function BottomNav() {
   const isFocusActive = activeTaskId !== null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--bg-elevated)] bg-[var(--bg-base)]/80 backdrop-blur-lg">
-      <div className="mx-auto flex max-w-lg items-center justify-around px-4 py-2">
+    <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--bg-elevated)] bg-[var(--bg-base)]/80 backdrop-blur-lg">
+      <div role="list" className="mx-auto flex max-w-lg items-center justify-around px-4 py-2">
         {NAV_ITEMS.map((item) => {
           let isActive = pathname === item.href
 
@@ -33,11 +33,12 @@ export function BottomNav() {
               key={item.href}
               whileHover={isActive ? {} : { scale: 1.08 }}
               whileTap={{ scale: 0.94 }}
-              className="contents"
+              role="listitem"
             >
               <Link
                 href={item.href === '/focus' && isFocusActive ? `/focus/${activeTaskId}` : item.href}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1 text-xs transition-colors ${
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex flex-col items-center gap-0.5 px-4 py-1 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
                   isActive
                     ? 'text-[var(--accent)]'
                     : item.href === '/focus' && isFocusActive
@@ -52,9 +53,8 @@ export function BottomNav() {
                   {item.icon}
                 </span>
                 {item.href === '/focus' && isFocusActive ? (
-                  <span className="max-w-[60px] truncate text-[10px]">
-                    {useFocusStore.getState().activeTaskId?.slice(0, 8)}…
-                  </span>
+                  <span className="max-w-[60px] truncate text-[10px]"
+                    >{useFocusStore.getState().activeTaskId?.slice(0, 8)}…</span>
                 ) : (
                   <span>{item.label}</span>
                 )}

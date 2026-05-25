@@ -39,13 +39,20 @@ export function InlineComposer() {
   return (
     <form onSubmit={handleSubmit} className="fixed bottom-20 left-0 right-0 z-30 px-4">
       <div className="mx-auto max-w-lg">
-        <div className="overflow-hidden rounded-full bg-[var(--bg-surface)]/90 backdrop-blur-lg ring-1 ring-[var(--bg-elevated)]">
+        <div className="flex items-center overflow-hidden rounded-full bg-[var(--bg-surface)]/90 backdrop-blur-lg ring-1 ring-[var(--bg-elevated)]">
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="What needs to happen today?"
-            className="w-full bg-transparent px-5 py-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+            className="flex-1 bg-transparent px-5 py-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
           />
+          <button
+            type="submit"
+            disabled={!text.trim()}
+            className="mr-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            Done
+          </button>
         </div>
       </div>
     </form>

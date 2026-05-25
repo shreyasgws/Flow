@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { queueWrite } from '@/lib/sync'
 import type { Task } from '@/types'
 
 export async function shouldCreateNewInstance(task: Task, today: string, yesterday: string, dayStartHour: number): Promise<boolean> {
@@ -54,6 +55,7 @@ export async function createInstance(task: Task, date: string): Promise<Task | n
       sourceDriftId: null,
     }
     await db.tasks.add(instance)
+    queueWrite('upsert', 'tasks', instance.id, instance)
     return instance
   } catch {
     return null

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useDriftStore } from '@/stores/driftStore'
 import { useTaskStore } from '@/stores/taskStore'
@@ -13,16 +13,53 @@ interface DriftPanelProps {
   onClose: () => void
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+
 export function DriftPanel({ open, onClose }: DriftPanelProps) {
   const entries = useDriftStore((s) => s.entries)
   const loadEntries = useDriftStore((s) => s.loadEntries)
   const archiveEntry = useDriftStore((s) => s.archiveEntry)
   const addTask = useTaskStore((s) => s.addTask)
   const [converting, setConverting] = useState<string | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) loadEntries()
   }, [open, loadEntries])
+
+  useEffect(() => {
+    if (!open) return
+    const panel = panelRef.current
+    if (!panel) return
+    const first = panel.querySelector<HTMLElement>(FOCUSABLE)
+    first?.focus()
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const panel = panelRef.current
+      if (!panel) return
+      const focusable = panel.querySelectorAll<HTMLElement>(FOCUSABLE)
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
 
   const handleConvert = useCallback(async (text: string, driftId: string) => {
     setConverting(text)
@@ -59,13 +96,19 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
             onClick={onClose}
+            aria-hidden="true"
           />
           <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Drift"
             initial={{ y: '60%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '60%', opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-[var(--bg-surface)] pb-8 shadow-xl"
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-[var(--bg-surface)] pb-8 shadow-xl focus-visible:outline-none"
+            tabIndex={-1}
           >
             <div className="mx-auto mb-2 mt-3 h-1 w-8 rounded-full bg-[var(--text-ghost)]" />
 

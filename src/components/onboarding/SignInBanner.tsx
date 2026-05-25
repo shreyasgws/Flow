@@ -11,7 +11,19 @@ export function SignInBanner({ onLinked }: SignInBannerProps) {
   const [supabase, setSupabase] = useState<ReturnType<typeof getSupabase> | null>(null)
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  useEffect(() => { try { setSupabase(getSupabase()) } catch { /* not ready */ } }, [])
+  useEffect(() => {
+    let isSupabaseReady = false;
+    try {
+      const supabaseInstance = getSupabase();
+      setSupabase(supabaseInstance);
+      isSupabaseReady = true;
+    } catch { /* not ready */ }
+
+    // Cleanup function
+    return () => {
+      isSupabaseReady = false;
+    };
+  }, [])
 
   async function handleSignIn() {
     if (!supabase) return

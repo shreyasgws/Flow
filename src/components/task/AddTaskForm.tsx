@@ -91,7 +91,8 @@ export function AddTaskForm({
     return (
       <button
         onClick={onActivate}
-        className="flex w-full items-center gap-3 py-2 text-xs text-[var(--text-ghost)] transition-colors hover:text-[var(--text-muted)]"
+        aria-label="Add task"
+        className="flex w-full items-center gap-3 py-2 text-xs text-[var(--text-ghost)] transition-colors hover:text-[var(--text-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
       >
         <span className="flex h-4 w-4 items-center justify-center rounded-full border border-dashed border-[var(--text-ghost)]">
           <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
@@ -127,8 +128,17 @@ export function AddTaskForm({
           }}
           placeholder="What is one thing?"
           disabled={isPending}
+          aria-label="Task title"
           className="flex-1 bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-ghost)] disabled:opacity-50"
         />
+        <button
+          onClick={handleSubmit}
+          disabled={isPending || !text.trim()}
+          aria-label="Add task"
+          className="rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-30"
+        >
+          Done
+        </button>
         <button
           onClick={handleCancel}
           disabled={isPending}

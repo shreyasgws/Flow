@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type SyncStatus = 'idle' | 'saving' | 'syncing' | 'saved' | 'offline'
+export type SyncStatus = 'idle' | 'saving' | 'syncing' | 'saved' | 'offline' | 'reconnecting'
 
 interface SyncStore {
   status: SyncStatus

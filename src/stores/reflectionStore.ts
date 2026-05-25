@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { db } from '@/lib/db'
 import { retryWithBackoff } from '@/lib/retry'
 import { useErrorStore } from '@/stores/errorStore'
+import { queueWrite } from '@/lib/sync'
 import type { Reflection } from '@/types'
 
 interface ReflectionStore {
@@ -41,6 +42,7 @@ export const useReflectionStore = create<ReflectionStore>((set, get) => ({
     if (existing) {
       try {
         await retryWithBackoff(() => db.reflections.update(existing.id, { content, categories }))
+        queueWrite('upsert', 'reflections', existing.id, { ...existing, content, categories })
         set((s) => ({
           reflections: s.reflections.map((r) =>
             r.id === existing.id ? { ...r, content, categories } : r
@@ -60,6 +62,7 @@ export const useReflectionStore = create<ReflectionStore>((set, get) => ({
           createdAt: Date.now(),
         }
         await retryWithBackoff(() => db.reflections.add(reflection))
+        queueWrite('upsert', 'reflections', reflection.id, reflection)
         set((s) => ({ reflections: [reflection, ...s.reflections] }))
       } catch {
         set({ error: 'Failed to save reflection' })
@@ -72,6 +75,7 @@ export const useReflectionStore = create<ReflectionStore>((set, get) => ({
     set({ error: null })
     try {
       await retryWithBackoff(() => db.reflections.delete(id))
+      queueWrite('delete', 'reflections', id, {})
       set((s) => ({ reflections: s.reflections.filter((r) => r.id !== id) }))
     } catch {
       set({ error: 'Failed to delete reflection' })

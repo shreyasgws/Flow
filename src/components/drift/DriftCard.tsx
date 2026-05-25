@@ -81,13 +81,13 @@ export function DriftCard({ entry, onConvert }: DriftCardProps) {
         <span className="text-[10px] text-[var(--text-ghost)]">{formatTime(entry.createdAt)}</span>
       </div>
 
-      <span className="flex shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
+      <span className="flex shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <motion.button
           onClick={() => { setEditText(entry.text); setIsEditing(true) }}
           aria-label="Edit drift"
           whileHover={{ scale: 1.15 }}
           whileTap={{ scale: 0.9 }}
-          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
             <path d="M8.5 1.5l2 2L4 10H2V8l6.5-6.5z" strokeLinecap="round" strokeLinejoin="round" />
@@ -98,7 +98,7 @@ export function DriftCard({ entry, onConvert }: DriftCardProps) {
           aria-label="Convert to task"
           whileHover={{ scale: 1.15 }}
           whileTap={{ scale: 0.9 }}
-          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--accent)]"
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
             <circle cx="6" cy="6" r="4.5" />
@@ -110,7 +110,7 @@ export function DriftCard({ entry, onConvert }: DriftCardProps) {
           aria-label="Archive drift"
           whileHover={{ scale: 1.15 }}
           whileTap={{ scale: 0.9 }}
-          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
             <path d="M2 3h8M4 3V2a1 1 0 011-1h2a1 1 0 011 1v1M3 4v5a1 1 0 001 1h4a1 1 0 001-1V4" strokeLinecap="round" strokeLinejoin="round" />
@@ -121,7 +121,7 @@ export function DriftCard({ entry, onConvert }: DriftCardProps) {
           aria-label="Delete drift"
           whileHover={{ scale: 1.15 }}
           whileTap={{ scale: 0.9 }}
-          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-ghost)] hover:text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="0.8" aria-hidden="true">
             <path d="M3 3l6 6M9 3l-6 6" strokeLinecap="round" />

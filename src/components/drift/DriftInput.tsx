@@ -42,6 +42,7 @@ export function DriftInput() {
         onKeyDown={handleKeyDown}
         placeholder="What crossed your mind?"
         disabled={isPending}
+        aria-label="Drift text"
         className="min-w-0 flex-1 bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-ghost)] disabled:opacity-50"
       />
       <button

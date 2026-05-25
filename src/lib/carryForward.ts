@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { queueWrite } from '@/lib/sync'
 import type { Task } from '@/types'
 
 export function getYesterday(): string {
@@ -42,6 +43,7 @@ export async function carryForwardTasks(taskIds: string[]): Promise<number> {
     }
 
     await db.tasks.add(newTask)
+    queueWrite('upsert', 'tasks', newTask.id, newTask)
     count++
   }
 

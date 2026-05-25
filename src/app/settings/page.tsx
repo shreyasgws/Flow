@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { AnimatePresence, motion } from 'motion/react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 import { CategoryManager } from '@/components/category/CategoryManager'
@@ -9,6 +11,8 @@ import { requestPermission, getStoredPermission, isNotificationSupported, cancel
 import { useAuthStore } from '@/stores/authStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { useDriftStore } from '@/stores/driftStore'
+import { useConfirmStore } from '@/stores/confirmStore'
+import { exportToJSON, exportToCSV } from '@/lib/export'
 import { getSupabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -50,12 +54,21 @@ export default function Settings() {
   }
 
   function handleToggleNudge(val: boolean) {
-    updateSettings({ dailyNudgeEnabled: val })
+    updateSettings({
+      dailyNudgeEnabled: val,
+      nudgeSuppressionLevel: val ? 0 : settings.nudgeSuppressionLevel,
+      consecutiveMissedNudges: val ? 0 : settings.consecutiveMissedNudges,
+    })
     if (!val) {
       cancelDailyNudge()
     } else if (notifPermission === 'granted') {
       const activeCount = allTasks.filter((t) => t.status === 'active').length
-      scheduleDailyNudge(settings.dayStartHour, activeCount, driftEntries.length)
+      scheduleDailyNudge(
+        settings.dayStartHour, activeCount, driftEntries.length,
+        settings.nudgeSuppressionLevel, settings.lastNudgeDate,
+        settings.quietHoursStart, settings.quietHoursEnd,
+        settings.storedTimezoneOffset,
+      )
     }
   }
 
@@ -132,37 +145,54 @@ export default function Settings() {
         </section>
       )}
 
-      {showSignOutConfirm && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setShowSignOutConfirm(false)} />
-          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-[var(--bg-surface)] p-5 pb-8 shadow-xl">
-            <div className="mx-auto mb-4 h-1 w-8 rounded-full bg-[var(--text-ghost)]" />
-            <h2 className="mb-1 text-sm font-medium text-[var(--text-primary)]">
-              Sign out?
-            </h2>
-            <p className="mb-4 text-xs text-[var(--text-secondary)]">
-              Your local data stays on this device. Signing out clears your session.
-            </p>
-            <div className="flex gap-2">
-              <button
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showSignOutConfirm && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
                 onClick={() => setShowSignOutConfirm(false)}
-                className="flex-1 rounded-full bg-[var(--bg-elevated)] py-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="fixed left-1/2 top-1/3 z-50 w-full max-w-sm -translate-x-1/2 rounded-2xl bg-[var(--bg-surface)] p-6 shadow-xl"
               >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  setShowSignOutConfirm(false)
-                  await signOut()
-                  router.replace('/')
-                }}
-                className="flex-1 rounded-full bg-[var(--accent)] py-2 text-sm text-white transition-opacity hover:opacity-90"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        </>
+                <h2 className="mb-2 text-lg font-medium text-[var(--text-primary)] text-center">
+                  Sign out?
+                </h2>
+                <p className="mb-6 text-sm text-[var(--text-secondary)] leading-relaxed text-center">
+                  Your local data stays on this device. Signing out clears your session.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowSignOutConfirm(false)}
+                    className="flex-1 rounded-full bg-[var(--bg-elevated)] py-3 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setShowSignOutConfirm(false)
+                      await signOut()
+                      router.replace('/')
+                    }}
+                    className="flex-1 rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
 
       <section className="mb-6">
@@ -374,6 +404,64 @@ export default function Settings() {
 
       <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
         <TemplateManager />
+      </section>
+
+      <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
+        <h2 className="mb-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
+          Data
+        </h2>
+        <div className="space-y-2">
+          <button
+            onClick={() => {
+              useConfirmStore.getState().show({
+                message: 'Export all data as JSON?',
+                confirmLabel: 'Export',
+                onConfirm: exportToJSON,
+              })
+            }}
+            className="w-full rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+          >
+            Export to JSON
+          </button>
+          <button
+            onClick={() => {
+              useConfirmStore.getState().show({
+                message: 'Export tasks as CSV?',
+                confirmLabel: 'Export',
+                onConfirm: exportToCSV,
+              })
+            }}
+            className="w-full rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+          >
+            Export to CSV
+          </button>
+          <button
+            onClick={() => {
+              const count = allTasks.filter((t) => t.status === 'completed').length
+              if (count === 0) return
+              useConfirmStore.getState().show({
+                message: `Clear ${count} completed tasks?`,
+                confirmLabel: 'Clear',
+                onConfirm: () => useTaskStore.getState().clearCompleted(),
+              })
+            }}
+            className="w-full rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+          >
+            Clear completed tasks
+          </button>
+          <button
+            onClick={() => {
+              useConfirmStore.getState().show({
+                message: 'Purge all archived drift?',
+                confirmLabel: 'Purge',
+                onConfirm: () => useDriftStore.getState().purgeArchived(),
+              })
+            }}
+            className="w-full rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+          >
+            Purge archived drift
+          </button>
+        </div>
       </section>
     </div>
   )

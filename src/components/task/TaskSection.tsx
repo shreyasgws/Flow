@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { TaskCard } from './TaskCard'
 import { AddTaskForm } from './AddTaskForm'
 import { SectionHeader } from '@/components/section/SectionHeader'
 import { useTaskStore } from '@/stores/taskStore'
 import { useFlowSectionStore } from '@/stores/flowSectionStore'
+import { useConfirmStore } from '@/stores/confirmStore'
+import { useDragReorder } from '@/hooks/useDragReorder'
 import type { Task, FlowSection } from '@/types'
 
 interface TaskSectionProps {
@@ -22,10 +24,14 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [sectionDragOverId, setSectionDragOverId] = useState<string | null>(null)
   const [dragCancelKey, setDragCancelKey] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
   const batchReorder = useTaskStore((s) => s.batchReorder)
   const deleteSection = useFlowSectionStore((s) => s.deleteSection)
   const batchSectionReorder = useFlowSectionStore((s) => s.batchReorder)
   const allSections = useFlowSectionStore((s) => s.sections)
+  const { handleDragMove, reset: resetAutoScroll } = useDragReorder({
+    containerRef,
+  })
 
   const nextSortOrder = tasks.length > 0
     ? Math.max(...tasks.map((t) => t.sortOrder)) + 1
@@ -40,6 +46,7 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     setDragOverId(id)
+    handleDragMove(e.clientY)
   }
 
   function handleDragLeave(e: React.DragEvent) {
@@ -52,6 +59,7 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
   function handleDrop(e: React.DragEvent, targetId: string) {
     e.preventDefault()
     setDragOverId(null)
+    resetAutoScroll()
     const draggedId = e.dataTransfer.getData('text/plain')
     if (draggedId === targetId) return
 
@@ -80,6 +88,7 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
   function handleDragEnd() {
     setDragOverId(null)
     setDragCancelKey((k) => k + 1)
+    resetAutoScroll()
   }
 
   function handleMoveUp(id: string) {
@@ -148,25 +157,52 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
     setSectionDragOverId(null)
   }
 
+  function handleDeleteSection() {
+    useConfirmStore.getState().show({
+      message: `Delete "${section.name}" section?`,
+      confirmLabel: 'Delete',
+      onConfirm: () => deleteSection(section.id),
+    })
+  }
+
+  const sectionIndex = allSections.findIndex((s) => s.id === section.id)
+
   return (
     <div className="mb-6">
       <SectionHeader
         section={section}
         taskCount={tasks.length}
         onEdit={onEditSection}
-        onDelete={deleteSection}
+        onDelete={handleDeleteSection}
         onDragStart={handleSectionDragStart}
         onDragOver={handleSectionDragOver}
         onDrop={handleSectionDrop}
         onDragEnd={handleSectionDragEnd}
         isDragTarget={sectionDragOverId === section.id}
+        sectionIndex={sectionIndex}
+        totalSections={allSections.length}
+        onMoveSection={(id, dir) => {
+          const sorted = [...allSections].sort((a, b) => a.sortOrder - b.sortOrder)
+          const idx = sorted.findIndex((s) => s.id === id)
+          if (idx === -1) return
+          if (dir === 'up' && idx === 0) return
+          if (dir === 'down' && idx === sorted.length - 1) return
+          const reordered = [...sorted]
+          const swapIdx = dir === 'up' ? idx - 1 : idx + 1
+          ;[reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]]
+          const updates = reordered.map((s, i) => ({ id: s.id, sortOrder: i }))
+          batchSectionReorder(updates)
+        }}
       />
 
-      <div className="ml-4 border-l border-[var(--bg-elevated)] pl-3" onDragLeave={handleDragLeave}>
+      <div ref={containerRef} className="ml-4 border-l border-[var(--bg-elevated)] pl-3" onDragLeave={handleDragLeave}>
         {tasks.length === 0 && !isAdding && (
-          <p className="py-2 text-xs text-[var(--text-muted)]">
+          <button
+            onClick={() => setIsAdding(true)}
+            className="py-2 text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+          >
             Tap + to add a task
-          </p>
+          </button>
         )}
 
         <motion.div

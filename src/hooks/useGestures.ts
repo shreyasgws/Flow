@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useCallback } from 'react'
+import { hapticDragPickup, hapticDropCommit } from '@/lib/haptics'
 
 const SWIPE_THRESHOLD = 40
 const VERTICAL_CANCEL_THRESHOLD = 15
@@ -8,6 +9,11 @@ const LONG_PRESS_DURATION = 300
 const LONG_PRESS_MOVE_THRESHOLD = 10
 const LONG_PRESS_MOVE_WINDOW = 500
 const GESTURE_PRIORITY_WINDOW = 100
+const MIN_DRAG_DISTANCE = 5
+const JITTER_WINDOW_MS = 80
+const JITTER_MAX_DELTA = 3
+const TAP_MAX_DURATION = 300
+const TAP_MAX_MOVE = 8
 
 export type GestureType = 'tap' | 'longpress' | 'swipe' | 'scroll'
 export type SwipeDirection = 'left' | 'right'
@@ -60,12 +66,31 @@ export function useGestures(handlers: GestureHandlers) {
     gestureTypeRef.current = null
   }
 
+  const moveHistoryRef = useRef<{ x: number; y: number; t: number }[]>([])
+
+  const isJitter = useCallback((x: number, y: number, t: number) => {
+    const history = moveHistoryRef.current
+    history.push({ x, y, t })
+    while (history.length > 0 && t - history[0].t > JITTER_WINDOW_MS) {
+      history.shift()
+    }
+    if (history.length < 4) return false
+    let dirChanges = 0
+    for (let i = 2; i < history.length; i++) {
+      const dx1 = history[i - 1].x - history[i - 2].x
+      const dx2 = history[i].x - history[i - 1].x
+      if (dx1 * dx2 < 0 && Math.abs(dx1) > JITTER_MAX_DELTA) dirChanges++
+    }
+    return dirChanges >= 3
+  }, [])
+
   const handlePointerDown = useCallback((e: GestureStartEvent) => {
     startRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
     lastMoveRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
     isDraggingRef.current = false
     isLongPressRef.current = false
     gestureTypeRef.current = null
+    moveHistoryRef.current = [{ x: e.clientX, y: e.clientY, t: Date.now() }]
 
     longPressTimerRef.current = setTimeout(() => {
       if (gestureTypeRef.current !== 'scroll') {
@@ -82,6 +107,14 @@ export function useGestures(handlers: GestureHandlers) {
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
     const dt = Date.now() - startRef.current.time
+
+    if (Math.abs(dx) < MIN_DRAG_DISTANCE && Math.abs(dy) < MIN_DRAG_DISTANCE) {
+      return
+    }
+
+    if (isJitter(e.clientX, e.clientY, Date.now())) {
+      return
+    }
 
     if (gestureTypeRef.current === 'scroll') {
       if (isDraggingRef.current) {
@@ -138,7 +171,7 @@ export function useGestures(handlers: GestureHandlers) {
     }
 
     lastMoveRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
-  }, [handlers, clearLongPress])
+  }, [handlers, clearLongPress, isJitter])
 
   const handlePointerUp = useCallback((e: GestureEndEvent) => {
     clearLongPress()
@@ -166,7 +199,12 @@ export function useGestures(handlers: GestureHandlers) {
     }
 
     if (gestureTypeRef.current === null) {
-      handlers.onTap?.()
+      const totalDt = Date.now() - (startRef.current?.time ?? 0)
+      const totalDx = Math.abs((e.clientX ?? 0) - (startRef.current?.x ?? 0))
+      const totalDy = Math.abs((e.clientY ?? 0) - (startRef.current?.y ?? 0))
+      if (totalDt <= TAP_MAX_DURATION && totalDx <= TAP_MAX_MOVE && totalDy <= TAP_MAX_MOVE) {
+        handlers.onTap?.()
+      }
     }
 
     reset()

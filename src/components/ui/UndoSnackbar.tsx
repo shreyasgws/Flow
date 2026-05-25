@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { slideUp } from '@/motions/variants'
+import { hapticGentleReturn } from '@/lib/haptics'
 
 interface UndoSnackbarProps {
   currentUndo: { id: string; label: string } | null
@@ -30,7 +31,7 @@ export function UndoSnackbar({ currentUndo, stack, onUndo, onUndoFromStack, onDi
             <span className="max-w-48 truncate text-sm text-[var(--text-primary)]">
               {currentUndo.label}
             </span>
-            <button onClick={onUndo} aria-label="Undo action" className="shrink-0 text-sm font-bold text-[var(--accent)]">
+            <button onClick={() => { hapticGentleReturn(); onUndo() }} aria-label="Undo action" className="shrink-0 text-sm font-bold text-[var(--accent)]">
               Undo
             </button>
             {stack.length > 1 && (
@@ -64,7 +65,7 @@ export function UndoSnackbar({ currentUndo, stack, onUndo, onUndoFromStack, onDi
                 <div key={entry.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-[var(--bg-elevated)]">
                   <span className="truncate text-sm text-[var(--text-primary)]">{entry.label}</span>
                   <button
-                    onClick={() => { onUndoFromStack(entry.id); setExpanded(false) }}
+                    onClick={() => { hapticGentleReturn(); onUndoFromStack(entry.id); setExpanded(false) }}
                     className="shrink-0 text-sm font-bold text-[var(--accent)]"
                   >
                     Undo

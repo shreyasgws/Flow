@@ -41,6 +41,20 @@ export class FlowDatabase extends Dexie {
 
 export const db = new FlowDatabase()
 
+export async function clearAllLocalData(): Promise<void> {
+  await db.tasks.clear()
+  await db.flowSections.clear()
+  await db.driftEntries.clear()
+  await db.reflections.clear()
+  await db.undoHistory.clear()
+  await db.settings.clear()
+  await db.categories.clear()
+  await db.templates.clear()
+  await db.syncQueue.clear()
+  try { await Dexie.delete('flow_ui') } catch { /* ignore */ }
+  try { sessionStorage.clear() } catch { /* ignore */ }
+}
+
 export async function seedDefaultSections(userId: string = 'default'): Promise<string[]> {
   const count = await db.flowSections.count()
   if (count > 0) return []

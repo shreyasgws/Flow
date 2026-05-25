@@ -4,10 +4,11 @@ import { useSync } from '@/hooks/useSync'
 
 const LABELS: Record<string, string> = {
   idle: '',
-  saving: 'Saving…',
-  syncing: 'Syncing…',
-  saved: 'Saved',
-  offline: 'Offline',
+  saving: 'Saving locally',
+  syncing: 'Syncing when ready',
+  saved: 'Everything is in sync',
+  offline: 'Sync resumes when connection returns',
+  reconnecting: 'Reconnecting quietly',
 }
 
 const COLORS: Record<string, string> = {
@@ -15,6 +16,7 @@ const COLORS: Record<string, string> = {
   syncing: 'text-[var(--accent)]',
   saved: 'text-[var(--text-muted)]',
   offline: 'text-[var(--warn)]',
+  reconnecting: 'text-[var(--accent)]',
 }
 
 export function SyncStatus() {

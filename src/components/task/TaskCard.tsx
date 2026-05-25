@@ -4,10 +4,12 @@ import { useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'motion/react'
 import { useTaskStore } from '@/stores/taskStore'
+import { useConfirmStore } from '@/stores/confirmStore'
 import { taskComplete } from '@/motions/variants'
 import { emotionalMotionProps } from '@/lib/emotionalStates'
 import { useCategoryStore } from '@/stores/categoryStore'
 import { useGestures } from '@/hooks/useGestures'
+import { hapticSoftTap, hapticDragPickup, hapticDropCommit } from '@/lib/haptics'
 
 interface TaskCardProps {
   id: string
@@ -86,6 +88,7 @@ export function TaskCard({
     if (isPending) return
     setEmotionalState('completing')
     setIsPending(true)
+    hapticSoftTap()
     try {
       if (isDone) {
         await uncompleteTask(id)
@@ -102,18 +105,25 @@ export function TaskCard({
     }
   }, [isPending, isDone, id, uncompleteTask, completeTask, onComplete])
 
-  async function handleDelete() {
+  function handleDelete() {
     if (isPending) return
-    setIsPending(true)
-    try {
-      await deleteTask(id)
-    } finally {
-      setIsPending(false)
-    }
+    useConfirmStore.getState().show({
+      message: `Delete "${title}"?`,
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setIsPending(true)
+        try {
+          await deleteTask(id)
+        } finally {
+          setIsPending(false)
+        }
+      },
+    })
   }
 
   function handleDragStart(e: React.DragEvent) {
     onDragStart?.(e, id)
+    hapticDragPickup()
   }
 
   function handleDragOver(e: React.DragEvent) {
@@ -122,6 +132,7 @@ export function TaskCard({
 
   function handleDrop(e: React.DragEvent) {
     onDrop?.(e, id)
+    hapticDropCommit()
   }
 
   return (
@@ -130,7 +141,10 @@ export function TaskCard({
       variants={taskComplete}
       initial="initial"
       animate={isDone ? 'done' : 'initial'}
-      className={`${isDragTarget ? 'rounded-md bg-[var(--ambient-glow)]' : ''}`}
+      role="listitem"
+      className={`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
+        isDragTarget ? 'rounded-md bg-[var(--ambient-glow)]' : ''
+      }`}
     >
       <div
         ref={dragRef}
@@ -143,10 +157,11 @@ export function TaskCard({
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
         onPointerCancel={handlePointerCancel}
-        className={`group flex items-center gap-2 py-2 ${
+        className={`group flex items-center gap-2 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
           !isDone ? 'cursor-grab active:cursor-grabbing' : ''
         } ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
         style={{ touchAction: 'pan-y' }}
+        tabIndex={isDone || isPending ? -1 : 0}
       >
         {!isDone && (
           <span
@@ -226,7 +241,7 @@ export function TaskCard({
         )}
 
         {!isDone && (
-          <span className="flex gap-0 opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="flex gap-0 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
             {!isFirst && (
               <button
                 onClick={() => onMoveUp?.(id)}
@@ -256,7 +271,7 @@ export function TaskCard({
           onClick={handleDelete}
           disabled={isPending}
           aria-label={`Delete "${title}"`}
-          className="opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-30"
+          className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-30"
         >
           <svg
             width="14"

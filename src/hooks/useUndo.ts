@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useId } from 'react'
-import { db } from '@/lib/db'
+import { useState, useCallback, useRef } from 'react'
 import { removeUndoFromDb } from '@/lib/undo'
 
 interface UndoEntry {
@@ -15,38 +14,45 @@ const AUTO_DISMISS_MS = 6000
 
 export function useUndo() {
   const [stack, setStack] = useState<UndoEntry[]>([])
-  const [currentUndo, setCurrentUndo] = useState<UndoEntry | null>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  const currentUndo = stack.length > 0 ? stack[0] : null
 
   const push = useCallback((entry: UndoEntry) => {
-    setStack((prev) => {
-      const next = [entry, ...prev].slice(0, MAX_STACK)
-      return next
-    })
-    setCurrentUndo(entry)
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      setCurrentUndo(null)
+    const existingTimer = timersRef.current.get(entry.id)
+    if (existingTimer) clearTimeout(existingTimer)
+
+    setStack((prev) => [entry, ...prev].slice(0, MAX_STACK))
+
+    const timer = setTimeout(() => {
+      setStack((prev) => prev.filter((e) => e.id !== entry.id))
+      timersRef.current.delete(entry.id)
     }, AUTO_DISMISS_MS)
+    timersRef.current.set(entry.id, timer)
   }, [])
 
   const undo = useCallback(async () => {
-    const entry = currentUndo
+    const entry = stack[0]
     if (!entry) return
     try {
       await entry.undo()
     } finally {
+      const timer = timersRef.current.get(entry.id)
+      if (timer) clearTimeout(timer)
+      timersRef.current.delete(entry.id)
       setStack((prev) => prev.filter((e) => e.id !== entry.id))
-      setCurrentUndo(null)
-      if (timerRef.current) clearTimeout(timerRef.current)
       await removeUndoFromDb(entry.id)
     }
-  }, [currentUndo])
+  }, [stack])
 
   const dismiss = useCallback(() => {
-    setCurrentUndo(null)
-    if (timerRef.current) clearTimeout(timerRef.current)
-  }, [])
+    if (stack.length === 0) return
+    const entry = stack[0]
+    const timer = timersRef.current.get(entry.id)
+    if (timer) clearTimeout(timer)
+    timersRef.current.delete(entry.id)
+    setStack((prev) => prev.filter((e) => e.id !== entry.id))
+  }, [stack])
 
   const undoFromStack = useCallback(async (id: string) => {
     const entry = stack.find((e) => e.id === id)
@@ -54,8 +60,10 @@ export function useUndo() {
     try {
       await entry.undo()
     } finally {
+      const timer = timersRef.current.get(id)
+      if (timer) clearTimeout(timer)
+      timersRef.current.delete(id)
       setStack((prev) => prev.filter((e) => e.id !== id))
-      setCurrentUndo((cur) => (cur?.id === id ? null : cur))
       await removeUndoFromDb(id)
     }
   }, [stack])

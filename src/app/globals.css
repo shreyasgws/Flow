@@ -82,6 +82,11 @@ body {
   color: var(--bg-base);
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 @keyframes ambientShift {
   0%, 100% { opacity: var(--visual-noise); }
   50% { opacity: calc(var(--visual-noise) * 0.6); }

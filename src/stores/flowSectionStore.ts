@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
+import { queueWrite } from '@/lib/sync'
 
 interface FlowSectionStore {
   sections: FlowSection[]
@@ -43,6 +44,7 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
     }
     try {
       await retryWithBackoff(() => db.flowSections.add(section))
+      queueWrite('upsert', 'flowSections', section.id, section)
       set((s) => ({ sections: [...s.sections, section] }))
       return section
     } catch {
@@ -58,14 +60,17 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
     if (!prev) return
     try {
       await retryWithBackoff(() => db.flowSections.update(id, data))
+      const updated = { ...prev, ...data }
+      queueWrite('upsert', 'flowSections', id, updated)
       set((s) => ({
         sections: s.sections.map((sec) =>
-          sec.id === id ? { ...sec, ...data } : sec
+          sec.id === id ? updated : sec
         ),
       }))
       const label = data.name ? `Renamed "${prev.name}"` : `Updated "${prev.name}"`
       pushUndo(id, label, async () => {
         await retryWithBackoff(() => db.flowSections.update(id, prev))
+        queueWrite('upsert', 'flowSections', id, prev)
         set((s) => ({
           sections: s.sections.map((sec) =>
             sec.id === id ? { ...sec, ...prev } : sec
@@ -84,10 +89,12 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
     if (!section) return
     try {
       await retryWithBackoff(() => db.flowSections.delete(id))
+      queueWrite('delete', 'flowSections', id, {})
       set((s) => ({ sections: s.sections.filter((sec) => sec.id !== id) }))
       pushUndo(id, `Deleted section "${section.name}"`, async () => {
         const restored = { ...section, id: crypto.randomUUID() }
         await retryWithBackoff(() => db.flowSections.add(restored))
+        queueWrite('upsert', 'flowSections', restored.id, restored)
         set((s) => ({
           sections: [...s.sections, restored].sort((a, b) => a.sortOrder - b.sortOrder),
         }))
@@ -108,6 +115,10 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
       await retryWithBackoff(() => db.transaction('rw', db.flowSections, async () => {
         for (const u of updates) {
           await db.flowSections.update(u.id, { sortOrder: u.sortOrder })
+          const section = get().sections.find((sec) => sec.id === u.id)
+          if (section) {
+            queueWrite('upsert', 'flowSections', u.id, { ...section, sortOrder: u.sortOrder })
+          }
         }
       }))
       set((s) => ({
@@ -122,6 +133,10 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
         await retryWithBackoff(() => db.transaction('rw', db.flowSections, async () => {
           for (const p of prevStates) {
             await db.flowSections.update(p.id, { sortOrder: p.sortOrder })
+            const section = get().sections.find((sec) => sec.id === p.id)
+            if (section) {
+              queueWrite('upsert', 'flowSections', p.id, { ...section, sortOrder: p.sortOrder })
+            }
           }
         }))
         set((s) => ({
@@ -143,6 +158,7 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
     if (!prev) return
     try {
       await retryWithBackoff(() => db.flowSections.update(id, { sortOrder }))
+      queueWrite('upsert', 'flowSections', id, { ...prev, sortOrder })
       set((s) => ({
         sections: s.sections
           .map((sec) => (sec.id === id ? { ...sec, sortOrder } : sec))
@@ -150,6 +166,7 @@ export const useFlowSectionStore = create<FlowSectionStore>((set, get) => ({
       }))
       pushUndo(id, `Moved section "${prev.name}"`, async () => {
         await retryWithBackoff(() => db.flowSections.update(id, { sortOrder: prev.sortOrder }))
+        queueWrite('upsert', 'flowSections', id, { ...prev, sortOrder: prev.sortOrder })
         set((s) => ({
           sections: s.sections
             .map((sec) => (sec.id === id ? { ...sec, sortOrder: prev.sortOrder } : sec))

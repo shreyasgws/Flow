@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { db } from '@/lib/db'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
+import { queueWrite } from '@/lib/sync'
 import type { Template, TemplateTask } from '@/types'
 
 interface TemplateStore {
@@ -40,6 +41,7 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
         createdAt: Date.now(),
       }
       await retryWithBackoff(() => db.templates.add(template))
+      queueWrite('upsert', 'templates', template.id, template)
       set({ templates: [...get().templates, template].sort((a, b) => a.sortOrder - b.sortOrder) })
       return template.id
     } catch {
@@ -51,6 +53,8 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
   updateTemplate: async (id: string, data: Partial<Pick<Template, 'name' | 'tasks' | 'sortOrder'>>) => {
     try {
       await retryWithBackoff(() => db.templates.update(id, data))
+      const prev = get().templates.find((t) => t.id === id)
+      if (prev) queueWrite('upsert', 'templates', id, { ...prev, ...data })
       set({
         templates: get().templates.map((t) => (t.id === id ? { ...t, ...data } : t)),
       })
@@ -62,6 +66,7 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
   deleteTemplate: async (id: string) => {
     try {
       await retryWithBackoff(() => db.templates.delete(id))
+      queueWrite('delete', 'templates', id, {})
       set({ templates: get().templates.filter((t) => t.id !== id) })
     } catch {
       useErrorStore.getState().push('database')

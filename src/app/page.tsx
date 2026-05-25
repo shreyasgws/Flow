@@ -11,7 +11,16 @@ export default function Landing() {
   const router = useRouter()
 
   useEffect(() => {
-    try { setSupabase(getSupabase()) } catch { /* env vars not ready */ }
+    // Initialize supabase if env vars are available
+    let supabaseInstance = null;
+    try {
+      supabaseInstance = getSupabase();
+    } catch { /* env vars not ready - supabaseInstance remains null */ }
+
+    // Only set state if we got a valid instance
+    if (supabaseInstance !== null) {
+      setSupabase(supabaseInstance);
+    }
   }, [])
   const settings = useSettingsStore((s) => s.settings)
   const updateSettings = useSettingsStore((s) => s.updateSettings)

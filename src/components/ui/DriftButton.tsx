@@ -61,7 +61,9 @@ export function DriftButton() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onClick={handleOpen}
-        className="fixed bottom-20 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--accent)]/35 bg-[var(--bg-overlay)] shadow-lg backdrop-blur-md"
+        aria-label={open ? 'Close drift' : 'Open drift'}
+        aria-expanded={open}
+        className="fixed bottom-20 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--accent)]/35 bg-[var(--bg-overlay)] shadow-lg backdrop-blur-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         style={{
           right: 16,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
@@ -84,7 +86,10 @@ export function DriftButton() {
           <path d="M12 2v4M12 18v4M2 12h4M18 12h4" strokeLinecap="round" />
         </svg>
         {activeCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-bold text-white">
+          <span
+            aria-label={`${activeCount} active drift entr${activeCount === 1 ? 'y' : 'ies'}`}
+            className="absolute -right-1 -top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-bold text-white"
+          >
             {activeCount}
           </span>
         )}

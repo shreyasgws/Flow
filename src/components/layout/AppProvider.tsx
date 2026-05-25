@@ -11,6 +11,7 @@ import { useDatabase } from '@/hooks/useDatabase'
 import { useSync } from '@/hooks/useSync'
 import { useServiceWorker } from '@/hooks/useServiceWorker'
 import { processRecurringTasks } from '@/lib/recurring'
+import { pullFromSupabase } from '@/lib/sync'
 import { useUiStateStore } from '@/stores/uiStateStore'
 import { Shell } from '@/components/layout/Shell'
 
@@ -22,6 +23,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const loadSettings = useSettingsStore((s) => s.loadSettings)
   const loadCategories = useCategoryStore((s) => s.loadCategories)
   const initAuth = useAuthStore((s) => s.init)
+  const needsPull = useAuthStore((s) => s.needsPull)
+  const clearNeedsPull = useAuthStore((s) => s.clearNeedsPull)
   const loadUiState = useUiStateStore((s) => s.load)
   const initialized = useRef(false)
 
@@ -44,6 +47,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [db.isReady, initAuth, loadTasks, loadSections, loadDrift, loadSettings, loadCategories, loadUiState])
 
   const settings = useSettingsStore((s) => s.settings)
+
+  useEffect(() => {
+    if (!needsPull) return
+    clearNeedsPull()
+    pullFromSupabase().then(() => {
+      const today = new Date().toISOString().slice(0, 10)
+      loadTasks(today)
+      loadSections()
+      loadDrift()
+      loadSettings()
+      loadCategories()
+    })
+  }, [needsPull, clearNeedsPull, loadTasks, loadSections, loadDrift, loadSettings, loadCategories])
 
   useEffect(() => {
     if (!db.isReady) return

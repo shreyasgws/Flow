@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from '@/types'
 import { db } from '@/lib/db'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
+import { queueWrite } from '@/lib/sync'
 
 interface SettingsStore {
   settings: AppSettings
@@ -39,6 +40,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     try {
       const updated = { ...get().settings, ...partial }
       await retryWithBackoff(() => db.settings.put(updated))
+      queueWrite('upsert', 'settings', updated.id, updated)
       set({ settings: updated })
     } catch {
       set({ error: 'Failed to save settings' })

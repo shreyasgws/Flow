@@ -99,6 +99,10 @@ export interface AppSettings {
   installPromptDismissed: boolean
   googleLinked: boolean
   carryForwardDismissedFor: string | null
+  nudgeSuppressionLevel: number
+  consecutiveMissedNudges: number
+  lastNudgeDate: string | null
+  storedTimezoneOffset: number
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -116,6 +120,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   installPromptDismissed: false,
   googleLinked: false,
   carryForwardDismissedFor: null,
+  nudgeSuppressionLevel: 0,
+  consecutiveMissedNudges: 0,
+  lastNudgeDate: null,
+  storedTimezoneOffset: 0,
 }
 
 export interface TemplateTask {

@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
+import { queueWrite } from '@/lib/sync'
 
 const PRESET_COLORS = [
   '#E05454', '#E08054', '#E0B054', '#8AB854',
@@ -52,6 +53,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     }
     try {
       await retryWithBackoff(() => db.categories.add(category))
+      queueWrite('upsert', 'categories', category.id, category)
       set((s) => ({ categories: [...s.categories, category] }))
       return category
     } catch {
@@ -67,6 +69,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     if (!prev) return
     try {
       await retryWithBackoff(() => db.categories.update(id, data))
+      queueWrite('upsert', 'categories', id, { ...prev, ...data })
       set((s) => ({
         categories: s.categories.map((c) =>
           c.id === id ? { ...c, ...data } : c
@@ -75,6 +78,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
       pushUndo(id, `Updated category "${prev.name}"`, async () => {
         const revert = Object.fromEntries(Object.keys(data).map((k) => [k, (prev as unknown as Record<string, unknown>)[k]]))
         await retryWithBackoff(() => db.categories.update(id, revert))
+        queueWrite('upsert', 'categories', id, prev)
         set((s) => ({
           categories: s.categories.map((c) =>
             c.id === id ? { ...c, ...revert } : c
@@ -92,10 +96,12 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     if (!category) return
     try {
       await retryWithBackoff(() => db.categories.delete(id))
+      queueWrite('delete', 'categories', id, {})
       set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }))
       pushUndo(id, `Deleted category "${category.name}"`, async () => {
         const restored = { ...category, id: crypto.randomUUID() }
         await retryWithBackoff(() => db.categories.add(restored))
+        queueWrite('upsert', 'categories', restored.id, restored)
         set((s) => ({
           categories: [...s.categories, restored].sort((a, b) => a.sortOrder - b.sortOrder),
         }))
@@ -115,6 +121,8 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
       await retryWithBackoff(() => db.transaction('rw', db.categories, async () => {
         for (const u of updates) {
           await db.categories.update(u.id, { sortOrder: u.sortOrder })
+          const cat = get().categories.find((c) => c.id === u.id)
+          if (cat) queueWrite('upsert', 'categories', u.id, { ...cat, sortOrder: u.sortOrder })
         }
       }))
       set((s) => ({
@@ -129,6 +137,8 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
         await retryWithBackoff(() => db.transaction('rw', db.categories, async () => {
           for (const p of prevStates) {
             await db.categories.update(p.id, { sortOrder: p.sortOrder })
+            const cat = get().categories.find((c) => c.id === p.id)
+            if (cat) queueWrite('upsert', 'categories', p.id, { ...cat, sortOrder: p.sortOrder })
           }
         }))
       })
