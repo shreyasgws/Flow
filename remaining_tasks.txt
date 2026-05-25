@@ -100,21 +100,11 @@ Files:
   src/stores/environmentStore.ts (MODIFY — battery/GPU mode)
 
 
-P11 — MULTI-DEVICE CONTINUITY
+P11 — MULTI-DEVICE CONTINUITY  ✅ DONE
 ===============================
-  - Active session ownership: sync presence, prevent duplicate timers
-  - Stale tab recovery: if another device changes data, softly refresh
-  - Offline merge resolution: changes merge predictably, transparently,
-    calmly
-  - Reconnect messaging: "Everything is back in sync" (not "CONNECTED")
-  - Cross-device continuity: opening mobile after desktop feels
-    continuous, not restarted
-
-Files:
-  src/lib/sync.ts (MODIFY — merge resolution)
-  src/hooks/useSync.ts (MODIFY — stale tab detection)
-  src/components/ui/SyncStatus.tsx (MODIFY — reconnect language)
-  src/stores/syncStore.ts (MODIFY — session state)
+Modified: src/lib/sync.ts (mergeRemoteIntoLocal + broadcastChange),
+          src/hooks/useSync.ts (BroadcastChannel stale detection),
+          src/stores/syncStore.ts (sessionId, lastRemoteChange)
 
 
 P12 — ANIMATION SYSTEM (TIER-ADAPTIVE PERFORMANCE)

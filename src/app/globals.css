@@ -16,6 +16,8 @@
   --warn: #e6a817;
 
   --ambient-glow: rgba(91, 140, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(255, 255, 255, 0.15);
 
   --spacing-density: 1;
   --motion-intensity: 1;
@@ -51,6 +53,8 @@
   --warn: #d4a017;
 
   --ambient-glow: rgba(91, 140, 255, 0.04);
+  --border: rgba(0, 0, 0, 0.1);
+  --border-active: rgba(0, 0, 0, 0.2);
 
   --gradient-morning: linear-gradient(135deg, #EDE8DD 0%, #FFFDF8 30%, #F6F2EA 60%, #EDE8DD 100%);
   --gradient-afternoon: linear-gradient(135deg, #F6F2EA 0%, #FFFDF8 30%, #EDE8DD 60%, #F6F2EA 100%);
@@ -116,4 +120,251 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ══════════════════════════════════════════════
+   P12: DEVICE TIER TOKENS
+   ══════════════════════════════════════════════ */
+
+/* TIER 1 — FULL (default) */
+:root {
+  --ambient-layer-count: 5;
+  --ambient-silhouette-op: 0.08;
+  --ambient-haze-op: 0.05;
+  --ambient-bloom-op: 0.03;
+  --ambient-grain-op: 0.04;
+  --ambient-particle-op: 0.02;
+  --ambient-play-state: running;
+  --ambient-duration-1: 30s;
+  --ambient-duration-2: 40s;
+  --ambient-duration-3: 25s;
+
+  --blur-composer: 12px;
+  --blur-sheet: 16px;
+  --blur-nav: 8px;
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-elevated: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-float: 0 6px 20px rgba(0,0,0,0.6);
+  --shadow-drag: 0 8px 30px rgba(0,0,0,0.6);
+
+  --ease-default: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  --dur-micro: 100ms;
+  --dur-fast: 200ms;
+  --dur-default: 300ms;
+  --dur-slow: 400ms;
+  --dur-ambient: 600ms;
+
+  --stagger-delay: 40ms;
+  --stagger-task: 30ms;
+  --stagger-weekly: 40ms;
+
+  --spring-stiffness: 120;
+  --spring-damping: 14;
+
+  --focus-breathe-duration: 6s;
+  --focus-breathe-scale: 1.02;
+
+  --timeline-pulse-duration: 2s;
+  --timeline-line-width: 1.5px;
+
+  --dandelion-animate: 1;
+  --dandelion-burst: 1;
+}
+
+/* TIER 2 — STANDARD */
+[data-tier="standard"] {
+  --ambient-silhouette-op: 0;
+  --ambient-haze-op: 0;
+  --ambient-bloom-op: 0.04;
+  --ambient-grain-op: 0;
+  --ambient-particle-op: 0;
+
+  --blur-composer: 0px;
+  --blur-sheet: 0px;
+  --blur-nav: 0px;
+
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-elevated: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-float: 0 4px 12px rgba(0,0,0,0.5);
+  --shadow-drag: 0 6px 20px rgba(0,0,0,0.5);
+
+  --spring-stiffness: 100;
+  --spring-damping: 16;
+
+  --dandelion-burst: 0;
+}
+
+/* TIER 3 — MINIMAL */
+[data-tier="minimal"] {
+  --ambient-silhouette-op: 0;
+  --ambient-haze-op: 0;
+  --ambient-bloom-op: 0;
+  --ambient-grain-op: 0;
+  --ambient-particle-op: 0;
+  --ambient-play-state: paused;
+
+  --blur-composer: 0px;
+  --blur-sheet: 0px;
+  --blur-nav: 0px;
+
+  --shadow-card: none;
+  --shadow-elevated: none;
+  --shadow-float: 0 2px 6px rgba(0,0,0,0.3);
+  --shadow-drag: 0 4px 10px rgba(0,0,0,0.4);
+
+  --ease-default: linear;
+  --ease-spring: linear;
+
+  --dur-micro: 50ms;
+  --dur-fast: 100ms;
+  --dur-default: 150ms;
+  --dur-slow: 200ms;
+  --dur-ambient: 200ms;
+
+  --stagger-delay: 0ms;
+  --stagger-task: 0ms;
+  --stagger-weekly: 0ms;
+
+  --spring-stiffness: 300;
+  --spring-damping: 30;
+
+  --focus-breathe-duration: 99999s;
+  --focus-breathe-scale: 1;
+
+  --timeline-pulse-duration: 99999s;
+  --timeline-line-width: 1px;
+
+  --dandelion-animate: 0;
+  --dandelion-burst: 0;
+}
+
+[data-tier="minimal"] .task-card,
+[data-tier="standard"] .task-card {
+  border: 1px solid var(--border);
+}
+
+[data-tier="minimal"] .composer-full,
+[data-tier="standard"] .composer-full {
+  background: var(--bg-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--border-active);
+}
+
+[data-tier="minimal"] .bottom-nav-full,
+[data-tier="standard"] .bottom-nav-full {
+  background: var(--bg-surface);
+  backdrop-filter: none;
+  border-top: 1px solid var(--border);
+}
+
+[data-tier="minimal"] .sheet-full,
+[data-tier="standard"] .sheet-full {
+  background: var(--bg-overlay);
+  backdrop-filter: none;
+  border-top: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════
+   P12: ANIMATION KEYFRAMES
+   ══════════════════════════════════════════════ */
+
+@keyframes ambientDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(8px, -12px) scale(1.02); }
+  66% { transform: translate(-6px, 6px) scale(0.99); }
+}
+
+@keyframes ambientDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-10px, 8px) scale(1.03); }
+  75% { transform: translate(8px, -6px) scale(0.98); }
+}
+
+@keyframes ambientDrift3 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(12px, -10px); }
+}
+
+@keyframes particleFloat {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.02; }
+  90% { opacity: 0.02; }
+  100% { transform: translateY(-60vh) translateX(8px); opacity: 0; }
+}
+
+@keyframes focusBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(var(--focus-breathe-scale)); }
+}
+
+@keyframes timelinePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes syncPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes taskAppear {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes badgeBump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* Transition pausing */
+.transitioning .ambient-silhouette,
+.transitioning .ambient-haze,
+.transitioning .ambient-bloom,
+.transitioning .timeline-dot-active,
+.transitioning .focus-background {
+  animation-play-state: paused !important;
+}
+
+/* Microstate classes */
+.timeline-dot-active {
+  animation: timelinePulse var(--timeline-pulse-duration) ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.focus-background {
+  animation: focusBreathe var(--focus-breathe-duration) ease-in-out infinite;
+  will-change: transform;
+}
+
+.sync-indicator-syncing {
+  animation: syncPulse 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.task-card-new {
+  animation: taskAppear var(--dur-default) var(--ease-default) both;
+  will-change: transform, opacity;
+}
+
+.drift-badge-bump {
+  animation: badgeBump 150ms var(--ease-spring) both;
+  will-change: transform;
 }

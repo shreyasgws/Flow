@@ -1,79 +1,166 @@
 'use client'
 
+import { useDeviceTier, getTierBooleans, TIERS } from '@/lib/deviceTier'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 
-function getTimeGradients(hour: number, warmth: number, isAmbient: boolean) {
-  const intensity = isAmbient ? 1 : 0.15
-
+function getTimeConfig(hour: number, warmth: number) {
   if (hour >= 5 && hour < 8) {
     return {
-      top: `rgba(180, 140, 100, ${0.08 * warmth * intensity})`,
-      bottom: `transparent`,
-      radial: `radial-gradient(ellipse at 50% 0%, rgba(200, 160, 120, ${0.04 * warmth * intensity}) 0%, transparent 70%)`,
+      base: '#0F0E0C',
+      bloom: '#C8832A',
+      bloomPosition: '80% 20%',
+      bloomOpacity: 0.08 * warmth,
     }
   }
   if (hour >= 8 && hour < 17) {
     return {
-      top: `rgba(91, 140, 255, ${0.06 * intensity})`,
-      bottom: `transparent`,
-      radial: `radial-gradient(ellipse at 50% 0%, rgba(91, 140, 255, ${0.03 + warmth * 0.05 * intensity}) 0%, transparent 70%)`,
+      base: '#0D0D11',
+      bloom: '#5B8CFF',
+      bloomPosition: '50% 50%',
+      bloomOpacity: 0.06 * warmth,
     }
   }
   if (hour >= 17 && hour < 20) {
     return {
-      top: `rgba(160, 100, 140, ${0.08 * warmth * intensity})`,
-      bottom: `rgba(91, 140, 255, ${0.02 * intensity})`,
-      radial: `radial-gradient(ellipse at 50% 0%, rgba(160, 100, 140, ${0.04 * warmth * intensity}) 0%, transparent 70%)`,
+      base: '#0B0D12',
+      bloom: '#3A5A7A',
+      bloomPosition: '20% 80%',
+      bloomOpacity: 0.08 * warmth,
     }
   }
   return {
-    top: `rgba(60, 60, 100, ${0.06 * intensity})`,
-    bottom: `rgba(20, 20, 40, ${0.04 * intensity})`,
-    radial: `radial-gradient(ellipse at 50% 0%, rgba(60, 60, 100, ${0.03 * intensity}) 0%, transparent 70%)`,
+    base: '#09090F',
+    bloom: '#4A3070',
+    bloomPosition: '50% 60%',
+    bloomOpacity: 0.07 * warmth,
   }
 }
 
-export function AmbientLayer() {
-  const env = useEnvironmentStore((s) => s.state)
-  const grad = getTimeGradients(env.hour, env.ambientWarmth, env.mode === 'ambient')
-  const noiseOpacity = env.mode === 'ambient' ? 0.03 + env.visualNoise * 0.04 : 0.005
+function getOpacityVar(name: string): string {
+  return `var(${name})`
+}
 
-  return (
-    <>
-      {/* Time-of-day gradient */}
+export function AmbientLayer() {
+  const tier = useDeviceTier()
+  const { isMinimal, isStandard, isFull } = getTierBooleans(tier)
+  const env = useEnvironmentStore((s) => s.state)
+  const config = getTimeConfig(env.hour, env.ambientWarmth)
+
+  if (isMinimal) {
+    return (
       <div
         className="pointer-events-none fixed inset-0 z-0"
         style={{
-          background: `linear-gradient(180deg, ${grad.top} 0%, ${grad.bottom} 100%), ${grad.radial}`,
-          transition: `opacity ${env.transitionSpeed}s, background ${env.transitionSpeed}s ease`,
-          opacity: env.mode === 'ambient' ? 0.6 + env.ambientWarmth * 0.4 : 0.1,
+          backgroundColor: config.base,
+          transition: `background-color var(--dur-ambient) linear`,
         }}
       />
+    )
+  }
 
-      {/* Ambient noise texture */}
+  if (isStandard) {
+    return (
       <div
-        className="pointer-events-none fixed inset-0 z-[1]"
+        className="pointer-events-none fixed inset-0 z-0"
         style={{
-          opacity: noiseOpacity,
-          transition: `opacity ${env.transitionSpeed}s`,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'repeat',
-          backgroundSize: '256px 256px',
-          mixBlendMode: 'overlay',
-          animation: env.mode === 'ambient' ? `ambientShift ${4 / env.motionIntensity}s ease-in-out infinite` : 'none',
+          backgroundColor: config.base,
+          transition: `background-color var(--dur-ambient) linear`,
         }}
-      />
+      >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: `radial-gradient(ellipse 60% 60% at ${config.bloomPosition}, ${config.bloom}${Math.round(config.bloomOpacity * 255).toString(16).padStart(2, '0')} 0%, transparent 70%)`,
+          }}
+        />
+      </div>
+    )
+  }
 
-      {/* Warmth overlay */}
+  return (
+    <div
+      className="pointer-events-none fixed inset-0 z-0"
+      style={{
+        backgroundColor: config.base,
+        transition: `background-color var(--dur-ambient) linear`,
+      }}
+    >
       <div
-        className="pointer-events-none fixed inset-0 z-[1]"
+        className="ambient-silhouette"
         style={{
-          background: env.ambientWarmth > 0.5
-            ? `linear-gradient(180deg, rgba(255, 200, 150, ${(env.ambientWarmth - 0.5) * 0.03}) 0%, transparent 50%)`
-            : `linear-gradient(180deg, rgba(100, 140, 255, ${(0.5 - env.ambientWarmth) * 0.03}) 0%, transparent 50%)`,
-          transition: `opacity ${env.transitionSpeed}s, background ${env.transitionSpeed}s ease`,
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(ellipse 80% 40% at 50% 70%, ${config.bloom}14 0%, transparent 60%)`,
+          filter: 'blur(40px)',
+          opacity: getOpacityVar('--ambient-silhouette-op'),
+          animation: 'ambientDrift1 30s ease-in-out infinite',
+          animationPlayState: getOpacityVar('--ambient-play-state'),
+          willChange: 'transform',
         }}
       />
+      <div
+        className="ambient-haze"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(ellipse 100% 80% at ${config.bloomPosition}, ${config.bloom}0D 0%, transparent 60%)`,
+          filter: 'blur(60px)',
+          opacity: getOpacityVar('--ambient-haze-op'),
+          animation: 'ambientDrift2 40s ease-in-out infinite',
+          animationPlayState: getOpacityVar('--ambient-play-state'),
+          willChange: 'transform',
+        }}
+      />
+      <div
+        className="ambient-bloom"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(circle 200px at ${config.bloomPosition}, ${config.bloom}08 0%, transparent 70%)`,
+          opacity: getOpacityVar('--ambient-bloom-op'),
+          animation: 'ambientDrift3 25s ease-in-out infinite',
+          animationPlayState: getOpacityVar('--ambient-play-state'),
+          willChange: 'transform',
+        }}
+      />
+      <div
+        className="ambient-grain"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+          backgroundSize: '200px 200px',
+          opacity: getOpacityVar('--ambient-grain-op'),
+        }}
+      />
+      <AmbientParticles />
+    </div>
+  )
+}
+
+function AmbientParticles() {
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            width: '2px',
+            height: '2px',
+            borderRadius: '50%',
+            background: 'white',
+            left: `${[15, 45, 75][i]}%`,
+            bottom: '10%',
+            opacity: getOpacityVar('--ambient-particle-op'),
+            animation: `particleFloat ${[20, 30, 25][i]}s linear infinite`,
+            animationDelay: `${[0, 8, 16][i]}s`,
+            animationPlayState: getOpacityVar('--ambient-play-state'),
+            willChange: 'transform',
+          }}
+        />
+      ))}
     </>
   )
 }
