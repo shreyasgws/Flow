@@ -44,7 +44,7 @@ export default function History() {
 
     const [allTasks, allSections, allDrift, allReflections] = await Promise.all([
       db.tasks.where('date').anyOf(dates).toArray(),
-      db.flowSections.where('date').anyOf(dates).toArray(),
+      db.flowSections.toArray(),
       db.driftEntries.toArray(),
       db.reflections.toArray(),
     ])

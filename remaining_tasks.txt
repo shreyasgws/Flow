@@ -69,19 +69,11 @@ Modified:   src/components/ui/SyncStatus.tsx,
             src/lib/export.ts
 
 
-P8 — HISTORY CONTINUITY (SCROLLABLE RHYTHM HISTORY)
+P8 — HISTORY CONTINUITY (SCROLLABLE RHYTHM HISTORY)  ✅ DONE
 ======================================================
-  - Scrollable day-by-day history view
-  - Revisit weeks, moods, sections, rhythms
-  - Persistent reflection archive (permanently accessible)
-  - Timeline memory: repeated tasks feel familiar (subtle visual cue)
-  - Lazy-load sections, virtualize long histories
-
-Files:
-  src/app/history/page.tsx (NEW)
-  src/components/history/TimelineDay.tsx (NEW)
-  src/components/history/TimelineMonth.tsx (NEW)
-  src/components/layout/BottomNav.tsx (MODIFY — add History tab?)
+New files:  src/app/history/page.tsx, src/components/history/TimelineDay.tsx,
+            src/components/history/TimelineMonth.tsx
+Modified:   src/components/layout/BottomNav.tsx
 
 
 P9 — SOFT INTELLIGENCE EXPANSION
