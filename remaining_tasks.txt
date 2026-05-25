@@ -107,90 +107,13 @@ Modified: src/lib/sync.ts (mergeRemoteIntoLocal + broadcastChange),
           src/stores/syncStore.ts (sessionId, lastRemoteChange)
 
 
-P12 — ANIMATION SYSTEM (TIER-ADAPTIVE PERFORMANCE)
+P12 — ANIMATION SYSTEM (TIER-ADAPTIVE PERFORMANCE)  ✅ DONE
 ====================================================
-Reference: flow_animation_system.txt
-
-Complete the tier-adaptive animation system that preserves emotional
-quality across all devices by translating (not removing) effects.
-
-  — DEVICE TIER DETECTION —
-  - GPU benchmark: quick canvas test (<8ms = capable)
-  - Reads navigator.deviceMemory, hardwareConcurrency, connection type
-  - Respects prefers-reduced-motion and Save-Data mode
-  - Caches result in localStorage for 7 days
-  - Three tiers: FULL (flagship), STANDARD (mid-range), MINIMAL (low-end)
-  - Write dataset-tier to <html> so CSS reads it
-
-  — CSS TOKEN SYSTEM PER TIER —
-  - Ambient tokens: --ambient-layer-count, --ambient-*-op, --ambient-duration-*
-  - Blur tokens: --blur-composer, --blur-sheet, --blur-nav
-  - Spring physics tokens: --spring-stiffness, --spring-damping
-  - Shadow tokens per tier
-  - Stagger tokens: --stagger-delay, --stagger-task
-  - Focus breathe tokens: --focus-breathe-duration
-  - Timeline tokens: --timeline-pulse-duration
-  - Dandelion tokens: --dandelion-animate, --dandelion-burst
-  - [data-tier="standard"] and [data-tier="minimal"] overrides
-
-  — TIER-ADAPTIVE AMBIENT BACKGROUND —
-  - FULL: 5 layers (base + silhouette + haze + bloom + grain), animated
-  - STANDARD: 2 layers (base + bloom), static (no animation)
-  - MINIMAL: single background color, no layers
-
-  — ANIMATION LAYER ENFORCEMENT —
-  - Layer 1 (Interaction): NEVER reduced on any tier
-    (swipe, checkmark fill, card expand, sheet open, etc.)
-  - Layer 2 (Response): full on all tiers, stagger disabled on Minimal
-  - Layer 3 (Ambient): tier-scaled (5/2/1 layers)
-  - Layer 4 (Microstate): all tiers, shorter durations on Minimal
-
-  — TIER-ADAPTIVE DANDELION —
-  - FULL: canvas, full breathing + tap burst
-  - STANDARD: canvas, breathing only (no burst)
-  - MINIMAL: static SVG (identical visual, zero animation cost)
-
-  — MOTION CONFIG PER TIER —
-  - FULL: spring (stiffness 120, damping 14)
-  - STANDARD: spring (stiffness 100, damping 16)
-  - MINIMAL: linear ease 150ms
-
-  — BLUR REPLACEMENT —
-  - FULL: backdrop-filter blur active
-  - STANDARD/MINIMAL: solid backgrounds with border replacing blur
-  - CSS overrides via [data-tier="standard"] .composer, .sheet, .nav
-
-  — TRANSITION PAUSING —
-  - Pause ambient animations during page navigation
-  - Pause ambient + microstate during drag-to-reorder
-  - Pause ambient + microstate (except focusBreathe) during focus mode
-  - Resume after transition completes
-
-  — PERFORMANCE MONITORING —
-  - FPS detection on STANDARD tier only
-  - If <25fps for 5 consecutive seconds, mark for downgrade next session
-  - Never change tiers mid-session (avoids jarring shifts)
-
-  — BATTERY SAVER —
-  - If battery <15% or charging=false + battery <20%, treat as Tier 3
-  - Detection runs only on session start
-
-  — FOCUS MODE PER TIER —
-  - FULL: breathing animation, bloom gradient
-  - STANDARD: static gradient (no breathing)
-  - MINIMAL: single deep background color
-
-  — ANIMATION CONCURRENCY BUDGET —
-  - Layer 1: max 2 simultaneous
-  - Layer 2: max 4 simultaneous
-  - Layer 3: max 4 CSS keyframes
-  - Layer 4: max 4 simultaneous
-  - Total: max 14 animated elements at once
-
-  — VIRTUAL TASK LIST (moved from P10) —
-  - Only render tasks in/near viewport when count > 15
-  - Estimate height, overscan 3 items
-  - For typical days (4-8 tasks), render all normally
+New: src/lib/deviceTier.ts, src/lib/motionConfig.ts,
+     src/lib/transitionManager.ts, src/lib/performanceMonitor.ts,
+     src/components/tasks/VirtualTaskList.tsx
+Modified: src/app/globals.css, src/components/ambient/AmbientLayer.tsx,
+          src/components/ambient/AdaptivePerformance.tsx
 
 Files:
   src/lib/deviceTier.ts (NEW — detection + export)

@@ -335,7 +335,10 @@ export default function Settings() {
                     : 'bg-[var(--bg-elevated)]'
                 } disabled:opacity-40`}
               >
-                <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                <motion.span
+                  layout
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className={`inline-block h-3.5 w-3.5 rounded-full bg-white ${
                   settings.dailyNudgeEnabled && notifPermission === 'granted'
                     ? 'translate-x-[18px]'
                     : 'translate-x-[3px]'
@@ -356,13 +359,16 @@ export default function Settings() {
                 onClick={() => updateSettings({ focusWindowAlertsEnabled: !settings.focusWindowAlertsEnabled })}
                 disabled={notifPermission !== 'granted'}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  settings.focusWindowAlertsEnabled && notifPermission === 'granted'
+                  settings.focusWindowAlertsEnabled
                     ? 'bg-[var(--accent)]'
                     : 'bg-[var(--bg-elevated)]'
-                } disabled:opacity-40`}
+                }`}
               >
-                <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
-                  settings.focusWindowAlertsEnabled && notifPermission === 'granted'
+                <motion.span
+                  layout
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className={`inline-block h-3.5 w-3.5 rounded-full bg-white ${
+                  settings.focusWindowAlertsEnabled
                     ? 'translate-x-[18px]'
                     : 'translate-x-[3px]'
                 }`} />

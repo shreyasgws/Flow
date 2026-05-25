@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'motion/react'
 import { useDriftStore } from '@/stores/driftStore'
 import { DriftPanel } from '@/components/drift/DriftPanel'
+import { DandelionIcon } from '@/components/drift/DandelionIcon'
 
 export function DriftButton() {
   const [open, setOpen] = useState(false)
+  const [burst, setBurst] = useState(false)
   const entries = useDriftStore((s) => s.entries)
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
@@ -51,6 +53,8 @@ export function DriftButton() {
   function handleOpen() {
     if (!hasMoved.current) {
       setOpen(true)
+      setBurst(true)
+      setTimeout(() => setBurst(false), 600)
     }
   }
 
@@ -73,18 +77,7 @@ export function DriftButton() {
         whileHover={isDragging ? {} : { scale: 1.05 }}
         whileTap={isDragging ? {} : { scale: 0.95 }}
       >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="text-[var(--accent)]"
-        >
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 2v4M12 18v4M2 12h4M18 12h4" strokeLinecap="round" />
-        </svg>
+        <DandelionIcon triggerBurst={burst} />
         {activeCount > 0 && (
           <span
             aria-label={`${activeCount} active drift entr${activeCount === 1 ? 'y' : 'ies'}`}

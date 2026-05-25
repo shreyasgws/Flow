@@ -126,6 +126,21 @@ body {
    P12: DEVICE TIER TOKENS
    ══════════════════════════════════════════════ */
 
+/* Glass morphism tokens */
+:root {
+  --glass-bg: rgba(30, 30, 35, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --glass-blur: 16px;
+}
+
+.theme-light {
+  --glass-bg: rgba(255, 253, 248, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.04);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  --glass-blur: 16px;
+}
+
 /* TIER 1 — FULL (default) */
 :root {
   --ambient-layer-count: 5;
