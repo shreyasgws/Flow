@@ -35,15 +35,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!db.isReady || initialized.current) return
     initialized.current = true
 
-    initAuth()
-    loadUiState()
+    ;(async () => {
+      await initAuth()
+      loadUiState()
 
-    const today = new Date().toISOString().slice(0, 10)
-    loadTasks(today)
-    loadSections()
-    loadDrift()
-    loadSettings()
-    loadCategories()
+      const today = new Date().toISOString().slice(0, 10)
+      loadTasks(today)
+      loadSections()
+      loadDrift()
+      loadSettings()
+      loadCategories()
+    })()
   }, [db.isReady, initAuth, loadTasks, loadSections, loadDrift, loadSettings, loadCategories, loadUiState])
 
   const settings = useSettingsStore((s) => s.settings)

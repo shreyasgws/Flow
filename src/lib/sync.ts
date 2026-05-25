@@ -88,6 +88,18 @@ function toSnakeCase(key: string): string {
   return key.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`)
 }
 
+function toCamelCase(key: string): string {
+  return key.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+}
+
+function camelizeKeys(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    result[toCamelCase(key)] = value
+  }
+  return result
+}
+
 function preparePayload(
   payload: Record<string, unknown>,
   userId: string,
@@ -240,14 +252,16 @@ export async function pullFromSupabase(): Promise<void> {
 
   for (const table of remoteTables) {
     try {
-      const { data, error } = await supabase.from(table).select('*')
+      const { data: rawData, error } = await supabase.from(table).select('*')
       if (error) continue
-      if (!data || data.length === 0) continue
+      if (!rawData || rawData.length === 0) continue
+
+      const camelData = rawData.map((r: Record<string, unknown>) => camelizeKeys(r))
 
       const localTable = TABLE_MAP_REVERSE[table]
       if (!localTable) continue
 
-      const merged = await mergeRemoteIntoLocal(localTable, data as any[])
+      const merged = await mergeRemoteIntoLocal(localTable, camelData as any[])
       if (localTable === 'tasks') await db.tasks.bulkPut(merged)
       else if (localTable === 'flowSections') await db.flowSections.bulkPut(merged as any[])
       else if (localTable === 'driftEntries') await db.driftEntries.bulkPut(merged as any[])
