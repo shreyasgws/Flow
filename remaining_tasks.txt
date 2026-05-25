@@ -76,19 +76,11 @@ New files:  src/app/history/page.tsx, src/components/history/TimelineDay.tsx,
 Modified:   src/components/layout/BottomNav.tsx
 
 
-P9 — SOFT INTELLIGENCE EXPANSION
-====================================
-  - Additional pattern detection:
-    * Repeated sections (e.g., "You often sketch during Creative Drift")
-    * Carry-forward patterns (which tasks keep getting pushed)
-    * Revisited Drift entries
-    * Rhythm consistency tracking
-  - Never score users, predict aggressively, optimize behavior,
-    or recommend productivity maximization
-
-Files:
-  src/lib/softIntelligence.ts (MODIFY — expanded patterns)
-  src/components/home/DayPulse.tsx (MODIFY — new insights display)
+P9 — SOFT INTELLIGENCE EXPANSION  ✅ DONE
+========================================
+Modified:   src/lib/softIntelligence.ts,
+            src/components/home/DayPulse.tsx,
+            src/app/home/page.tsx
 
 
 P10 — PERFORMANCE: TASK LIST VIRTUALIZATION

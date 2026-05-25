@@ -33,6 +33,16 @@ function debouncedFlush() {
   debounceTimer = setTimeout(flushQueue, DEBOUNCE_MS)
 }
 
+function tryBroadcastChange() {
+  if (typeof BroadcastChannel === 'undefined') return
+  try {
+    const channel = new BroadcastChannel('flow-sync')
+    channel.postMessage({ type: 'data-changed', sessionId: useSyncStore.getState().sessionId })
+    channel.close()
+  } catch {
+  }
+}
+
 export async function flushQueue() {
   const pending = await db.syncQueue
     .where('status')
@@ -68,6 +78,7 @@ export async function flushQueue() {
   if (remaining === 0) {
     useSyncStore.getState().setStatus('saved')
     useSyncStore.getState().setLastSynced(Date.now())
+    tryBroadcastChange()
     setTimeout(() => {
       useSyncStore.getState().setStatus('idle')
     }, 2000)
@@ -175,6 +186,45 @@ const TABLE_MAP_REVERSE: Record<string, string> = {
   settings: 'settings',
 }
 
+async function mergeRemoteIntoLocal(
+  localTable: string,
+  remoteRows: Record<string, unknown>[]
+): Promise<Record<string, unknown>[]> {
+  if (!db[localTable as keyof typeof db] || typeof (db[localTable as keyof typeof db] as any)?.toArray !== 'function') {
+    return remoteRows
+  }
+
+  const localRows = await (db[localTable as keyof typeof db] as any).toArray() as Record<string, unknown>[]
+  const localMap = new Map<string, Record<string, unknown>>()
+  for (const row of localRows) {
+    localMap.set(row.id as string, row)
+  }
+
+  const merged: Record<string, unknown>[] = []
+  const seen = new Set<string>()
+
+  for (const remote of remoteRows) {
+    const id = remote.id as string
+    seen.add(id)
+    const local = localMap.get(id)
+    if (!local) {
+      merged.push(remote)
+    } else {
+      const remoteTime = (remote.createdAt as number) ?? 0
+      const localTime = (local.createdAt as number) ?? 0
+      merged.push(remoteTime >= localTime ? remote : local)
+    }
+  }
+
+  for (const local of localRows) {
+    if (!seen.has(local.id as string)) {
+      merged.push(local)
+    }
+  }
+
+  return merged
+}
+
 export async function pullFromSupabase(): Promise<void> {
   const { getSupabase } = await import('@/lib/supabase')
   let supabase
@@ -193,12 +243,13 @@ export async function pullFromSupabase(): Promise<void> {
       const localTable = TABLE_MAP_REVERSE[table]
       if (!localTable) continue
 
-      if (localTable === 'tasks') await db.tasks.bulkPut(data as any[])
-      else if (localTable === 'flowSections') await db.flowSections.bulkPut(data as any[])
-      else if (localTable === 'driftEntries') await db.driftEntries.bulkPut(data as any[])
-      else if (localTable === 'reflections') await db.reflections.bulkPut(data as any[])
-      else if (localTable === 'categories') await db.categories.bulkPut(data as any[])
-      else if (localTable === 'templates') await db.templates.bulkPut(data as any[])
+      const merged = await mergeRemoteIntoLocal(localTable, data as any[])
+      if (localTable === 'tasks') await db.tasks.bulkPut(merged)
+      else if (localTable === 'flowSections') await db.flowSections.bulkPut(merged as any[])
+      else if (localTable === 'driftEntries') await db.driftEntries.bulkPut(merged as any[])
+      else if (localTable === 'reflections') await db.reflections.bulkPut(merged as any[])
+      else if (localTable === 'categories') await db.categories.bulkPut(merged as any[])
+      else if (localTable === 'templates') await db.templates.bulkPut(merged as any[])
       else if (localTable === 'settings') {
         for (const row of data) {
           await db.settings.put(row as any)
