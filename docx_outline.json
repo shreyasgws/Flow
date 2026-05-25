@@ -1,0 +1,628 @@
+{
+  "1. THE IDEA": [
+    "Flow is a calm operating system for daily momentum.",
+    "Not a productivity dashboard. Not a hustle tool. Not a habit tracker. Not a gamified planner.",
+    "A place to plan your day without turning your life into a productivity system.",
+    "No health tracking. No mood logging. No gamification. No streaks. No guilt. No pressure. No scores.",
+    "Just a clean, honest, breathing space to plan your day, move through it, and quietly reflect on how it went."
+  ],
+  "2. THE PHILOSOPHY": [
+    "Freedom First",
+    "Every task starts as a line of text. Type it, hit enter, it is there. No category required. No icon required. No Flow Section required. Add those later, or never — the task looks complete either way. Nothing feels incomplete without metadata.",
+    "Soft Memory, Not a Library",
+    "Flow remembers what you have typed before and surfaces gentle ghost suggestions when you start typing. Suggestions fade after 7 days of non-use. Nothing piles up. Nothing locks you in. There is no task library you must maintain.",
+    "Carry Forward, Your Choice"
+  ],
+  "3. WHAT THIS APP IS NOT": [
+    "Not a habit tracker (no streaks, no chains, no daily goals)",
+    "Not a health tracker (no steps, water, calories, mood)",
+    "Not a project manager (no subtasks, no assignees, no Kanban)",
+    "Not a calendar (no event invites, no time-blocking grid)",
+    "Not a journaling app (carry reason is a quick note, not a journal)"
+  ],
+  "4. TECH STACK": [
+    "FULL STACK OVERVIEW",
+    "Frontend: Next.js + React + Tailwind CSS + Motion + Zustand",
+    "Local Layer: IndexedDB + Dexie.js",
+    "Backend: Supabase + PostgreSQL + Auth + Storage + Realtime",
+    "Infrastructure: Vercel + PWA + Service Workers"
+  ],
+  "1. FRONTEND FRAMEWORK": [
+    "Next.js — App Router",
+    "Flow needs smooth page transitions, installability, mobile and desktop responsiveness, high-performance rendering, and scalable architecture. Next.js App Router provides layouts, transitions, nested systems, ambient environment layers, edge optimization, and PWA support.",
+    "Recommended folder structure:",
+    "app/ components/ features/ stores/ hooks/ lib/ styles/ motions/ tokens/ types/ utils/",
+    "A modular structure prevents chaos as Flow grows across Drift, reflections, Flow Sections, ambient environments, focus mode, undo systems, and sync systems."
+  ],
+  "2. UI LIBRARY": [
+    "React",
+    "Flow's UI changes constantly: ambient transitions, task movement, gesture states, drag systems, atmosphere adaptation, and focus transitions. React is ideal for reactive emotional interfaces.",
+    "Avoid massive component files, giant prop chains, and overuse of context. Prefer modular components, Zustand stores, and feature-based organization.",
+    "---"
+  ],
+  "3. STYLING SYSTEM": [
+    "Tailwind CSS + Semantic Tokens",
+    "Flow depends on atmosphere systems, adaptive spacing, motion states, dynamic themes, and ambient layering. Tailwind makes token-driven design systems much easier.",
+    "CRITICAL: Use semantic tokens, never hardcoded values.",
+    "surface-primary | surface-secondary | surface-elevated",
+    "text-primary | text-secondary | text-muted"
+  ],
+  "4. ANIMATION SYSTEM": [
+    "Motion (formerly Framer Motion)",
+    "Flow depends on emotional pacing, tactile interactions, atmosphere, calm transitions, and continuity feeling. Motion is one of the best libraries for emotionally responsive UI.",
+    "Handles: layout transitions (tasks moving between Flow Sections), shared element transitions (task opening into focus mode), ambient motion (subtle atmospheric drifting), and gesture systems (drag-to-convert Drift entries).",
+    "Motion timing guide:",
+    "120ms micro interactions | 220ms UI transitions | 400ms environmental changes | 800ms+ ambient atmosphere"
+  ],
+  "5. STATE MANAGEMENT": [
+    "Zustand",
+    "Redux is too heavy for Flow. Flow needs lightweight interaction state, fast updates, minimal boilerplate, and flexible stores.",
+    "Recommended stores: taskStore, driftStore, environmentStore, focusStore, syncStore, undoStore, settingsStore, reflectionStore.",
+    "The environment store becomes the heart of Ambient Mode:",
+    "environmentStore = { theme, ambientMode, motionIntensity, atmosphereLevel, spacingDensity, contrastLevel }"
+  ],
+  "6. LOCAL-FIRST DATABASE": [
+    "IndexedDB + Dexie.js",
+    "THIS IS ONE OF THE MOST IMPORTANT DECISIONS.",
+    "Flow should be local-first: interactions happen instantly with no loading feeling, sync happens quietly later. Without local-first, typing lag and drag delay destroy Flow's emotional philosophy of immediate responsiveness.",
+    "Dexie.js provides simpler APIs, querying, transactions, and versioning over raw IndexedDB.",
+    "Local-first sync architecture:"
+  ],
+  "7. BACKEND": [
+    "Supabase",
+    "Handles cloud sync, auth, backups, persistence, and cross-device continuity. Supabase provides PostgreSQL, auth, storage, realtime subscriptions, and row-level security.",
+    "Flow has relational data, historical continuity, recurring systems, reflections, undo stacks, and export systems — all deeply relational. PostgreSQL handles this beautifully.",
+    "---"
+  ],
+  "8. AUTHENTICATION": [
+    "After successful migration: delete all anonymous-ID records from Supabase. Show a single message: 'Your data is saved to your account.'",
+    "When the user chooses to sign in with Google: call supabase.auth.linkIdentity({ provider: 'google' }). If link succeeds, Supabase merges the accounts and the user keeps their data. If link fails, fall back to manual migration.",
+    "Flow uses anonymous-first onboarding by default. On first open, a Supabase anonymous session is created immediately (supabase.auth.signInAnonymously()). The user experiences the full product without any sign-in wall. Data saves to both IndexedDB (under the anonymous user ID) and Supabase.",
+    "Architectural Decision: Anonymous-first onboarding",
+    "Supabase Auth"
+  ],
+  "9. HOSTING & PWA": [
+    "Vercel + @serwist/next (or next-pwa)",
+    "Vercel for hosting with best Next.js integration, deployments, preview builds, and edge optimization.",
+    "Flow should feel personal, always available, calm, and device-native. PWA via @serwist/next makes Flow installable, offline-capable, and app-like.",
+    "---"
+  ],
+  "10. TESTING & QUALITY": [
+    "Playwright + Storybook + ESLint + Prettier",
+    "Flow is interaction-heavy. Playwright tests gestures, drag interactions, focus mode, motion systems, and mobile layouts. Manual testing alone will become painful.",
+    "Storybook lets you test themes, ambient states, components, motion variations, and accessibility across Ambient Mode's many UI states.",
+    "Vitest for unit tests.",
+    "---"
+  ],
+  "11. OPTIONAL LATER ADDITIONS": [
+    "Sentry for crash tracking, sync errors, and offline issues.",
+    "PostHog for minimal analytics — onboarding understanding and UX improvement only. NOT addictive analytics.",
+    "---",
+    "PERFORMANCE PHILOSOPHY",
+    "Avoid: excessive blur, giant shadows, continuous animation loops, particle systems everywhere, GPU-heavy effects."
+  ],
+  "5. DATABASE SCHEMA": [
+    "Table: users",
+    "id: uuid (PK)",
+    "email: text",
+    "display_name: text",
+    "avatar_url: text (from Google OAuth)"
+  ],
+  "6. PAGES AND ROUTES": [
+    "Drift has no dedicated route.",
+    "Review has no dedicated navigation tab.",
+    "Both are accessed contextually (see Navigation section).",
+    "PART THREE — NAVIGATION"
+  ],
+  "7. NAVIGATION PHILOSOPHY": [
+    "The biggest goal of Flow's navigation: users should never feel \"inside menus.\"",
+    "Instead, the app should feel like moving through layers of your day.",
+    "Home is the center of gravity. Everything else emerges from it, supports it, and returns to it.",
+    "Flow should never feel like:",
+    "A dashboard app"
+  ],
+  "8. BOTTOM NAVIGATION — 4 TABS ONLY": [
+    "[ Home ]  [ Week ]  [ Focus ]  [ Settings ]",
+    "That is it. No more, no less.",
+    "Why 4 tabs and not 5:",
+    "Review is not a primary destination. It is discovered by tapping a past date.",
+    "Drift is not a primary destination. It lives as the floating Drift button (always present)."
+  ],
+  "9. DRIFT FLOATING BUTTON": [
+    "Drift is accessed via a persistent floating circle button that lives on top of every screen.",
+    "This button goes everywhere with the user — Home, Week, Focus, Settings, everywhere.",
+    "Appearance",
+    "Shape: circle, 56px diameter",
+    "Background: --bg-overlay with a soft blur backdrop"
+  ],
+  "10. DRIFT BUTTON — CUSTOM DANDELION ICON": [
+    "The Drift button has a completely custom icon: an animated dandelion.",
+    "No other app uses this icon. It is exclusively Flow's.",
+    "Icon Design",
+    "8 stems radiating from a center core",
+    "Each stem has a circular seed tip at its end"
+  ],
+  "11. DRIFT BOTTOM SHEET": [
+    "Opens when the Drift button is tapped.",
+    "Visual Design",
+    "Height: 60% of screen",
+    "Background: --bg-overlay with blur backdrop",
+    "Border-radius: 20px 20px 0 0"
+  ],
+  "12. TRANSITION SYSTEM": [
+    "Flow should not feel like switching pages. It should feel like moving through states.",
+    "Named Transitions",
+    "Visual Navigation Hierarchy",
+    "At any moment, the user should visually understand four layers:",
+    "Named Transitions"
+  ],
+  "13. LANDING SCREEN (/)": [
+    "Full ambient screen. No hero image. No feature list. No screenshots.",
+    "The atmosphere IS the landing page.",
+    "Layout",
+    "[animated layered ambient background — morning warmth by default]",
+    "[ultra-fine grain overlay]"
+  ],
+  "14. HOME SCREEN (/home)": [
+    "The center of gravity. Where users spend 85–90% of their time.",
+    "Layer Order (top to bottom visually)",
+    "Ambient background (time-aware, always present)",
+    "Day Pulse header",
+    "Date strip (horizontal, scrollable)"
+  ],
+  "15. ADDING A TASK": [
+    "Tap composer",
+    "↓",
+    "Type anything → Enter → Task created",
+    "↓",
+    "Optional (tap icons below input):"
+  ],
+  "16. CATEGORIES": [
+    "Creating a Category",
+    "Tap category icon on any task, or + New Category in the category bottom sheet.",
+    "New Category",
+    "─────────────────────────────────────────",
+    "Name: [ Work                          ]"
+  ],
+  "17. TASK STATES AND INTERACTIONS": [
+    "Visual States",
+    "Default (Collapsed) State",
+    "The resting state of every task card. This is what the user sees 90% of the time.",
+    "Checkbox: 20×20px circle, 1.5px border --border-active, transparent fill. Unchecked.",
+    "Title: DM Sans 15px, --text-primary, single line, overflow ellipsis."
+  ],
+  "18. SESSION TRANSITIONS": [
+    "When a task is marked done, Flow never snaps coldly back to the plain task list.",
+    "The Micro-Transition",
+    "Duration: 1.2 to 1.8 seconds. Dismissable by tapping anywhere.",
+    "Checkmark fills with section atmosphere color (200ms)",
+    "Title strikes through and fades to 60% (200ms)"
+  ],
+  "19. FOCUS MODE (/focus/:taskId)": [
+    "Full screen. All chrome hidden. Sacred space.",
+    "Entry Points",
+    "Long press on any task → enters Focus Mode immediately",
+    "Swipe left on task → action menu → Focus option",
+    "Task expanded view → Focus button"
+  ],
+  "20. END OF DAY REVIEW (/review/:date)": [
+    "Accessed by tapping any past date in the date strip or any past day card in the weekly view.",
+    "Never accessible as a bottom nav tab — it is discovered contextually.",
+    "Always read-only.",
+    "Layout",
+    "Thursday, 22 May"
+  ],
+  "21. WEEKLY VIEW (/weekly)": [
+    "\"A memory of your week.\"",
+    "Not analytics. Not a dashboard. A quiet emotional scan of how the week moved.",
+    "Layout",
+    "<- May 2026 ->",
+    "Mon    Tue    Wed    Thu    Fri    Sat    Sun"
+  ],
+  "22. PLAN PAGE (/plan/:date)": [
+    "For future dates only. Same UI as home screen in edit mode.",
+    "Same layout as /home (timeline or checklist mode)",
+    "Date shown in header instead of greeting",
+    "\"Apply Template\" button visible in top-right area",
+    "All task interactions identical to home"
+  ],
+  "23. DAY WEIGHT SYSTEM": [
+    "Each day has a visual weight the UI naturally expresses — never labeled, always felt.",
+    "How Weight Is Calculated",
+    "Three inputs combined:",
+    "Total estimated time (sum of all task time estimates for the day)",
+    "Total task count"
+  ],
+  "24. DAY TEMPLATES": [
+    "Creating a Template",
+    "While on any day's plan → long press empty area or tap \"...\" menu → \"Save as Template\"",
+    "Name the template (e.g. \"Typical Monday\", \"Deep Work Day\", \"Light Day\")",
+    "Template stores: task titles, Flow Sections, categories, time estimates, friction levels, mode",
+    "Applying a Template"
+  ],
+  "25. RECURRING TASKS": [
+    "Setting Up Recurrence",
+    "During task creation or editing: tap 🔁 → choose:",
+    "None (default)",
+    "Daily (every day)",
+    "Weekdays (Monday through Friday only)"
+  ],
+  "26. CARRY FORWARD FLOW": [
+    "Morning Trigger",
+    "If yesterday had any unfinished tasks:",
+    "A soft banner appears at the top of the home screen after the day pulse",
+    "\"3 tasks from yesterday — carry them forward?\"",
+    "[ Review & Carry ]  [ Dismiss ]"
+  ],
+  "27. SOFT INTELLIGENCE SYSTEM": [
+    "The app observes patterns and suggests. Never auto-changes anything. Ever.",
+    "What It Detects",
+    "Overloaded days (too many tasks or estimated hours)",
+    "Repeated carry-forwards (same task carried 3+ consecutive days)",
+    "Long inactivity during an active plan (no interaction for 2+ hours)"
+  ],
+  "28. NOTIFICATIONS": [
+    "Core Rules",
+    "Maximum 1 background notification per day (the daily nudge)",
+    "Focus window alerts fire once, after the window time has passed",
+    "Recurring task notifications: only if user explicitly enables per task",
+    "NO guilt, shame, urgency, deadline, or failure language. Ever."
+  ],
+  "29. DESIGN DIRECTION": [
+    "Identity: Flow is a calm operating system for daily momentum.",
+    "The UI should feel like opening a window at dawn — quiet, spacious, alive.",
+    "Tone: Refined dark ambient. Not flashy. Not cold. Like a well-worn leather notebook in digital form, lit by a single soft lamp.",
+    "Brand direction: editorial, notebook, ambient, calm software, reflective.",
+    "Avoid: startup productivity aesthetic, neon, excessive gradients, cyber UI, dashboard energy."
+  ],
+  "30. AMBIENT BACKGROUND SYSTEM": [
+    "The background is not flat. It has depth, atmosphere, and responds to time of day.",
+    "Layer Structure (3 to 5 layers, composited)",
+    "Layer 1 (base): Darkest solid color",
+    "Layer 2: Soft blurred curved shape (landscape silhouette), 8% opacity",
+    "Layer 3: Floating haze gradient, 5% opacity, slow drift"
+  ],
+  "31. COLOR PALETTE — DARK MODE": [
+    "Background",
+    "--bg-base:        #0D0D10  (deepest layer, page background)",
+    "--bg-surface:     #161619  (cards, modals, task cards)",
+    "--bg-elevated:    #1E1E23  (hovered cards, active states, composer)",
+    "--bg-overlay:     #252529  (bottom sheets, popovers, Drift sheet)"
+  ],
+  "32. TYPOGRAPHY": [
+    "Fonts",
+    "All from Google Fonts, loaded via @import.",
+    "Fraunces — display serif",
+    "Purpose: screen titles, date headers, Day Pulse header, focus mode task title, weekly summary text, all large emotional text",
+    "Weights: 300 (light), 600 (semibold)"
+  ],
+  "33. SPACING AND LAYOUT": [
+    "Base Unit: 4px",
+    "Border Radius",
+    "Task card: 14px",
+    "Pill (composer, buttons, pills): 999px",
+    "Button: 10px"
+  ],
+  "34. MOTION AND ANIMATION": [
+    "Every animation serves meaning. Nothing animates for decoration alone.",
+    "Core Principle",
+    "Every animation serves meaning. Nothing animates for decoration alone. Motion in Flow communicates state change, provides spatial orientation, and reinforces the calm emotional identity. All animations are optional via Reduced Motion (Section 44, Feature 23).",
+    "Animation Architecture",
+    "All animations use CSS transforms (translate, scale, opacity) on GPU-composited layers. Never animate layout properties (width, height, top, left, margin, padding). Use will-change: transform on animated elements. Prefer CSS animations over JavaScript-driven animation for ambient/looping motion."
+  ],
+  "35. EMPTY STATES": [
+    "Every empty state is warm and inviting. Never clinical. Never generic.",
+    "Philosophy",
+    "Empty states in Flow are not dead ends. They are invitations. Every empty state must feel warm, spacious, and intentional — never cold, never confusing, never like something is broken.",
+    "First Launch — No Tasks Yet",
+    "Show: Day Pulse greeting with a soft welcome message."
+  ],
+  "36. LIGHT MODE CORE PHILOSOPHY": [
+    "This section defines the complete Light Mode philosophy, emotional direction, visual language, UI behavior, and interaction principles for Flow. The goal is not to create a standard light theme, but to create a distinct emotional environment that feels intentional, premium, calm, and human.",
+    "The light mode should not feel like a productivity dashboard.",
+    "It should feel like a quiet planning notebook sitting near a window in the early morning.",
+    "The emotional tone must be:",
+    "Warm"
+  ],
+  "37. LIGHT MODE EMOTIONAL IDENTITY": [
+    "The light theme should create emotional softness. Users should subconsciously feel less pressure when opening the app.",
+    "The UI should resemble:",
+    "Premium stationery",
+    "Editorial print layouts",
+    "High-end paper planners"
+  ],
+  "38. LIGHT MODE FULL COLOR SYSTEM": [
+    "Base Backgrounds",
+    "--bg-base:        #F6F2EA",
+    "--bg-surface:     #FFFDF8",
+    "--bg-elevated:    #F1ECE3",
+    "--bg-overlay:     #EBE5DB"
+  ],
+  "39. SURFACE & LAYERING PHILOSOPHY (LIGHT MODE)": [
+    "The light mode should feel paper-based rather than glass-based. Cards should feel gently stacked instead of floating.",
+    "Avoid:",
+    "Harsh shadows",
+    "Floating dashboard cards",
+    "High-gloss gradients"
+  ],
+  "40. TYPOGRAPHY BEHAVIOR (LIGHT MODE)": [
+    "Typography becomes more emotionally important in light mode.",
+    "Fraunces should be heavily emphasized for:",
+    "Headers",
+    "Dates",
+    "Focus mode titles"
+  ],
+  "41. COMPONENT DESIGN BEHAVIOR (LIGHT MODE)": [
+    "Task Cards",
+    "Warm paper-like backgrounds",
+    "Soft separators",
+    "Thin borders",
+    "Minimal shadows"
+  ],
+  "42. MOTION SYSTEM (LIGHT MODE)": [
+    "Motion in light mode should feel softer and lighter than dark mode.",
+    "Avoid:",
+    "Glow effects",
+    "Bloom effects",
+    "Dramatic scale animations"
+  ],
+  "43. FOCUS MODE IN LIGHT THEME": [
+    "Focus mode should resemble a clean writing desk.",
+    "The screen should feel:",
+    "Quiet",
+    "Spacious",
+    "Grounded"
+  ],
+  "44. ACCESSIBILITY REQUIREMENTS (LIGHT MODE)": [
+    "Light mode accessibility is critical because subtle palettes can reduce readability.",
+    "Requirements:",
+    "Strong enough contrast ratios",
+    "Clear active states",
+    "Legible borders"
+  ],
+  "45. EMOTIONAL CONSISTENCY RULES (LIGHT MODE)": [
+    "Every design decision in light mode should pass this test:",
+    "\"Does this feel calming and human, or efficient and corporate?\"",
+    "If something feels:",
+    "Too sharp",
+    "Too bright"
+  ],
+  "46. DUAL THEME IDENTITY SUMMARY": [
+    "Dark Mode Identity:",
+    "Night",
+    "Focus",
+    "Immersion",
+    "Quiet depth"
+  ],
+  "47. SETTINGS (/settings)": [
+    "Clean, grouped, no deep nesting. Never feature-heavy.",
+    "Profile",
+    "Avatar (from Google, circular, 56px)",
+    "Display name (editable inline)",
+    "Email (read-only)"
+  ],
+  "48. DATA SYNC STRATEGY": [
+    "Core Rule: Local-First, Offline-Fallback",
+    "Revised Architecture Decision: Local-first with Supabase as sync target. IndexedDB is the source of truth. Every write goes to IndexedDB first and immediately. The sync worker replays operations to Supabase in the background. Supabase confirms what IndexedDB already has. Rollbacks never happen because local state is always the committed state. The sync worker is a background process that does not block any user interaction.",
+    "Every write goes to Supabase immediately and directly. Local IndexedDB is a fallback only — never the primary path. The user should never feel like they are \"working offline\" unless there truly is no internet.",
+    "Local Write Flow (default, always preferred)",
+    "User performs any action"
+  ],
+  "49. UI STATE PERSISTENCE": [
+    "The app remembers exactly where the user left off. Every session continues from the last known state.",
+    "What Is Persisted",
+    "Stored in ui_state jsonb column on the users table. Updated on every meaningful interaction (debounced: max 1 write per 5 seconds).",
+    "On App Open Behavior",
+    "Load ui_state from Supabase (or local cache if offline)"
+  ],
+  "50. ALL 29 FEATURES — FULL DOCUMENTATION": [
+    "The original 18 core features plus 11 essential additional features and system refinements. These additions are not feature-bloat — they are infrastructural, emotional, and UX-level improvements that strengthen the core philosophy of Flow without compromising its simplicity.",
+    "Every feature in Flow must pass a single test: \"Does this increase calm momentum, or does it create management overhead?\" If it creates friction, complexity, guilt, or maintenance burden, it should not be added.",
+    "Feature 1: Day Templates",
+    "Architecture",
+    "Day templates store a snapshot of a day's plan structure — not specific task instances. When a template is applied, new plan_task rows are created in the target day_plan. The original tasks are never linked to the template after application."
+  ],
+  "1. User taps \"Apply Template\" on /plan/:date. 2. Bottom sheet shows list of temp": [
+    "After application: all tasks are fully editable independently. No link back to the template exists. Templates are only starting points.",
+    "Template source: saved from any day's plan via long-press on empty area or \"...\" menu in the top-right. The template captures the current state of tasks at the moment of saving. Future edits to the source day do not affect saved templates.",
+    "Maximum templates: 30. If the user hits the limit, the save button shows \"Template limit reached (30). Delete an existing template first.\"",
+    "Save any day's plan as a named template. Apply to any future date in one tap. Tasks appended (never replace existing). Fully editable after applying. Stores: task titles, slots, categories, time estimates, friction levels, mode. Never locks — applying a template is only a starting point. Managed in Settings → Day Templates.",
+    "Feature 2: Drag to Reorder"
+  ],
+  "1. User signs in with Google. 2. A single full-screen welcome appears (only on f": [
+    "After onboarding, the user is in the app with: an empty plan, a ready composer, no tasks, no categories, no templates, no data. The first thing the user should do is type a task and press Enter. The Day Pulse says \"Welcome. Tap below to plan your first day.\" The first task created triggers no celebration, no tooltip, no \"Great job!\" — the app simply works.",
+    "Returning to the welcome screen: the welcome screen is not shown again on subsequent visits. The user goes directly to /home. ui_state.last_active_date is used to restore the previous session state (see Section 49).",
+    "Purpose: Introduce the emotional identity of Flow immediately.",
+    "Structure:",
+    "One or two screens maximum"
+  ],
+  "51. EDGE CASES": [
+    "Day Boundary & Midnight Handling",
+    "Midnight crossing during Focus Mode: if a focus session starts at 11:30pm and crosses midnight, the session belongs to the start date. Elapsed time continues uninterrupted. Task completion after midnight but before day_start_hour: completion is attributed to the previous day. Task completion after day_start_hour: completion is attributed to the current day. Carry-forward banner checks day_start_hour boundary, not calendar midnight.",
+    "Recurring Task Edge Cases",
+    "If a recurring task is created on a day that already has an instance: no duplicate is created. If day_start_hour changes: existing recurrence schedules are not retroactively modified — they apply from the change forward. If a recurring task is carried forward: the carried instance is a one-off plan_task, not a new recurring instance. Deleting the base recurring task: all future instances are deleted (with Undo support). Past instances remain in review (read-only). Instance marked done before recurring rule change: the instance status is preserved.",
+    "Carry-Forward Edge Cases"
+  ],
+  "52. NON-NEGOTIABLE DESIGN PRINCIPLES": [
+    "Reduce visible complexity — the default state of every screen is always minimal",
+    "Make Flow feel alive — the background, timeline, active task, and Drift button all breathe",
+    "Preserve emotional safety — never guilt, never pressure, never judgment, never failure states",
+    "Use atmosphere carefully — depth and ambience must never distract from tasks",
+    "Avoid dashboard energy — no harsh analytics, no graphs, no scores, no percentages on the main screens"
+  ],
+  "53. FINAL EMOTIONAL GOAL": [
+    "When someone opens Flow, they should feel:",
+    "Calm",
+    "Clear",
+    "Capable",
+    "Unpressured"
+  ],
+  "54. FLOW SECTIONS — CUSTOM RHYTHM SYSTEM": [
+    "Core Philosophy",
+    "Flow replaces fixed time slots (Morning / Afternoon / Evening / Night) with Flow Sections — customizable, named, emotional containers for your daily rhythm. This is not a scheduling grid. It is a way to organize time by how life feels, not by what the clock says.",
+    "Traditional planners ask: \"What time is it?\" Flow asks: \"What part of your day is this?\"",
+    "A rigid clock-based structure quietly contradicts Flow's philosophy of softness, adaptability, emotional rhythm, and humane planning. Flow Sections make the app feel deeply personal, emotionally intelligent, non-corporate, and identity-driven.",
+    "What Is a Flow Section?"
+  ],
+  "55. AMBIENT MODE — ADAPTIVE ATMOSPHERE SYSTEM": [
+    "Core Philosophy",
+    "Most productivity apps are visually static. Whether the user is overwhelmed, calm, focused, exhausted, or reflective, the interface always behaves exactly the same. Flow's Ambient Mode changes that. Instead of a fixed interface, Flow becomes an emotionally responsive environment.",
+    "The UI subtly adapts to: time of day, workload density, focus state, interaction intensity, current Flow Section, and emotional pacing. Not dramatically. Not theatrically. Not in a gamified way.",
+    "The goal: the app should feel emotionally appropriate for the current moment. The user should rarely consciously notice the system changing. They should simply feel calmer, clearer, more grounded, and less pressured.",
+    "Ambient Mode is not a gimmick, a visual effect pack, or a dynamic wallpaper system. It is environmental comfort design."
+  ],
+  "1. Time-Based Atmosphere": [
+    "Quiet Morning:",
+    "The interface feels airy, warm, spacious, and soft. Slightly warmer tones, more whitespace, gentle opacity transitions, reduced visual density.",
+    "Deep Night:",
+    "The interface becomes quieter, dimmer, more immersive. Softened contrast, slower transitions, darker atmospheric layers, muted accent intensity."
+  ],
+  "2. Workload Density Adaptation": [
+    "Light Day (few tasks planned):",
+    "The UI breathes more, feels spacious, uses softer hierarchy. Spacing expands slightly. Ambient movement becomes calmer.",
+    "Heavy Day (many tasks planned):",
+    "The app subtly helps create structure. Tighter alignment, slightly denser spacing, reduced decorative effects, stronger typography hierarchy. This helps reduce overwhelm. The interface becomes more grounded."
+  ],
+  "3. Focus Session Adaptation": [
+    "When Focus Mode starts, the environment simplifies itself. Surrounding UI fades softly, decorative layers reduce, ambient motion nearly disappears, typography enlarges slightly, background noise decreases. The task becomes the emotional center. The interface feels sacred and isolated."
+  ],
+  "4. Flow Section Atmosphere": [
+    "Different Flow Sections influence atmosphere subtly:",
+    "Focus Window → quieter, structured",
+    "Calm Time → softer contrast",
+    "Creative Drift → warmer ambient movement",
+    "Low Energy → reduced stimulation"
+  ],
+  "56. REFLECTION LAYER — AWARENESS WITHOUT ANALYTICS": [
+    "Core Philosophy",
+    "Most productivity software turns life into metrics. Users are shown completion percentages, streaks, graphs, charts, scores, and productivity rankings. These systems often create guilt, obsession, burnout, and performance anxiety. Flow rejects this model completely.",
+    "But users still need feedback, continuity, meaning, and awareness. The Reflection Layer solves this. Instead of analytics, Flow offers emotional reflection. The app does not measure performance. It helps users notice patterns gently.",
+    "Core Goal",
+    "The Reflection Layer should help users feel aware, grounded, and connected to their rhythm — without feeling judged, evaluated, or optimized."
+  ],
+  "1. Rhythm Reflection — observes pacing patterns: heavier days, lighter days, pla": [],
+  "2. Energy Reflection — connected to Flow Sections: where focus naturally happens": [],
+  "3. Emotional Continuity — encourages sustainable movement: \"You kept returning.\"": [
+    "Important Rule: No Scores Ever",
+    "Never include percentages, rankings, productivity scores, achievement systems, or performance metrics. This would fundamentally damage Flow's identity.",
+    "Visual Design Philosophy",
+    "The Reflection Layer should feel editorial, spacious, quiet, and journal-like. Not dashboard-heavy, graph-dense, or data-oriented. Use large typography, soft spacing, minimal visuals, and subtle timeline cues.",
+    "Historical Continuity"
+  ],
+  "57. DRIFT CAPTURE SYSTEM — THOUGHTS BEFORE TASKS": [
+    "Core Philosophy",
+    "Most productivity apps assume tasks are already fully formed. Real life does not work that way. Usually, ideas appear suddenly, thoughts arrive incompletely, and intentions exist before structure. Drift is designed for pre-task thinking.",
+    "It captures fragments, ideas, reminders, feelings, sparks, and mental clutter — without forcing immediate organization.",
+    "Core Goal",
+    "Reduce mental pressure. The user should feel: \"I can release this thought safely.\" without needing to categorize, schedule, prioritize, structure, or optimize."
+  ],
+  "6. Drag Interaction": [
+    "If the user pins, highlights, enlarges, or interacts deeply with an entry, Flow may treat it as meaningful."
+  ],
+  "5. Manual Expansion": [
+    "Flow notices thematic recurrence.",
+    "homepage spacing still feels off",
+    "appears alongside:",
+    "need better homepage",
+    "Example:"
+  ],
+  "4. Repeated Similar Thoughts": [
+    "If an entry survives several days without fading, Flow may gently acknowledge it. Not as pressure. As continuity."
+  ],
+  "3. Long-Term Persistence": [
+    "The thought is evolving toward action.",
+    "redesign focus ui animations and spacing",
+    "becomes:",
+    "redesign focus ui",
+    "Example:"
+  ],
+  "2. Multiple Edits": [
+    "If the user repeatedly opens the same entry, Flow may infer: this thought still matters."
+  ],
+  "1. Reopened Drift Entry": [
+    "Valid Trigger Conditions",
+    "------------------------------------------------------------",
+    "Suggestions should NOT appear randomly. They should only appear under meaningful behavioral conditions.",
+    "Suggestion Trigger System",
+    "------------------------------------------------------------"
+  ],
+  "58. DRIFT-TO-TASK TRANSITION SYSTEM - FROM THOUGHT TO INTENTION": [
+    "Design Principle: The line between 'observational' and 'tracking' is extremely thin. A user who notices the app is counting how many times they open the same thought will feel surveilled, not supported. Enforce 'not every thought should become a task' through the app's tone and copy, not through a behavioral filter.",
+    "- Any form of invisible behavioral tracking for suggestion purposes",
+    "- Drag-to-convert onto timeline (complex gesture requiring significant UI real estate; explore in V2 if users request it)",
+    "- Recognition/suggestion engine (behavioral tracking of how many times a user opens an entry, thematic recurrence detection, pinned/enlarged tracking)",
+    "Removed from V1:"
+  ],
+  "59. MOBILE GESTURE FAILURE STATES": [
+    "Core Philosophy",
+    "Fluid, Forgiving Interaction",
+    "Gesture-heavy interfaces become frustrating without recovery systems. Flow gestures must feel stable, forgiving, and low-pressure.",
+    "Required Recovery Behaviors",
+    "Drag Cancellation: if user drags away, the task softly returns to its original position."
+  ],
+  "60. PERFORMANCE BUDGETS": [
+    "Core Philosophy",
+    "Calmness Must Feel Fast",
+    "A calm interface that stutters stops feeling calm. Performance is part of emotional UX.",
+    "Core Performance Targets",
+    "Mobile: 60 FPS target, under 16ms interaction response, instant task creation, smooth drag behavior."
+  ],
+  "61. ERROR-STATE PHILOSOPHY": [
+    "Core Philosophy",
+    "Failure Without Anxiety",
+    "Most apps treat errors like technical faults, warnings, and system failures.",
+    "Flow treats errors as moments of reassurance.",
+    "The app should never make users feel panic, uncertainty, or fear of data loss."
+  ],
+  "1. Sync Delay — soft syncing indicator, passive retry, no interruption.": [],
+  "2. Offline State — Flow transitions gracefully into quiet offline mode: \"Offline": [],
+  "3. Conflict Resolution — never expose technical merge jargon. Instead: \"Two vers": [
+    "Visual Philosophy",
+    "Error states should reduce stimulation, avoid aggressive red, and remain emotionally calm. Prefer muted amber, soft neutral tones, and restrained motion.",
+    "The app must NEVER imply \"Your work may be lost\" unless absolutely true. Trust is everything.",
+    "Flow's emotional identity is built on safety, calm, and trust. Error states must never break that trust. Every error message, every failure state, every unexpected behavior must feel like the app is on the user's side — not blaming them, not panicking, not giving up.",
+    "Error Language Principles"
+  ],
+  "62. NOTIFICATION TIMING RULES": [
+    "Core Philosophy",
+    "Gentle Continuity, Not Interruption",
+    "Notifications should feel like soft awareness, not productivity surveillance.",
+    "Notification Types",
+    "Soft Reminder: gentle awareness. Example: \"Your evening reflection is waiting quietly.\""
+  ],
+  "63. MULTI-DEVICE BEHAVIORAL RULES": [
+    "Core Philosophy",
+    "One Emotional Space Across Devices",
+    "Flow should feel like the same space continuing everywhere — not separate disconnected apps.",
+    "Active Focus Session Ownership",
+    "If Focus Mode is active on desktop, mobile should reflect: \"Focus session active on MacBook\""
+  ],
+  "64. DETAILED EMPTY-STATE SYSTEM": [
+    "Core Philosophy",
+    "Empty Space Is Emotional Space",
+    "In Flow, emptiness is not failure. An empty day should feel spacious, calm, and intentional — not unfinished, lonely, or broken.",
+    "Example Empty States",
+    "Empty Day: \"A lighter day can still move gently.\""
+  ],
+  "65. UNIVERSAL UNDO SYSTEM — SAFETY WITHOUT INTERRUPTION": [
+    "Core Philosophy",
+    "Most apps protect users through warnings, confirmations, and modal interruptions.",
+    "Flow protects users through reversibility.",
+    "Instead of constantly asking \"Are you sure?\", Flow assumes:",
+    "* humans make small mistakes,"
+  ],
+  "66. DESIGN TOKEN ARCHITECTURE — SCALABLE EMOTIONAL DESIGN": [
+    "Core Philosophy",
+    "Atmosphere cannot be hardcoded. Flow requires semantic emotional tokens for consistent scaling across Ambient Mode, Flow Sections, and theme variations.",
+    "Token Categories",
+    "Atmosphere Tokens",
+    "atmosphere.calm -- soft ambient tones for low-energy Flow Sections"
+  ],
+  "67. COMPONENT EMOTIONAL STATE SYSTEM — CONSISTENT EMOTIONAL INTERACTION": [
+    "Core Philosophy",
+    "Every component should communicate emotion consistently. Buttons, cards, tasks, toggles, and Drift entries all need emotional interaction rules.",
+    "Emotional State Map",
+    "Hover: invitation — the component softly acknowledges presence.",
+    "Active: grounded — the component feels pressed, stable, certain."
+  ]
+}

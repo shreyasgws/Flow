@@ -1,0 +1,1600 @@
+FLOW — Complete Animation & Performance System
+The Full Fix: Beauty Preserved Across All Devices
+---
+---
+PART ONE — THE PHILOSOPHY
+---
+The Core Principle
+Animations in Flow are not decoration. They are communication.
+Every animation either communicates a state change, provides spatial orientation,
+reinforces emotional identity, or gives tactile feedback.
+If an animation does none of these four things, it should not exist.
+The goal is not "fewer animations on low-end devices."
+The goal is "the same emotional experience rendered in cheaper materials."
+A warm amber glow at dawn can be:
+5 animated GPU-composited layers on a flagship device
+A single warm background color transition on a low-end device
+Both feel like morning. Both feel like Flow.
+One costs 2% GPU. The other costs 0.1%.
+The user feels the same thing.
+This distinction — same feeling, different cost — is the entire philosophy
+of the performance system. Nothing is removed. Everything is translated.
+---
+What "Beautiful" Actually Means on Low-End Devices
+A low-end phone user is not expecting desktop-class effects.
+They are expecting the app to feel:
+Instant
+Smooth
+Intentional
+Calm
+A low-end phone running a stripped-down but perfectly smooth Flow
+feels more beautiful than a flagship phone running Flow at 25fps
+because of over-ambitious blur and particle effects.
+Smoothness IS beauty on mobile.
+Jank destroys trust faster than any missing visual effect.
+The rule: a low-end device should never feel like it is running
+a degraded version of Flow. It should feel like it is running
+the right version of Flow for its capabilities.
+---
+---
+PART TWO — DEVICE TIER DETECTION
+---
+The Three Tiers
+```
+Tier 1 — FULL
+  Flagship phones (iPhone 14+, Pixel 7+, Samsung S22+)
+  Desktop and laptop browsers
+  All 5 ambient layers animated
+  Backdrop-filter blur active
+  Spring physics on all gestures
+  Canvas dandelion with full breathing + burst
+  Particle effects
+  Grain texture
+  Full stagger animations
+
+Tier 2 — STANDARD
+  Mid-range phones (Snapdragon 700 series, iPhone XR–13)
+  Most Android phones 2019–2022
+  2 ambient layers (color + bloom), static
+  No backdrop-filter blur (solid backgrounds)
+  Spring physics on gestures (reduced stiffness)
+  Canvas dandelion breathing only (no burst particle trail)
+  No particles
+  No grain texture
+  Stagger animations preserved (they are cheap)
+
+Tier 3 — MINIMAL
+  Low-end phones (Snapdragon 600 and below, older iPhones pre-XR)
+  Any device with prefers-reduced-motion
+  Any device with Save Data mode
+  Single background color per time period (no layers)
+  No backdrop-filter ever
+  No spring physics (linear ease 200ms)
+  Static dandelion SVG (no canvas, no animation)
+  No particles, no grain, no bloom
+  No stagger (all elements appear simultaneously)
+  Only interaction animations remain (essential only)
+```
+---
+Detection Logic
+Create this file first before any component is written.
+It runs once at startup. Result is locked for the session.
+```javascript
+// /src/lib/deviceTier.js
+
+export const TIERS = {
+  FULL: 'full',
+  STANDARD: 'standard',
+  MINIMAL: 'minimal'
+}
+
+function runGPUBenchmark() {
+  // Quick canvas benchmark — draws 1000 gradient operations
+  // Returns true if device can handle it in under 8ms
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = 200
+    canvas.height = 200
+    const ctx = canvas.getContext('2d')
+    const start = performance.now()
+    for (let i = 0; i < 100; i++) {
+      const grad = ctx.createRadialGradient(100, 100, 0, 100, 100, 100)
+      grad.addColorStop(0, 'rgba(200,131,42,0.1)')
+      grad.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = grad
+      ctx.fillRect(0, 0, 200, 200)
+    }
+    const elapsed = performance.now() - start
+    return elapsed < 8
+  } catch {
+    return false
+  }
+}
+
+function detectTier() {
+  // Immediate minimal signals — no benchmark needed
+  const prefersReducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches
+
+  const saveData = navigator.connection?.saveData === true
+
+  const slowConnection = ['slow-2g', '2g'].includes(
+    navigator.connection?.effectiveType
+  )
+
+  if (prefersReducedMotion || saveData || slowConnection) {
+    return TIERS.MINIMAL
+  }
+
+  // Hardware signals
+  const memory = navigator.deviceMemory || 4      // GB, defaults 4 if not available
+  const cores = navigator.hardwareConcurrency || 4
+
+  if (memory <= 1 || cores <= 2) {
+    return TIERS.MINIMAL
+  }
+
+  if (memory <= 3 || cores <= 4) {
+    // Run quick benchmark to decide between minimal and standard
+    const gpuCapable = runGPUBenchmark()
+    return gpuCapable ? TIERS.STANDARD : TIERS.MINIMAL
+  }
+
+  // Higher end — benchmark to decide between standard and full
+  const gpuCapable = runGPUBenchmark()
+  return gpuCapable ? TIERS.FULL : TIERS.STANDARD
+}
+
+// Run detection once, lock it
+export const DEVICE_TIER = detectTier()
+
+// Write to document so CSS can read it
+document.documentElement.dataset.tier = DEVICE_TIER
+
+// Write to localStorage so subsequent sessions skip benchmark
+// (benchmark result cached for 7 days)
+try {
+  const cached = localStorage.getItem('flow_device_tier')
+  const cachedTime = localStorage.getItem('flow_device_tier_time')
+  const sevenDays = 7 * 24 * 60 * 60 * 1000
+
+  if (cached && cachedTime && Date.now() - Number(cachedTime) < sevenDays) {
+    // Use cached result — but always respect prefers-reduced-motion in real time
+    const tier = (prefersReducedMotion || saveData) ? TIERS.MINIMAL : cached
+    document.documentElement.dataset.tier = tier
+  } else {
+    localStorage.setItem('flow_device_tier', DEVICE_TIER)
+    localStorage.setItem('flow_device_tier_time', String(Date.now()))
+  }
+} catch {
+  // localStorage unavailable — use detected tier
+}
+
+// Export a hook for React components
+export function useDeviceTier() {
+  return DEVICE_TIER
+}
+
+// Export boolean helpers
+export const isFull = DEVICE_TIER === TIERS.FULL
+export const isStandard = DEVICE_TIER === TIERS.STANDARD
+export const isMinimal = DEVICE_TIER === TIERS.MINIMAL
+export const hasSpring = !isMinimal
+export const hasBlur = isFull
+export const hasAmbient = !isMinimal
+export const hasCanvas = !isMinimal
+export const hasParticles = isFull
+export const hasGrain = isFull
+export const hasStagger = !isMinimal
+```
+---
+---
+PART THREE — CSS TOKEN SYSTEM
+---
+The Token Architecture
+Every visual property in Flow reads from a CSS custom property.
+Components never hardcode animation values, durations, blur amounts,
+or shadow values. They always use tokens.
+When the device tier changes a token value, every component
+that reads that token adapts automatically.
+No component needs to know what tier it is on.
+```css
+/* /src/styles/tokens.css */
+
+/* ─────────────────────────────────────────────
+   TIER 1 — FULL (default, applied to :root)
+   ───────────────────────────────────────────── */
+:root {
+
+  /* Ambient system */
+  --ambient-layer-count:    5;
+  --ambient-base-opacity:   1;
+  --ambient-silhouette-op:  0.08;
+  --ambient-haze-op:        0.05;
+  --ambient-bloom-op:       0.03;
+  --ambient-grain-op:       0.04;
+  --ambient-particle-op:    0.02;
+  --ambient-play-state:     running;
+  --ambient-duration-1:     30s;
+  --ambient-duration-2:     40s;
+  --ambient-duration-3:     25s;
+
+  /* Blur */
+  --blur-composer:          12px;
+  --blur-sheet:             16px;
+  --blur-nav:               8px;
+  --blur-drift-button:      8px;
+
+  /* Shadows */
+  --shadow-card:            0 1px 3px rgba(0,0,0,0.4);
+  --shadow-elevated:        0 4px 16px rgba(0,0,0,0.5);
+  --shadow-float:           0 6px 20px rgba(0,0,0,0.6);
+  --shadow-drag:            0 8px 30px rgba(0,0,0,0.6);
+  --shadow-drift-button:    0 0 0 4px rgba(91,140,255,0.06),
+                            0 6px 20px rgba(0,0,0,0.6);
+
+  /* Motion */
+  --ease-default:           cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring:            cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in:                cubic-bezier(0.4, 0, 1, 1);
+  --ease-out:               cubic-bezier(0, 0, 0.2, 1);
+
+  /* Durations */
+  --dur-micro:              100ms;
+  --dur-fast:               200ms;
+  --dur-default:            300ms;
+  --dur-slow:               400ms;
+  --dur-ambient:            600ms;
+
+  /* Stagger */
+  --stagger-delay:          40ms;
+  --stagger-task:           30ms;
+  --stagger-metadata:       30ms;
+  --stagger-weekly:         40ms;
+
+  /* Spring physics (used by Framer Motion) */
+  --spring-stiffness:       120;
+  --spring-damping:         14;
+  --spring-mass:            1;
+
+  /* Focus mode */
+  --focus-breathe-duration: 6s;
+  --focus-breathe-scale:    1.02;
+
+  /* Timeline */
+  --timeline-pulse-duration:2s;
+  --timeline-line-width:    1.5px;
+
+  /* Dandelion */
+  --dandelion-animate:      1;   /* 1 = canvas animation, 0 = static SVG */
+  --dandelion-burst:        1;   /* 1 = burst on tap, 0 = disabled */
+}
+
+
+/* ─────────────────────────────────────────────
+   TIER 2 — STANDARD
+   Applied via [data-tier="standard"] on <html>
+   ───────────────────────────────────────────── */
+[data-tier="standard"] {
+
+  /* Ambient — 2 layers only, bloom and base */
+  --ambient-silhouette-op:  0;        /* silhouette layer hidden */
+  --ambient-haze-op:        0;        /* haze layer hidden */
+  --ambient-bloom-op:       0.04;     /* slightly stronger to compensate */
+  --ambient-grain-op:       0;        /* grain off */
+  --ambient-particle-op:    0;        /* particles off */
+
+  /* No backdrop blur — solid backgrounds instead */
+  --blur-composer:          0px;
+  --blur-sheet:             0px;
+  --blur-nav:               0px;
+  --blur-drift-button:      0px;
+
+  /* Lighter shadows */
+  --shadow-card:            0 1px 2px rgba(0,0,0,0.3);
+  --shadow-elevated:        0 2px 8px rgba(0,0,0,0.4);
+  --shadow-float:           0 4px 12px rgba(0,0,0,0.5);
+  --shadow-drag:            0 6px 20px rgba(0,0,0,0.5);
+  --shadow-drift-button:    0 4px 12px rgba(0,0,0,0.5);
+
+  /* Spring slightly less bouncy */
+  --spring-stiffness:       100;
+  --spring-damping:         16;
+
+  /* Dandelion: breathing only, no tap burst */
+  --dandelion-burst:        0;
+}
+
+
+/* ─────────────────────────────────────────────
+   TIER 3 — MINIMAL
+   Applied via [data-tier="minimal"] on <html>
+   ───────────────────────────────────────────── */
+[data-tier="minimal"] {
+
+  /* Ambient — all layers hidden */
+  --ambient-silhouette-op:  0;
+  --ambient-haze-op:        0;
+  --ambient-bloom-op:       0;
+  --ambient-grain-op:       0;
+  --ambient-particle-op:    0;
+  --ambient-play-state:     paused;   /* all CSS keyframes paused */
+
+  /* No blur ever */
+  --blur-composer:          0px;
+  --blur-sheet:             0px;
+  --blur-nav:               0px;
+  --blur-drift-button:      0px;
+
+  /* No shadows on cards (use borders instead for depth) */
+  --shadow-card:            none;
+  --shadow-elevated:        none;
+  --shadow-float:           0 2px 6px rgba(0,0,0,0.3);
+  --shadow-drag:            0 4px 10px rgba(0,0,0,0.4);
+  --shadow-drift-button:    0 2px 6px rgba(0,0,0,0.4);
+
+  /* Linear ease replaces all spring/curve easing */
+  --ease-default:           linear;
+  --ease-spring:            linear;
+
+  /* Shorter durations — feels snappy not slow */
+  --dur-micro:              50ms;
+  --dur-fast:               100ms;
+  --dur-default:            150ms;
+  --dur-slow:               200ms;
+  --dur-ambient:            200ms;
+
+  /* No stagger — all elements appear simultaneously */
+  --stagger-delay:          0ms;
+  --stagger-task:           0ms;
+  --stagger-metadata:       0ms;
+  --stagger-weekly:         0ms;
+
+  /* No spring physics */
+  --spring-stiffness:       300;      /* very stiff = effectively instant */
+  --spring-damping:         30;
+
+  /* Focus mode — no breathing */
+  --focus-breathe-duration: 99999s;   /* effectively stopped */
+  --focus-breathe-scale:    1;
+
+  /* Timeline — thinner, no pulse */
+  --timeline-pulse-duration:99999s;
+  --timeline-line-width:    1px;
+
+  /* Dandelion — static SVG, no canvas */
+  --dandelion-animate:      0;
+  --dandelion-burst:        0;
+
+  /* Add subtle borders to replace depth from shadows/blur */
+  --minimal-card-border:    1px solid var(--border);
+}
+```
+---
+---
+PART FOUR — THE FOUR ANIMATION LAYERS IN DETAIL
+---
+Layer 1 — Interaction Animations
+These are triggered directly by user action.
+The user is watching these happen.
+They must be perfect on every device including Tier 3.
+They are the non-negotiable beauty of Flow.
+What they are:
+```
+Task completion (checkmark fill + title strike)    200ms
+Card expand / collapse                             200ms ease-out
+Swipe gesture follow                               Real-time, no lag
+Drag lift                                          150ms
+Drag drop                                          300ms spring
+Composer expand                                    300ms spring
+Bottom sheet open                                  350ms spring
+Bottom sheet close                                 280ms ease-in
+Drift sheet open                                   300ms spring
+Drift sheet close                                  250ms ease-in
+Page transitions                                   280ms ease-out
+Focus mode entry                                   400ms
+Focus mode exit                                    350ms ease-out
+```
+Implementation rules:
+CSS `transform` and `opacity` only. Never width, height, top, left, margin
+`will-change: transform` on every element that animates
+`translateZ(0)` to force GPU layer promotion
+On Tier 3: same animations, shorter durations (see token table), linear easing
+These animations NEVER get disabled. A Tier 3 device still gets the
+checkmark fill, the card expand, the sheet spring.
+They are just slightly shorter and linear instead of spring-curved.
+This is the difference between "snappy" and "broken."
+Task Completion Animation (works on all tiers):
+```css
+/* The checkmark fills with section color */
+.task-checkbox {
+  transition: background-color var(--dur-fast) var(--ease-default),
+              border-color var(--dur-fast) var(--ease-default);
+  will-change: transform;
+}
+
+/* Title strikes through */
+.task-title-done {
+  transition: opacity var(--dur-fast) var(--ease-out),
+              text-decoration var(--dur-fast);
+}
+
+/* Card settles */
+.task-card-done {
+  transition: opacity var(--dur-default) var(--ease-out);
+}
+```
+On Tier 3: `--dur-fast` is 100ms and `--ease-default` is linear.
+The animation still happens. It is just shorter and linear.
+Still feels intentional. Not broken.
+---
+Layer 2 — Response Animations
+Triggered by data changes or system events.
+Not continuous. Fire once, complete, go idle.
+Cost is near-zero when not firing.
+What they are:
+```
+Task creation fade-in              300ms, then stops
+Weekly card stagger on page load   40ms × 7, then stops completely
+Day Pulse fade-in on load          200ms, then stops
+Carry forward banner slide-in      250ms, then stops
+Soft Intelligence suggestion fade  300ms, then stops
+Session transition prompt fade     300ms, then stops
+Timeline line state change         400ms, then stops
+Drift item creation                300ms, then stops
+Badge count bump on new drift item 150ms scale, then stops
+Sync indicator state changes       200ms, then stops
+```
+Key insight:
+These animations are free most of the time because they are not running.
+A task creation animation costs GPU for 300ms out of every hour the user
+uses the app. The total amortized cost is negligible.
+On Tier 3, stagger is removed (all at 0ms delay) but the animations
+themselves still run. Tasks still fade in. Sheets still open.
+The only difference is that 7 weekly cards appear at the same time
+instead of with 40ms delays.
+Stagger implementation:
+```css
+/* Full and Standard — staggered */
+.weekly-card:nth-child(1) { animation-delay: calc(0 * var(--stagger-weekly)); }
+.weekly-card:nth-child(2) { animation-delay: calc(1 * var(--stagger-weekly)); }
+.weekly-card:nth-child(3) { animation-delay: calc(2 * var(--stagger-weekly)); }
+.weekly-card:nth-child(4) { animation-delay: calc(3 * var(--stagger-weekly)); }
+.weekly-card:nth-child(5) { animation-delay: calc(4 * var(--stagger-weekly)); }
+.weekly-card:nth-child(6) { animation-delay: calc(5 * var(--stagger-weekly)); }
+.weekly-card:nth-child(7) { animation-delay: calc(6 * var(--stagger-weekly)); }
+
+/* On Tier 3: --stagger-weekly = 0ms so all delays are 0 */
+/* All 7 cards appear simultaneously */
+/* Still looks intentional — just snappier */
+```
+---
+Layer 3 — Ambient Animations
+Always running. The atmosphere of Flow.
+This is where the visual beauty lives.
+This is also where the performance risk lives.
+The fix: tier-adaptive rendering with CSS-only GPU-composited motion.
+Full Tier Implementation (5 layers):
+```jsx
+// /src/components/layout/AmbientBackground.jsx
+
+import { useMemo, useEffect, useState } from 'react'
+import { isFull, isStandard, isMinimal } from '../../lib/deviceTier'
+
+function getTimeOfDay() {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'morning'
+  if (hour >= 12 && hour < 17) return 'afternoon'
+  if (hour >= 17 && hour < 21) return 'evening'
+  return 'night'
+}
+
+const TIME_CONFIG = {
+  morning: {
+    base: '#0F0E0C',
+    bloom: '#C8832A',
+    bloomPosition: '80% 20%',
+    bloomOpacity: 0.08,
+  },
+  afternoon: {
+    base: '#0D0D11',
+    bloom: '#4A7FA5',
+    bloomPosition: '50% 50%',
+    bloomOpacity: 0.06,
+  },
+  evening: {
+    base: '#0B0D12',
+    bloom: '#3A5A7A',
+    bloomPosition: '20% 80%',
+    bloomOpacity: 0.08,
+  },
+  night: {
+    base: '#09090F',
+    bloom: '#4A3070',
+    bloomPosition: '50% 60%',
+    bloomOpacity: 0.07,
+  },
+}
+
+export default function AmbientBackground() {
+  const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay)
+
+  // Update time of day every 60 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeOfDay(getTimeOfDay())
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const config = TIME_CONFIG[timeOfDay]
+
+  // Tier 3: just a single background color
+  // Simple, clean, still feels like morning/evening
+  if (isMinimal) {
+    return (
+      <div
+        className="ambient-root"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          backgroundColor: config.base,
+          transition: `background-color var(--dur-ambient) linear`,
+        }}
+      />
+    )
+  }
+
+  // Tier 2: base color + bloom gradient only, static
+  if (isStandard) {
+    return (
+      <div
+        className="ambient-root"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          backgroundColor: config.base,
+          transition: `background-color var(--dur-ambient) linear`,
+        }}
+      >
+        {/* Layer 4: bloom — single radial gradient, no animation */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: `radial-gradient(
+              ellipse 60% 60% at ${config.bloomPosition},
+              ${config.bloom}${Math.round(config.bloomOpacity * 255).toString(16).padStart(2,'0')} 0%,
+              transparent 70%
+            )`,
+            // No animation on standard — static bloom
+            // Still creates depth and atmosphere
+            // Just not breathing
+          }}
+        />
+      </div>
+    )
+  }
+
+  // Tier 1: all 5 layers, animated
+  return (
+    <div
+      className="ambient-root"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+        backgroundColor: config.base,
+        transition: `background-color var(--dur-ambient) linear`,
+      }}
+    >
+      {/* Layer 2: Silhouette blur shape */}
+      <div
+        className="ambient-silhouette"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(
+            ellipse 80% 40% at 50% 70%,
+            ${config.bloom}14 0%,
+            transparent 60%
+          )`,
+          filter: 'blur(40px)',
+          opacity: 'var(--ambient-silhouette-op)',
+          animation: 'ambientDrift1 30s ease-in-out infinite',
+          animationPlayState: 'var(--ambient-play-state)',
+          willChange: 'transform',
+        }}
+      />
+
+      {/* Layer 3: Haze gradient */}
+      <div
+        className="ambient-haze"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(
+            ellipse 100% 80% at ${config.bloomPosition},
+            ${config.bloom}0D 0%,
+            transparent 60%
+          )`,
+          filter: 'blur(60px)',
+          opacity: 'var(--ambient-haze-op)',
+          animation: 'ambientDrift2 40s ease-in-out infinite',
+          animationPlayState: 'var(--ambient-play-state)',
+          willChange: 'transform',
+        }}
+      />
+
+      {/* Layer 4: Bloom */}
+      <div
+        className="ambient-bloom"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(
+            circle 200px at ${config.bloomPosition},
+            ${config.bloom}08 0%,
+            transparent 70%
+          )`,
+          opacity: 'var(--ambient-bloom-op)',
+          animation: 'ambientDrift3 25s ease-in-out infinite',
+          animationPlayState: 'var(--ambient-play-state)',
+          willChange: 'transform',
+        }}
+      />
+
+      {/* Layer 5: Grain texture — static SVG tile, no animation */}
+      <div
+        className="ambient-grain"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+          backgroundSize: '200px 200px',
+          opacity: 'var(--ambient-grain-op)',
+          // No animation on grain — static texture
+          // This is intentional: animated grain = noise = GPU expensive
+        }}
+      />
+
+      {/* Particles: only on Tier 1 */}
+      <AmbientParticles />
+    </div>
+  )
+}
+```
+Ambient Particles (Tier 1 only):
+```jsx
+// Only rendered on Tier 1
+// 3 particles, pure CSS keyframe animation
+// Each is a 2px circle with 2% opacity
+// GPU-composited: opacity + transform only
+
+function AmbientParticles() {
+  return (
+    <>
+      {[0, 1, 2].map(i => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            width: '2px',
+            height: '2px',
+            borderRadius: '50%',
+            background: 'white',
+            left: `${[15, 45, 75][i]}%`,
+            bottom: '10%',
+            opacity: 'var(--ambient-particle-op)',
+            animation: `particleFloat ${[20, 30, 25][i]}s linear infinite`,
+            animationDelay: `${[0, 8, 16][i]}s`,
+            animationPlayState: 'var(--ambient-play-state)',
+            willChange: 'transform',
+          }}
+        />
+      ))}
+    </>
+  )
+}
+```
+---
+Layer 4 — Microstate Animations
+The smallest animations. The ones that make Flow feel alive
+without the user ever consciously noticing them.
+Almost all of them are CSS keyframes on opacity and scale only.
+```css
+/* /src/styles/animations.css */
+
+/* ─── AMBIENT DRIFT (Layer 3 animations) ─── */
+@keyframes ambientDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(8px, -12px) scale(1.02); }
+  66%       { transform: translate(-6px, 6px) scale(0.99); }
+}
+
+@keyframes ambientDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%       { transform: translate(-10px, 8px) scale(1.03); }
+  75%       { transform: translate(8px, -6px) scale(0.98); }
+}
+
+@keyframes ambientDrift3 {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(12px, -10px); }
+}
+
+/* ─── PARTICLE FLOAT ─── */
+@keyframes particleFloat {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.02; }
+  90%  { opacity: 0.02; }
+  100% { transform: translateY(-60vh) translateX(8px); opacity: 0; }
+}
+
+/* ─── FOCUS MODE BACKGROUND BREATHING ─── */
+/* Only fires in focus mode, paused everywhere else */
+@keyframes focusBreathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(var(--focus-breathe-scale)); }
+}
+
+/* ─── TIMELINE ACTIVE DOT PULSE ─── */
+@keyframes timelinePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* ─── SYNC INDICATOR PULSE ─── */
+@keyframes syncPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ─── GENERAL FADE IN ─── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── SLIDE DOWN (carry forward banner) ─── */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── TASK CREATION ─── */
+@keyframes taskAppear {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ─── BADGE BUMP ─── */
+@keyframes badgeBump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+```
+Microstate CSS classes:
+```css
+/* Timeline active dot */
+.timeline-dot-active {
+  animation: timelinePulse var(--timeline-pulse-duration) ease-in-out infinite;
+  animation-play-state: var(--ambient-play-state);
+  will-change: transform, opacity;
+}
+
+/* Focus background */
+.focus-background {
+  animation: focusBreathe var(--focus-breathe-duration) ease-in-out infinite;
+  /* Only active when in focus route */
+  /* Paused everywhere else */
+  will-change: transform;
+}
+
+/* Sync indicator */
+.sync-indicator-syncing {
+  animation: syncPulse 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* New task */
+.task-card-new {
+  animation: taskAppear var(--dur-default) var(--ease-default) both;
+  will-change: transform, opacity;
+}
+
+/* Badge bump on new drift item */
+.drift-badge-bump {
+  animation: badgeBump 150ms var(--ease-spring) both;
+  will-change: transform;
+}
+```
+---
+---
+PART FIVE — THE DANDELION BUTTON PER TIER
+---
+The Dandelion Problem
+The dandelion is a canvas element running requestAnimationFrame continuously.
+On low-end devices this is an extra continuous GPU task.
+The fix: on Tier 3, the dandelion becomes a static SVG icon.
+Same shape. Same aesthetic. Zero animation cost.
+On Tier 2, it breathes but does not burst.
+On Tier 1, full breathing and tap burst.
+The Three Dandelion Renders:
+```jsx
+// /src/components/drift/DandelionIcon.jsx
+
+import { useEffect, useRef } from 'react'
+import { isFull, isStandard, isMinimal, hasCanvas } from '../../lib/deviceTier'
+
+// Static SVG — identical visual to the canvas version
+// Used on Tier 3
+function DandelionStatic() {
+  return (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Center core */}
+      <circle cx="14" cy="14" r="2.2" fill="rgba(240,239,232,0.92)" />
+
+      {/* 8 stems — clockwise from top */}
+      {/* Top: opacity 90%, length 11 */}
+      <line x1="14" y1="11.8" x2="14" y2="3" stroke="rgba(240,239,232,0.90)"
+            strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="14" cy="2.5" r="1.2" fill="rgba(240,239,232,0.90)"/>
+
+      {/* Top-right: opacity 76%, length 10 */}
+      <line x1="15.5" y1="12.5" x2="21" y2="7" stroke="rgba(240,239,232,0.76)"
+            strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="21.5" cy="6.5" r="1.1" fill="rgba(240,239,232,0.76)"/>
+
+      {/* Right: opacity 60%, length 10 */}
+      <line x1="16.2" y1="14" x2="24" y2="14" stroke="rgba(240,239,232,0.60)"
+            strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="24.5" cy="14" r="1.0" fill="rgba(240,239,232,0.60)"/>
+
+      {/* Bottom-right: opacity 44%, length 9 */}
+      <line x1="15.5" y1="15.5" x2="20.5" y2="20.5" stroke="rgba(240,239,232,0.44)"
+            strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="21" cy="21" r="0.9" fill="rgba(240,239,232,0.44)"/>
+
+      {/* Bottom: opacity 30%, length 8 */}
+      <line x1="14" y1="16.2" x2="14" y2="23" stroke="rgba(240,239,232,0.30)"
+            strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="14" cy="23.5" r="0.8" fill="rgba(240,239,232,0.30)"/>
+
+      {/* Bottom-left: opacity 26%, length 9 */}
+      <line x1="12.5" y1="15.5" x2="7.5" y2="20.5" stroke="rgba(240,239,232,0.26)"
+            strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="7" cy="21" r="0.7" fill="rgba(240,239,232,0.26)"/>
+
+      {/* Left: opacity 50%, length 10 */}
+      <line x1="11.8" y1="14" x2="4" y2="14" stroke="rgba(240,239,232,0.50)"
+            strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="3.5" cy="14" r="0.9" fill="rgba(240,239,232,0.50)"/>
+
+      {/* Top-left: opacity 66%, length 10 */}
+      <line x1="12.5" y1="12.5" x2="7" y2="7" stroke="rgba(240,239,232,0.66)"
+            strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="6.5" cy="6.5" r="1.05" fill="rgba(240,239,232,0.66)"/>
+    </svg>
+  )
+}
+
+// Canvas version — breathing animation (Tier 2 and Tier 1)
+// Burst animation only on Tier 1 (--dandelion-burst = 1)
+function DandelionCanvas({ triggerBurst }) {
+  const canvasRef = useRef(null)
+  const stateRef = useRef({
+    t: 0,
+    bursting: false,
+    burstT: 0,
+    rafId: null,
+  })
+
+  const stems = [
+    { angle: -Math.PI/2,    baseLen: 11, baseOp: 0.92, phase: 0 },
+    { angle: -Math.PI/4,    baseLen: 10, baseOp: 0.76, phase: Math.PI*2/8*1 },
+    { angle: 0,             baseLen: 10, baseOp: 0.60, phase: Math.PI*2/8*2 },
+    { angle: Math.PI/4,     baseLen: 9,  baseOp: 0.44, phase: Math.PI*2/8*3 },
+    { angle: Math.PI/2,     baseLen: 8,  baseOp: 0.30, phase: Math.PI*2/8*4 },
+    { angle: 3*Math.PI/4,   baseLen: 9,  baseOp: 0.26, phase: Math.PI*2/8*5 },
+    { angle: Math.PI,       baseLen: 10, baseOp: 0.50, phase: Math.PI*2/8*6 },
+    { angle: -3*Math.PI/4,  baseLen: 10, baseOp: 0.66, phase: Math.PI*2/8*7 },
+  ]
+
+  const CX = 20, CY = 20
+
+  const easeOutCubic = x => 1 - Math.pow(1 - x, 3)
+  const springFn = x => {
+    const s = 1.5
+    return Math.pow(2, -10*x) * Math.sin((x - s/4) * (2*Math.PI) / s) + 1
+  }
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const dpr = Math.min(window.devicePixelRatio || 1, 2) // cap at 2x
+    canvas.width = 40 * dpr
+    canvas.height = 40 * dpr
+    canvas.style.width = '40px'
+    canvas.style.height = '40px'
+    ctx.scale(dpr, dpr)
+
+    function draw() {
+      const state = stateRef.current
+      ctx.clearRect(0, 0, 40, 40)
+
+      state.t += 0.022
+
+      // Burst state machine
+      let extraLen = 0
+      let opMul = 1
+
+      if (state.bursting) {
+        state.burstT += 0.016
+        const BURST_OUT = 0.38
+        const BURST_HOLD = 0.12
+        const BURST_IN = 0.55
+        const total = BURST_OUT + BURST_HOLD + BURST_IN
+
+        if (state.burstT >= total) {
+          state.bursting = false
+          state.burstT = 0
+        } else if (state.burstT < BURST_OUT) {
+          const p = state.burstT / BURST_OUT
+          extraLen = easeOutCubic(p) * 9
+          opMul = 1 - easeOutCubic(p) * 0.3
+        } else if (state.burstT < BURST_OUT + BURST_HOLD) {
+          extraLen = 9
+          opMul = 0.7
+        } else {
+          const p = (state.burstT - BURST_OUT - BURST_HOLD) / BURST_IN
+          const springVal = springFn(p)
+          extraLen = Math.max(0, (1 - springVal) * 9)
+          opMul = 0.7 + springVal * 0.3
+        }
+      }
+
+      // Draw stems
+      stems.forEach((stem, i) => {
+        const sway = Math.sin(state.t + stem.phase) * 0.07
+        const breathe = Math.sin(state.t * 0.7 + stem.phase) * 1.3
+        const staggeredExtra = extraLen * (1 + i * 0.03)
+
+        const angle = stem.angle + sway
+        const len = stem.baseLen + breathe + staggeredExtra
+
+        const ex = CX + Math.cos(angle) * len
+        const ey = CY + Math.sin(angle) * len
+
+        // Stem line
+        ctx.beginPath()
+        ctx.moveTo(CX, CY)
+        ctx.lineTo(ex, ey)
+        ctx.strokeStyle = `rgba(240,239,232,${(stem.baseOp * opMul * 0.75).toFixed(3)})`
+        ctx.lineWidth = 1
+        ctx.lineCap = 'round'
+        ctx.stroke()
+
+        // Tip circle
+        const tipR = 1.2 + Math.sin(state.t * 0.9 + stem.phase) * 0.35
+        ctx.beginPath()
+        ctx.arc(ex, ey, tipR, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(240,239,232,${(stem.baseOp * opMul).toFixed(3)})`
+        ctx.fill()
+      })
+
+      // Center core
+      const coreR = 2.1 + Math.sin(state.t * 1.1) * 0.28 +
+        (state.bursting ? extraLen * 0.05 : 0)
+      ctx.beginPath()
+      ctx.arc(CX, CY, coreR, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(240,239,232,0.93)'
+      ctx.fill()
+
+      state.rafId = requestAnimationFrame(draw)
+    }
+
+    stateRef.current.rafId = requestAnimationFrame(draw)
+
+    return () => {
+      if (stateRef.current.rafId) {
+        cancelAnimationFrame(stateRef.current.rafId)
+      }
+    }
+  }, [])
+
+  // Expose burst trigger
+  useEffect(() => {
+    if (triggerBurst && isFull) {
+      stateRef.current.bursting = true
+      stateRef.current.burstT = 0
+    }
+    // On Tier 2: no burst, just breathing
+  }, [triggerBurst])
+
+  return <canvas ref={canvasRef} width={40} height={40} />
+}
+
+// The exported component — renders the right version per tier
+export default function DandelionIcon({ triggerBurst }) {
+  if (isMinimal) {
+    return <DandelionStatic />
+  }
+  return <DandelionCanvas triggerBurst={triggerBurst} />
+}
+```
+---
+---
+PART SIX — GESTURE ANIMATIONS PER TIER
+---
+Framer Motion Configuration Per Tier
+Framer Motion reads spring config from the device tier.
+Standard and Full get spring physics.
+Minimal gets linear ease — still smooth, just not bouncy.
+```javascript
+// /src/lib/motionConfig.js
+
+import { isFull, isStandard, isMinimal } from './deviceTier'
+
+// Spring config for interactive gestures
+export const SPRING_CONFIG = isMinimal
+  ? { type: 'tween', duration: 0.15, ease: 'linear' }
+  : isFull
+    ? { type: 'spring', stiffness: 120, damping: 14, mass: 1 }
+    : { type: 'spring', stiffness: 100, damping: 16, mass: 1 }
+
+// For bottom sheets
+export const SHEET_SPRING = isMinimal
+  ? { type: 'tween', duration: 0.15, ease: 'linear' }
+  : { type: 'spring', stiffness: 120, damping: 14 }
+
+// For page transitions
+export const PAGE_TRANSITION = isMinimal
+  ? { duration: 0.15, ease: 'linear' }
+  : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
+
+// For drag and drop
+export const DRAG_SPRING = isMinimal
+  ? { type: 'tween', duration: 0.15, ease: 'linear' }
+  : { type: 'spring', stiffness: 200, damping: 20 }
+
+// For card expand/collapse
+export const EXPAND_CONFIG = {
+  duration: isMinimal ? 0.1 : 0.2,
+  ease: isMinimal ? 'linear' : [0.22, 1, 0.36, 1],
+}
+```
+Task Card Swipe Gesture:
+```jsx
+// The swipe gesture renders identically on all tiers
+// The only difference is the spring config
+
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
+import { SPRING_CONFIG } from '../../lib/motionConfig'
+
+function TaskCard({ task, onComplete, onActionMenu }) {
+  const x = useMotionValue(0)
+
+  // Visual feedback during swipe
+  const checkboxScale = useTransform(x, [0, 40], [1, 1.15])
+  const greenBackground = useTransform(
+    x,
+    [0, 30, 80],
+    ['rgba(76,175,121,0)', 'rgba(76,175,121,0.1)', 'rgba(76,175,121,0.2)']
+  )
+
+  function handleDragEnd(_, info) {
+    if (info.offset.x > 60) {
+      // Complete the task
+      animate(x, 100, { ...SPRING_CONFIG, onComplete: () => {
+        onComplete()
+        animate(x, 0, SPRING_CONFIG)
+      }})
+    } else if (info.offset.x < -60) {
+      // Reveal action menu
+      animate(x, -120, SPRING_CONFIG)
+      onActionMenu()
+    } else {
+      // Snap back
+      animate(x, 0, SPRING_CONFIG)
+    }
+  }
+
+  return (
+    <motion.div
+      drag="x"
+      dragConstraints={{ left: -120, right: 80 }}
+      dragElastic={0.1}
+      onDragEnd={handleDragEnd}
+      style={{ x, background: greenBackground }}
+      className="task-card"
+    >
+      <motion.div style={{ scale: checkboxScale }}>
+        {/* Checkbox */}
+      </motion.div>
+      <span className="task-title">{task.title}</span>
+    </motion.div>
+  )
+}
+```
+---
+---
+PART SEVEN — BLUR REPLACEMENT FOR STANDARD AND MINIMAL
+---
+The Backdrop-Filter Problem
+`backdrop-filter: blur()` is the most GPU-expensive CSS property.
+On Android Chrome it forces a re-composite of everything behind
+the blurred element on every frame. On low-end devices it drops
+to 15fps or lower.
+The fix: replace blur with solid backgrounds that use the overlay
+color system. The result looks different but feels just as premium.
+```css
+/* Tier 1: Glass effect with blur */
+.composer-full {
+  background: rgba(30, 30, 35, 0.85);
+  backdrop-filter: blur(var(--blur-composer));
+  -webkit-backdrop-filter: blur(var(--blur-composer));
+}
+
+/* Tier 2 and 3: Solid surface — no blur */
+/* Uses a slightly more opaque version of the same color */
+/* With a subtle top border for separation */
+[data-tier="standard"] .composer-full,
+[data-tier="minimal"] .composer-full {
+  background: var(--bg-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--border-active);
+}
+
+/* Bottom nav */
+.bottom-nav-full {
+  background: rgba(22, 22, 25, 0.9);
+  backdrop-filter: blur(var(--blur-nav));
+}
+
+[data-tier="standard"] .bottom-nav-full,
+[data-tier="minimal"] .bottom-nav-full {
+  background: var(--bg-surface);
+  backdrop-filter: none;
+  border-top: 1px solid var(--border);
+}
+
+/* Bottom sheets */
+.sheet-full {
+  background: rgba(37, 37, 41, 0.95);
+  backdrop-filter: blur(var(--blur-sheet));
+}
+
+[data-tier="standard"] .sheet-full,
+[data-tier="minimal"] .sheet-full {
+  background: var(--bg-overlay);
+  backdrop-filter: none;
+  border-top: 1px solid var(--border);
+}
+```
+The visual difference between blurred and non-blurred is minimal
+when the background is already dark. The overlay color (#252529)
+at 95% opacity looks nearly identical to a blurred version.
+The border replaces the visual separation that blur provided.
+---
+---
+PART EIGHT — TRANSITION PAUSING DURING NAVIGATION
+---
+The Concurrency Problem
+The single biggest cause of animation jank is too many
+expensive operations running simultaneously.
+The most common trigger: the user navigates while ambient
+animations are running.
+The fix: pause ambient animations during transitions.
+```javascript
+// /src/lib/transitionManager.js
+
+import { isMinimal } from './deviceTier'
+
+let transitionActive = false
+
+export function startTransition() {
+  if (isMinimal) return  // No ambient to pause on minimal
+  transitionActive = true
+  document.documentElement.classList.add('transitioning')
+}
+
+export function endTransition() {
+  transitionActive = false
+  document.documentElement.classList.remove('transitioning')
+}
+
+export function isTransitioning() {
+  return transitionActive
+}
+```
+```css
+/* Pause ALL ambient animations during page transitions */
+.transitioning .ambient-silhouette,
+.transitioning .ambient-haze,
+.transitioning .ambient-bloom,
+.transitioning .timeline-dot-active,
+.transitioning .focus-background {
+  animation-play-state: paused !important;
+}
+
+/* Also pause the dandelion canvas via a data attribute */
+.transitioning [data-drift-button] {
+  /* The DriftButton component reads this and pauses the RAF */
+}
+```
+```jsx
+// In the router/layout component
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import { startTransition, endTransition } from '../../lib/transitionManager'
+import { PAGE_TRANSITION } from '../../lib/motionConfig'
+
+function PageTransitionWrapper({ children }) {
+  const location = useLocation()
+
+  return (
+    <AnimatePresence mode="wait" onExitComplete={endTransition}>
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={PAGE_TRANSITION}
+        onAnimationStart={startTransition}
+        onAnimationComplete={endTransition}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+```
+---
+---
+PART NINE — VIRTUAL LIST FOR TASK RENDERING
+---
+The Problem This Solves
+A day with 20+ tasks rendering 20 task cards, all with
+will-change: transform, all potentially animating on swipe —
+this creates GPU memory pressure on low-end devices.
+The fix: only render what is visible.
+```jsx
+// /src/components/tasks/VirtualTaskList.jsx
+// Only render tasks that are in or near the viewport
+
+import { useRef, useState, useEffect, useCallback } from 'react'
+import TaskCard from './TaskCard'
+
+const TASK_HEIGHT_ESTIMATE = 56   // px, collapsed card height
+const OVERSCAN = 3                 // render 3 extra above and below viewport
+
+export default function VirtualTaskList({ tasks, ...props }) {
+  const containerRef = useRef(null)
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 })
+
+  const updateVisibleRange = useCallback(() => {
+    if (!containerRef.current) return
+    const container = containerRef.current
+    const { scrollTop, clientHeight } = container.closest('[data-scroll-container]')
+      || document.documentElement
+
+    const containerTop = container.getBoundingClientRect().top + window.scrollY
+
+    const startIndex = Math.max(
+      0,
+      Math.floor((scrollTop - containerTop) / TASK_HEIGHT_ESTIMATE) - OVERSCAN
+    )
+    const endIndex = Math.min(
+      tasks.length,
+      Math.ceil((scrollTop - containerTop + clientHeight) / TASK_HEIGHT_ESTIMATE) + OVERSCAN
+    )
+
+    setVisibleRange({ start: startIndex, end: endIndex })
+  }, [tasks.length])
+
+  useEffect(() => {
+    updateVisibleRange()
+    window.addEventListener('scroll', updateVisibleRange, { passive: true })
+    return () => window.removeEventListener('scroll', updateVisibleRange)
+  }, [updateVisibleRange])
+
+  const totalHeight = tasks.length * TASK_HEIGHT_ESTIMATE
+  const visibleTasks = tasks.slice(visibleRange.start, visibleRange.end)
+  const topPadding = visibleRange.start * TASK_HEIGHT_ESTIMATE
+
+  return (
+    <div ref={containerRef} style={{ height: totalHeight, position: 'relative' }}>
+      <div style={{ transform: `translateY(${topPadding}px)` }}>
+        {visibleTasks.map((task, i) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            index={visibleRange.start + i}
+            {...props}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+Note: only use virtual list when task count exceeds 15.
+For typical days (4–8 tasks) render all tasks normally —
+virtualization overhead is not worth it for small lists.
+```jsx
+// In ChecklistView or Timeline:
+{tasks.length > 15 ? (
+  <VirtualTaskList tasks={tasks} {...props} />
+) : (
+  tasks.map(task => <TaskCard key={task.id} task={task} {...props} />)
+)}
+```
+---
+---
+PART TEN — FOCUS MODE PER TIER
+---
+Focus Mode Is Sacred On Every Tier
+The philosophy: Focus Mode should feel intentional and immersive
+on every device. A low-end phone user deserves the same sacred
+quality of focus experience as a flagship user.
+The only things that differ are the rendering costs.
+The emotional quality is identical.
+```jsx
+// /src/pages/Focus.jsx
+
+import { isFull, isStandard, isMinimal } from '../lib/deviceTier'
+
+function FocusBackground({ timeOfDay }) {
+  const config = TIME_CONFIG[timeOfDay]
+
+  // Tier 3: Single deep background color
+  // Still feels immersive — darkness IS the focus atmosphere
+  if (isMinimal) {
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: config.base,
+        // No animation, no layers
+        // The stillness IS the calm
+      }} />
+    )
+  }
+
+  // Tier 2: Gradient background, no breathing animation
+  if (isStandard) {
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: `
+          radial-gradient(
+            ellipse 80% 60% at 50% 40%,
+            ${config.bloom}20 0%,
+            ${config.base} 60%
+          )
+        `,
+        // Static gradient — no animation
+        // Still beautiful, still immersive
+      }} />
+    )
+  }
+
+  // Tier 1: Full breathing animation
+  return (
+    <div
+      className="focus-background"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: `
+          radial-gradient(
+            ellipse 80% 60% at 50% 40%,
+            ${config.bloom}25 0%,
+            ${config.base} 70%
+          )
+        `,
+        animation: `focusBreathe var(--focus-breathe-duration) ease-in-out infinite`,
+        willChange: 'transform',
+      }}
+    />
+  )
+}
+```
+---
+---
+PART ELEVEN — THE ANIMATION CONCURRENCY BUDGET
+---
+Maximum Simultaneous Animated Elements
+```
+At any given moment in Flow:
+
+Layer 1 (Interaction):  Up to 2 simultaneously
+  (e.g., a swipe + the checkmark fill)
+  These are always allowed. They are what the user is doing.
+
+Layer 2 (Response):     Up to 4 simultaneously
+  (e.g., task creation + day pulse update + badge bump + banner)
+  Short-lived. Auto-terminate.
+
+Layer 3 (Ambient):      Up to 4 CSS keyframe animations
+  (base color transition + 3 drift layers on Tier 1)
+  PAUSED during page transitions and focus mode entry
+
+Layer 4 (Microstate):   Up to 4 simultaneously
+  (timeline pulse + sync indicator + focus breathe + dandelion)
+  All CSS keyframes on opacity/transform only. Cheapest category.
+
+Total maximum: 14 animated elements at once.
+In practice: most of the time it is 4–6.
+```
+---
+The Pause Rules
+```
+During page transitions (280–400ms):
+  → Pause all Layer 3 ambient drift animations
+  → Pause Layer 4 microstates (except sync indicator)
+  → Resume all after transition completes
+
+During Focus Mode (entire session):
+  → Pause all Layer 3 ambient drift animations
+  → Pause all Layer 4 microstates except focusBreathe
+  → The dandelion dims to 20% opacity (dims, not pauses)
+  → Resume all on Focus Mode exit
+
+During drag-to-reorder:
+  → Pause Layer 3 ambient drift animations
+  → Pause Layer 4 microstates
+  → All GPU budget goes to the drag interaction
+  → Resume on drop
+
+During device low-power mode (battery saver):
+  → Detect via navigator.getBattery() if available
+  → If battery < 15% or charging is false + battery < 20%:
+    → Treat as Tier 3 regardless of hardware
+  → Restart detection on next session (not mid-session)
+```
+---
+---
+PART TWELVE — PERFORMANCE MONITORING
+---
+Detecting When to Downgrade Mid-Session
+Never change tiers mid-session — it creates visible jarring shifts.
+But do monitor frame rate to detect if the current tier is too expensive.
+```javascript
+// /src/lib/performanceMonitor.js
+
+import { DEVICE_TIER, TIERS } from './deviceTier'
+
+let frameCount = 0
+let lastTime = performance.now()
+let lowFPSCount = 0
+const LOW_FPS_THRESHOLD = 25
+const LOW_FPS_STRIKES = 5  // 5 consecutive low readings = downgrade next session
+
+function measureFPS() {
+  frameCount++
+  const now = performance.now()
+
+  if (now - lastTime >= 1000) {
+    const fps = Math.round((frameCount * 1000) / (now - lastTime))
+    frameCount = 0
+    lastTime = now
+
+    if (fps < LOW_FPS_THRESHOLD) {
+      lowFPSCount++
+      if (lowFPSCount >= LOW_FPS_STRIKES) {
+        // Mark for downgrade on next session launch
+        const nextTier = DEVICE_TIER === TIERS.FULL
+          ? TIERS.STANDARD
+          : TIERS.MINIMAL
+        localStorage.setItem('flow_device_tier', nextTier)
+        localStorage.setItem('flow_device_tier_time', String(Date.now()))
+        // Do NOT apply mid-session — wait for next open
+      }
+    } else {
+      lowFPSCount = 0
+    }
+  }
+
+  requestAnimationFrame(measureFPS)
+}
+
+// Only run monitoring on Standard tier
+// Full tier devices don't need monitoring
+// Minimal tier already runs cheapest settings
+if (DEVICE_TIER === TIERS.STANDARD) {
+  requestAnimationFrame(measureFPS)
+}
+```
+---
+---
+PART THIRTEEN — COMPLETE TIER SUMMARY
+---
+What Each Tier Looks Like
+TIER 1 — FULL (Flagship + Desktop)
+```
+Ambient background:   5 layers, all animated (30–40s cycles)
+Grain texture:        Static SVG tile, no animation
+Particles:            3 floating dots, 20–30s cycles
+Blur effects:         Active on composer, sheets, nav, Drift button
+Task cards:           No border (depth via color layers and shadow)
+Shadows:              Full 3-layer shadow system
+Spring physics:       All gestures, stiffness 120 damping 14
+Dandelion:            Canvas, full breathing + tap burst
+Stagger:              40ms between weekly cards, 30ms between tasks
+Page transitions:     280ms ease-out + ambient crossfade
+Focus breathing:      6s cycle, ±2% scale
+Timeline pulse:       2s cycle, opacity + scale
+Micro-interactions:   All enabled, full duration
+```
+TIER 2 — STANDARD (Mid-range phones)
+```
+Ambient background:   2 layers (base color + bloom), static
+Grain texture:        Off
+Particles:            Off
+Blur effects:         Off — solid backgrounds with borders
+Task cards:           1px --border on cards (replaces shadow depth)
+Shadows:              Lighter version
+Spring physics:       All gestures, stiffness 100 damping 16
+Dandelion:            Canvas, breathing only (no burst)
+Stagger:              Same as Tier 1 (40ms/30ms — cheap, preserved)
+Page transitions:     280ms ease-out (no ambient crossfade)
+Focus breathing:      Off — static gradient background
+Timeline pulse:       2s cycle (cheap — opacity only)
+Micro-interactions:   All enabled, same duration
+```
+TIER 3 — MINIMAL (Low-end phones + reduced motion)
+```
+Ambient background:   Single background color, time-of-day only
+Grain texture:        Off
+Particles:            Off
+Blur effects:         Never
+Task cards:           1px --border (always visible for depth)
+Shadows:              Cards: none. Floats: minimal
+Spring physics:       Off — linear ease 150ms on all transitions
+Dandelion:            Static SVG icon (identical visual, zero cost)
+Stagger:              Off — all elements appear simultaneously
+Page transitions:     150ms linear fade
+Focus breathing:      Off — static deep background color
+Timeline pulse:       Off
+Micro-interactions:   Preserved but shorter (100–150ms, linear)
+Interaction Layer 1:  ALWAYS FULL — swipe, checkmark, card expand,
+                      sheet open — these are never reduced
+```
+---
+The Key Rule — Repeated for Emphasis
+Layer 1 Interaction animations are NEVER reduced on any tier.
+A Tier 3 device still gets:
+The satisfying checkmark fill when a task is completed
+The smooth card expand when tapped
+The swipe gesture with visual feedback
+The bottom sheet opening and closing smoothly
+The Drift sheet fog opening
+These are what the user interacts with. These are what
+make the app feel premium. These run on CSS transform
+and opacity, which are GPU-composited and fast even on
+the cheapest Android phone.
+The ambient system (Layer 3) is what the user sees.
+The interaction system (Layer 1) is what the user feels.
+You can reduce what they see.
+You cannot reduce what they feel.
+---
+Flow Animation & Performance System — Complete
+Four layers. Three tiers. Beauty preserved on every device.
