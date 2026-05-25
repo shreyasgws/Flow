@@ -72,7 +72,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const msUntilCheck = nextCheck.getTime() - now.getTime()
 
     const timer = setTimeout(async () => {
-      await processRecurringTasks(dayStartHour)
+      try {
+        await processRecurringTasks()
+      } catch {
+        // Will retry next scheduled check
+      }
       const today = new Date().toISOString().slice(0, 10)
       loadTasks(today)
     }, msUntilCheck)

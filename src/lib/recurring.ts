@@ -2,7 +2,7 @@ import { db } from '@/lib/db'
 import { queueWrite } from '@/lib/sync'
 import type { Task } from '@/types'
 
-export async function shouldCreateNewInstance(task: Task, today: string, yesterday: string, dayStartHour: number): Promise<boolean> {
+export async function shouldCreateNewInstance(task: Task, today: string): Promise<boolean> {
   if (!task.isRecurring || task.recurrenceType === 'none') return false
   if (task.status !== 'completed') return false
 
@@ -62,11 +62,8 @@ export async function createInstance(task: Task, date: string): Promise<Task | n
   }
 }
 
-export async function processRecurringTasks(dayStartHour: number): Promise<number> {
+export async function processRecurringTasks(): Promise<number> {
   const today = new Date().toISOString().slice(0, 10)
-  const yesterdayDate = new Date()
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1)
-  const yesterday = yesterdayDate.toISOString().slice(0, 10)
 
   const baseTasks = await db.tasks
     .where({ isRecurring: true })
@@ -75,7 +72,7 @@ export async function processRecurringTasks(dayStartHour: number): Promise<numbe
 
   let count = 0
   for (const task of baseTasks) {
-    const shouldCreate = await shouldCreateNewInstance(task, today, yesterday, dayStartHour)
+    const shouldCreate = await shouldCreateNewInstance(task, today)
     if (shouldCreate) {
       const instance = await createInstance(task, today)
       if (instance) count++

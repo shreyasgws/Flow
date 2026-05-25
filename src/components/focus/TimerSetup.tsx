@@ -81,7 +81,7 @@ function TimerDial({ minutes, onChange }: TimerDialProps) {
 }
 
 interface FocusTimerProps {
-  onStart: () => void
+  onStart?: () => void
 }
 
 export function FocusTimer(_props: FocusTimerProps) {
