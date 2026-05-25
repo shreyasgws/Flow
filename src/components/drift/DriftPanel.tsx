@@ -22,6 +22,8 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
   const addTask = useTaskStore((s) => s.addTask)
   const [converting, setConverting] = useState<string | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     if (open) loadEntries()
@@ -39,7 +41,7 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
     if (!open) return
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key !== 'Tab') return
@@ -59,7 +61,7 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open, onClose])
+  }, [open])
 
   const handleConvert = useCallback(async (text: string, driftId: string) => {
     setConverting(text)

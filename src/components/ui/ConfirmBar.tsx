@@ -20,8 +20,8 @@ export function ConfirmBar() {
     }
   }, [options, hide])
 
-  function handleConfirm() {
-    options?.onConfirm?.()
+  async function handleConfirm() {
+    await options?.onConfirm?.()
     hide()
   }
 

@@ -55,7 +55,7 @@ export function BottomNav() {
                 </span>
                 {item.href === '/focus' && isFocusActive ? (
                   <span className="max-w-[60px] truncate text-[10px]"
-                    >{useFocusStore.getState().activeTaskId?.slice(0, 8)}…</span>
+                    >{activeTaskId?.slice(0, 8)}…</span>
                 ) : (
                   <span>{item.label}</span>
                 )}

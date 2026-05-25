@@ -1,6 +1,5 @@
 import { db, type SyncQueueItem } from '@/lib/db'
 import { useSyncStore } from '@/stores/syncStore'
-import { useErrorStore } from '@/stores/errorStore'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 
 const DEBOUNCE_MS = 500
@@ -188,19 +187,24 @@ const TABLE_MAP_REVERSE: Record<string, string> = {
 
 async function mergeRemoteIntoLocal(
   localTable: string,
-  remoteRows: Record<string, unknown>[]
-): Promise<Record<string, unknown>[]> {
-  if (!db[localTable as keyof typeof db] || typeof (db[localTable as keyof typeof db] as any)?.toArray !== 'function') {
-    return remoteRows
-  }
+  remoteRows: any[]
+): Promise<any[]> {
+  const table = db[localTable as keyof typeof db] as any
+  if (!table?.toArray) return remoteRows
 
-  const localRows = await (db[localTable as keyof typeof db] as any).toArray() as Record<string, unknown>[]
-  const localMap = new Map<string, Record<string, unknown>>()
+  const localRows: any[] = await table.toArray()
+  const localMap = new Map<string, any>()
   for (const row of localRows) {
-    localMap.set(row.id as string, row)
+    localMap.set(row.id, row)
   }
 
-  const merged: Record<string, unknown>[] = []
+  function toMs(ts: any): number {
+    if (typeof ts === 'number') return ts
+    if (typeof ts === 'string') return new Date(ts).getTime()
+    return 0
+  }
+
+  const merged: any[] = []
   const seen = new Set<string>()
 
   for (const remote of remoteRows) {
@@ -210,14 +214,14 @@ async function mergeRemoteIntoLocal(
     if (!local) {
       merged.push(remote)
     } else {
-      const remoteTime = (remote.createdAt as number) ?? 0
-      const localTime = (local.createdAt as number) ?? 0
+      const remoteTime = toMs(remote.createdAt)
+      const localTime = toMs(local.createdAt)
       merged.push(remoteTime >= localTime ? remote : local)
     }
   }
 
   for (const local of localRows) {
-    if (!seen.has(local.id as string)) {
+    if (!seen.has(local.id)) {
       merged.push(local)
     }
   }
@@ -251,7 +255,7 @@ export async function pullFromSupabase(): Promise<void> {
       else if (localTable === 'categories') await db.categories.bulkPut(merged as any[])
       else if (localTable === 'templates') await db.templates.bulkPut(merged as any[])
       else if (localTable === 'settings') {
-        for (const row of data) {
+        for (const row of merged) {
           await db.settings.put(row as any)
         }
       }

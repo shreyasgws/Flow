@@ -49,47 +49,51 @@ export default function History() {
       db.reflections.toArray(),
     ])
 
-    const newDays = new Map(days)
-    let actualCount = 0
+    setDays((prev) => {
+      const updated = new Map(prev)
+      let actualCount = 0
 
-    for (const date of dates) {
-      const dayTasks = allTasks.filter((t) => t.date === date)
-      const daySections = allSections.filter((s) => {
-        const sd = new Date(s.createdAt).toISOString().slice(0, 10)
-        return sd === date
-      })
-      const dayDrift = allDrift.filter((e) => {
-        const ed = new Date(e.createdAt).toISOString().slice(0, 10)
-        return ed === date
-      })
-      const dayReflection = allReflections.find((r) => {
-        const weekEnd = new Date(r.weekStart)
-        weekEnd.setDate(weekEnd.getDate() + 7)
-        return date >= r.weekStart && date < weekEnd.toISOString().slice(0, 10)
-      }) ?? null
+      for (const date of dates) {
+        const dayTasks = allTasks.filter((t) => t.date === date)
+        const daySections = allSections.filter((s) => {
+          const sd = new Date(s.createdAt).toISOString().slice(0, 10)
+          return sd === date
+        })
+        const dayDrift = allDrift.filter((e) => {
+          const ed = new Date(e.createdAt).toISOString().slice(0, 10)
+          return ed === date
+        })
+        const dayReflection = allReflections.find((r) => {
+          const weekEnd = new Date(r.weekStart)
+          weekEnd.setDate(weekEnd.getDate() + 7)
+          return date >= r.weekStart && date < weekEnd.toISOString().slice(0, 10)
+        }) ?? null
 
-      if (dayTasks.length > 0 || daySections.length > 0 || dayDrift.length > 0 || dayReflection) {
-        actualCount++
+        if (dayTasks.length > 0 || daySections.length > 0 || dayDrift.length > 0 || dayReflection) {
+          actualCount++
+        }
+
+        if (dayTasks.length > 0 || daySections.length > 0 || dayDrift.length > 0) {
+          dayTasks.sort((a, b) => a.sortOrder - b.sortOrder)
+          daySections.sort((a, b) => a.sortOrder - b.sortOrder)
+          dayDrift.sort((a, b) => b.createdAt - a.createdAt)
+        }
+
+        if (!updated.has(date)) {
+          updated.set(date, { tasks: dayTasks, sections: daySections, drift: dayDrift, reflection: dayReflection })
+        }
       }
 
-      if (dayTasks.length > 0 || daySections.length > 0 || dayDrift.length > 0) {
-        dayTasks.sort((a, b) => a.sortOrder - b.sortOrder)
-        daySections.sort((a, b) => a.sortOrder - b.sortOrder)
-        dayDrift.sort((a, b) => b.createdAt - a.createdAt)
-      }
+      if (actualCount < DAYS_PER_BATCH) setHasMore(false)
+      return updated
+    })
 
-      if (!newDays.has(date)) {
-        newDays.set(date, { tasks: dayTasks, sections: daySections, drift: dayDrift, reflection: dayReflection })
-      }
-    }
-
-    setDays(newDays)
     setLoadedDays((prev) => prev + dates.length)
-    if (actualCount < DAYS_PER_BATCH) setHasMore(false)
     setIsLoading(false)
   }
 
   useEffect(() => {
+    // Initialize data loading
     loadBatch(0)
   }, [])
 

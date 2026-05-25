@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
 import { useDriftStore } from '@/stores/driftStore'
-import { emotionalMotionProps } from '@/lib/emotionalStates'
 import type { DriftEntry } from '@/types'
 
 interface DriftCardProps {

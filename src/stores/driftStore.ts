@@ -148,6 +148,9 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
         for (const entry of archived) {
           queueWrite('upsert', 'driftEntries', entry.id, entry)
         }
+        set((s) => ({
+          entries: [...s.entries, ...archived].sort((a, b) => b.createdAt - a.createdAt),
+        }))
       })
     } catch {
       set({ error: 'Failed to purge drift' })

@@ -15,22 +15,15 @@ export function VirtualTaskList({ count, children }: VirtualTaskListProps) {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: count })
 
   const updateVisibleRange = useCallback(() => {
-    if (!containerRef.current) return
-    const container = containerRef.current
-    const scrollContainer = container.closest('[data-scroll-container]')
-    const scrollEl = scrollContainer || document.documentElement
-    const { scrollTop, clientHeight } = scrollEl
+    const el = containerRef.current
+    if (!el) return
 
-    const containerTop = container.getBoundingClientRect().top + window.scrollY
+    const rect = el.getBoundingClientRect()
+    const viewStart = -rect.top
+    const viewEnd = viewStart + window.innerHeight
 
-    const startIndex = Math.max(
-      0,
-      Math.floor((scrollTop - containerTop) / TASK_HEIGHT_ESTIMATE) - OVERSCAN,
-    )
-    const endIndex = Math.min(
-      count,
-      Math.ceil((scrollTop - containerTop + clientHeight) / TASK_HEIGHT_ESTIMATE) + OVERSCAN,
-    )
+    const startIndex = Math.max(0, Math.floor(viewStart / TASK_HEIGHT_ESTIMATE) - OVERSCAN)
+    const endIndex = Math.min(count, Math.ceil(viewEnd / TASK_HEIGHT_ESTIMATE) + OVERSCAN)
 
     setVisibleRange({ start: startIndex, end: endIndex })
   }, [count])
@@ -42,10 +35,11 @@ export function VirtualTaskList({ count, children }: VirtualTaskListProps) {
   }, [updateVisibleRange])
 
   const totalHeight = count * TASK_HEIGHT_ESTIMATE
+  const offset = visibleRange.start * TASK_HEIGHT_ESTIMATE
 
   return (
     <div ref={containerRef} className="relative" style={{ height: totalHeight }}>
-      <div style={{ transform: `translateY(${visibleRange.start * TASK_HEIGHT_ESTIMATE}px)` }}>
+      <div style={{ transform: `translateY(${offset}px)` }}>
         {children(visibleRange)}
       </div>
     </div>

@@ -6,9 +6,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useTaskStore } from '@/stores/taskStore'
 import { useFlowSectionStore } from '@/stores/flowSectionStore'
 import { useCategoryStore } from '@/stores/categoryStore'
+import { useDriftStore } from '@/stores/driftStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
-import { useFocusStore } from '@/stores/focusStore'
 import { useAuthStore } from '@/stores/authStore'
 import { TaskSection } from '@/components/task/TaskSection'
 import { TaskCard } from '@/components/task/TaskCard'
@@ -23,7 +23,6 @@ import { SignInBanner } from '@/components/onboarding/SignInBanner'
 import { TemplatePicker } from '@/components/template/TemplatePicker'
 import { useTemplateStore } from '@/stores/templateStore'
 import { CarryForwardBanner } from '@/components/home/CarryForwardBanner'
-import { useUiStateStore } from '@/stores/uiStateStore'
 import type { TemplateTask } from '@/types'
 
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -75,6 +74,12 @@ export default function Home() {
       updateSettings({ googleLinked: true })
     }
   }, [authUser, settings.googleLinked, updateSettings])
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current)
+    }
+  }, [])
 
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -170,10 +175,12 @@ export default function Home() {
     setEditorOpen(true)
   }
 
+  const driftEntries = useDriftStore((s) => s.entries)
+
   if (sections.length === 0) {
     return (
       <div className="px-4">
-        <DayPulse tasks={dateTasks} date={selectedDate} />
+        <DayPulse tasks={dateTasks} date={selectedDate} sections={sections} drift={driftEntries} />
         <div className="mt-16 text-center">
           <p className="mb-4 text-sm text-[var(--text-secondary)]">
             A lighter day can still move gently.
@@ -254,7 +261,7 @@ export default function Home() {
         </div>
       )}
 
-      <DayPulse tasks={dateTasks} date={selectedDate} allTasks={tasks} />
+        <DayPulse tasks={dateTasks} date={selectedDate} allTasks={tasks} sections={sections} drift={driftEntries} />
       <CarryForwardBanner />
       <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
       <CategoryFilterBar activeId={filterCategoryId} onChange={setFilterCategoryId} />

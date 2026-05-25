@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useDriftStore } from '@/stores/driftStore'
 import { DriftPanel } from '@/components/drift/DriftPanel'
@@ -14,8 +14,15 @@ export function DriftButton() {
   const [isDragging, setIsDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 })
   const hasMoved = useRef(false)
+  const [now, setNow] = useState(Date.now())
 
-  const now = Date.now()
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now())
+    }, 1000) // Update every second for active count
+    return () => clearInterval(interval)
+  }, [])
+
   const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000
   const activeCount = entries.filter((e) => now - e.createdAt < SEVENTY_TWO_HOURS).length
 

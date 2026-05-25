@@ -71,14 +71,14 @@ export async function exportToCSV() {
           const val = record[h]
           if (val === null || val === undefined) return ''
           const str = String(val)
-          return str.includes(',') || str.includes('"') || str.includes('\n')
-            ? `"${str.replace(/"/g, '""')}"`
-            : str
+          const escaped = str.replace(/"/g, '""')
+          const needsQuoting = /[,"\n]/.test(str) || /^[=+\-@]/.test(str)
+          return needsQuoting ? `"${escaped}"` : escaped
         })
         .join(',')
     })
 
-    const csv = [headers.join(','), ...rows].join('\n')
+    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     download(`flow-tasks-${new Date().toISOString().slice(0, 10)}.csv`, blob)
   } catch {

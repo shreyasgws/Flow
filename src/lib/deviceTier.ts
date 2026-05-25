@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 export const TIERS = {
   FULL: 'full',
@@ -79,13 +79,19 @@ export function applyDeviceTier(): DeviceTier {
 }
 
 export function useDeviceTier(): DeviceTier {
-  const [tier] = useState<DeviceTier>(() => applyDeviceTier())
+  const [tier, setTier] = useState<DeviceTier>(TIERS.FULL)
+  const appliedRef = useRef(false)
 
   useEffect(() => {
+    const t = applyDeviceTier()
+    setTier(t)
+    appliedRef.current = true
+
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)')
     const handler = () => {
-      const newTier = mql.matches ? TIERS.MINIMAL : applyDeviceTier()
+      const newTier = mql.matches ? TIERS.MINIMAL : (appliedRef.current ? applyDeviceTier() : TIERS.FULL)
       document.documentElement.dataset.tier = newTier
+      setTier(newTier)
     }
     mql.addEventListener('change', handler)
     return () => mql.removeEventListener('change', handler)

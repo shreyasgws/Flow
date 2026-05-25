@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { TIERS } from './deviceTier'
 
 let transitionActive = false
@@ -23,14 +24,12 @@ export function isTransitioning() {
 }
 
 export function useTransitionPause() {
-  if (typeof window === 'undefined') return
-  const observer = new MutationObserver(() => {
-    if (document.documentElement.classList.contains('transitioning')) {
-      transitionActive = true
-    } else {
-      transitionActive = false
-    }
-  })
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  return () => observer.disconnect()
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const observer = new MutationObserver(() => {
+      transitionActive = document.documentElement.classList.contains('transitioning')
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
 }

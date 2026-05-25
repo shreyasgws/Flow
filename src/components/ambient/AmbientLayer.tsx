@@ -1,6 +1,6 @@
 'use client'
 
-import { useDeviceTier, getTierBooleans, TIERS } from '@/lib/deviceTier'
+import { useDeviceTier, getTierBooleans } from '@/lib/deviceTier'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 
 function getTimeConfig(hour: number, warmth: number) {

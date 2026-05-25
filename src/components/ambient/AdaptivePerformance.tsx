@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useEnvironmentStore, type PerformanceMode } from '@/stores/environmentStore'
 import { applyDeviceTier } from '@/lib/deviceTier'
-import { startPerformanceMonitor } from '@/lib/performanceMonitor'
+import { startPerformanceMonitor, stopPerformanceMonitor } from '@/lib/performanceMonitor'
 
 interface NavigatorWithMemory extends Navigator {
   deviceMemory?: number
@@ -29,6 +29,7 @@ export function AdaptivePerformance() {
     const detected = detectPerformance()
     setPerformance(detected)
     startPerformanceMonitor()
+    return () => stopPerformanceMonitor()
   }, [setPerformance])
 
   return null

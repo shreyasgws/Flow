@@ -1,7 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
-import { hapticDragPickup, hapticDropCommit } from '@/lib/haptics'
+import { useRef, useCallback, useEffect } from 'react'
 
 const SWIPE_THRESHOLD = 40
 const VERTICAL_CANCEL_THRESHOLD = 15
@@ -217,6 +216,10 @@ export function useGestures(handlers: GestureHandlers) {
     }
     reset()
   }, [handlers, clearLongPress])
+
+  useEffect(() => {
+    return () => clearLongPress()
+  }, [clearLongPress])
 
   return {
     handlePointerDown,

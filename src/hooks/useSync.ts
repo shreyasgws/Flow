@@ -44,7 +44,7 @@ export function useSync() {
             flushQueue().then(() => {
               useSyncStore.getState().setStatus('saved')
               useSyncStore.getState().setLastSynced(Date.now())
-            })
+            }).catch(() => {})
           }
         }
       }
@@ -58,7 +58,7 @@ export function useSync() {
     window.addEventListener('online', onOnline)
 
     intervalRef.current = setInterval(() => {
-      flushQueue()
+      flushQueue().catch(() => {})
     }, 30000)
 
     return () => {
