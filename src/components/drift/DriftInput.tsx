@@ -48,7 +48,7 @@ export function DriftInput() {
       <button
         onClick={handleSubmit}
         disabled={isPending || !text.trim()}
-        className="shrink-0 rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+        className="btn-primary shrink-0 px-3 py-1 text-[11px]"
       >
         Save
       </button>

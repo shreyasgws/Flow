@@ -91,7 +91,7 @@ export function SectionEditor({ open, initial, onSave, onClose, title }: Section
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-[var(--bg-surface)] p-5 pb-8 shadow-xl"
+            className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-[var(--bg-surface)] p-6 pb-8 shadow-xl"
           >
             <div className="mx-auto mb-4 h-1 w-8 rounded-full bg-[var(--text-ghost)]" />
             <h2 className="mb-4 text-sm font-medium text-[var(--text-primary)]">{title}</h2>
@@ -162,14 +162,14 @@ export function SectionEditor({ open, initial, onSave, onClose, title }: Section
                   type="button"
                   onClick={onClose}
                   disabled={isPending}
-                  className="flex-1 rounded-full bg-[var(--bg-elevated)] py-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] disabled:opacity-50"
+                  className="btn-secondary flex-1 py-2 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending || !name.trim()}
-                  className="flex-1 rounded-full bg-[var(--accent)] py-2 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="btn-primary flex-1 py-2 text-sm"
                 >
                   {isPending ? 'Saving...' : 'Save'}
                 </button>

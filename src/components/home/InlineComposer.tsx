@@ -61,7 +61,7 @@ export function InlineComposer() {
             onClick={submit}
             disabled={!text.trim() || loading}
             aria-label="Add task"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-white transition-all duration-150 ease-out hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:active:scale-100"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-white transition-all duration-150 ease-out hover:opacity-90 active:scale-[0.97] disabled:opacity-30 disabled:active:scale-100"
           >
             {loading ? (
               <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">

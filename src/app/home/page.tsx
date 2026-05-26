@@ -192,6 +192,13 @@ export default function Home() {
             Create your first section
           </button>
         </div>
+        <SectionEditor
+          open={editorOpen}
+          title={editingSection ? 'Edit Section' : 'New Section'}
+          initial={EMPTY_SECTION_FORM}
+          onSave={handleSaveEditor}
+          onClose={() => setEditorOpen(false)}
+        />
       </div>
     )
   }
@@ -391,7 +398,7 @@ export default function Home() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '60%', opacity: 0 }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-[var(--bg-surface)] p-5 pb-8 shadow-xl"
+               className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-[var(--bg-surface)] p-6 pb-8 shadow-xl"
             >
               <div className="mx-auto mb-4 h-1 w-8 rounded-full bg-[var(--text-ghost)]" />
               <h2 className="mb-3 text-sm font-medium text-[var(--text-primary)]">
@@ -408,13 +415,13 @@ export default function Home() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setSaveTemplatePrompt(false)}
-                  className="flex-1 rounded-full bg-[var(--bg-elevated)] py-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                  className="btn-secondary flex-1 py-2 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmSaveTemplate}
-                  className="flex-1 rounded-full bg-[var(--accent)] py-2 text-sm text-white transition-opacity hover:opacity-90"
+                  className="btn-primary flex-1 py-2 text-sm"
                 >
                   Save
                 </button>

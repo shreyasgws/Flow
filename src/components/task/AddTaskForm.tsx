@@ -135,7 +135,7 @@ export function AddTaskForm({
           onClick={handleSubmit}
           disabled={isPending || !text.trim()}
           aria-label="Add task"
-          className="rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-30"
+          className="btn-primary px-3 py-1 text-[11px] font-medium"
         >
           Done
         </button>
@@ -143,7 +143,7 @@ export function AddTaskForm({
           onClick={handleCancel}
           disabled={isPending}
           aria-label="Cancel"
-          className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] disabled:opacity-50"
+          className="btn-ghost text-[10px]"
         >
           Esc
         </button>

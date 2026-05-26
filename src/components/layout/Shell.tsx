@@ -64,8 +64,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
     function handleVisibility() {
       if (document.visibilityState === 'visible') {
         markNudgeSeen()
+        document.documentElement.style.setProperty('--ambient-play-state', 'running')
+      } else {
+        document.documentElement.style.setProperty('--ambient-play-state', 'paused')
       }
     }
+    handleVisibility()
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])

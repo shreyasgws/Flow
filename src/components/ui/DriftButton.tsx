@@ -74,15 +74,15 @@ export function DriftButton() {
         onClick={handleOpen}
         aria-label={open ? 'Close drift' : 'Open drift'}
         aria-expanded={open}
-        className="fixed bottom-20 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--accent)]/35 bg-[var(--bg-overlay)] shadow-lg backdrop-blur-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+        className="btn-ghost fixed bottom-20 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--accent)]/35 bg-[var(--bg-overlay)] shadow-lg backdrop-blur-md"
         style={{
           right: 16,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
           cursor: isDragging ? 'grabbing' : 'grab',
           touchAction: 'none',
         }}
-        whileHover={isDragging ? {} : { scale: 1.05 }}
-        whileTap={isDragging ? {} : { scale: 0.95 }}
+        whileHover={isDragging ? {} : { scale: 1.02 }}
+        whileTap={isDragging ? {} : { scale: 0.97 }}
       >
         <DandelionIcon triggerBurst={burst} />
         {activeCount > 0 && (

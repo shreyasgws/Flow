@@ -45,15 +45,15 @@ export function TemplateManager() {
                   onChange={(e) => setEditName(e.target.value)}
                   className="flex-1 rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs text-[var(--text-primary)] outline-none"
                 />
-                <button onClick={handleSaveRename} className="text-xs text-[var(--accent)]">Save</button>
-                <button onClick={() => setEditingId(null)} className="text-xs text-[var(--text-muted)]">Cancel</button>
+                <button onClick={handleSaveRename} className="btn-ghost text-xs text-[var(--accent)]">Save</button>
+                <button onClick={() => setEditingId(null)} className="btn-ghost text-xs">Cancel</button>
               </>
             ) : (
               <>
                 <span className="flex-1 text-sm text-[var(--text-primary)]">{t.name}</span>
                 <span className="text-[10px] text-[var(--text-muted)]">{t.tasks.length} tasks</span>
-                <button onClick={() => startEdit(t.id, t.name)} className="text-[10px] text-[var(--text-ghost)] hover:text-[var(--text-secondary)]">Rename</button>
-                <button onClick={() => handleDelete(t.id)} className="text-[10px] text-[var(--text-ghost)] hover:text-[var(--warn)]">Delete</button>
+                <button onClick={() => startEdit(t.id, t.name)} className="btn-ghost text-[10px]">Rename</button>
+                <button onClick={() => handleDelete(t.id)} className="btn-ghost text-[10px] text-[var(--text-ghost)] hover:text-[var(--warn)]">Delete</button>
               </>
             )}
           </div>

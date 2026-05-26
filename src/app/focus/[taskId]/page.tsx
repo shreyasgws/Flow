@@ -174,10 +174,10 @@ export default function FocusPage({
               {!timerConfig && <FocusTimer onStart={() => {}} />}
             </div>
 
-            <div className="mt-10 flex gap-4">
+            <div className="mt-8 flex gap-4">
               <button
                 onClick={handleComplete}
-                className="rounded-full bg-[var(--bg-elevated)] px-8 py-2.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-elevated)]/70"
+                className="btn-secondary px-8 py-2.5 text-sm"
               >
                 Done
               </button>
@@ -198,7 +198,7 @@ export default function FocusPage({
             <div className="mt-3 flex justify-center gap-3">
               <button
                 onClick={handleTakeBreak}
-                className="rounded-full bg-[var(--bg-elevated)] px-5 py-2 text-sm text-[var(--text-secondary)] transition-opacity hover:opacity-80"
+                className="btn-secondary px-6 py-2 text-sm"
               >
                 Take a break
               </button>

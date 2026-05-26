@@ -29,7 +29,7 @@ export function EmptyDay({ variant, completedCount = 0, sectionCount = 0, onCrea
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.3 }}
             onClick={onCreateSection}
-            className="mt-4 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+            className="btn-primary mt-4 px-4 py-1.5"
           >
             Create your first section
           </motion.button>

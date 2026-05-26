@@ -21,7 +21,7 @@ export default function SettingsError({
         </p>
         <button
           onClick={reset}
-          className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+          className="btn-primary px-4 py-1.5"
         >
           Try again
         </button>

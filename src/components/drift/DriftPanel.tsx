@@ -114,7 +114,7 @@ export function DriftPanel({ open, onClose }: DriftPanelProps) {
           >
             <div className="mx-auto mb-2 mt-3 h-1 w-8 rounded-full bg-[var(--text-ghost)]" />
 
-            <div className="px-5">
+            <div className="px-6">
               <h2 className="mb-3 text-sm font-medium text-[var(--text-primary)]">Drift</h2>
               <DriftInput />
 

@@ -55,13 +55,13 @@ export function InstallPrompt() {
           <div className="flex gap-2">
             <button
               onClick={handleInstall}
-              className="flex-1 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+              className="btn-primary flex-1 px-4 py-1.5"
             >
               Install
             </button>
             <button
               onClick={handleDismiss}
-              className="flex-1 rounded-full bg-[var(--bg-elevated)] px-4 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              className="btn-secondary flex-1 px-4 py-1.5"
             >
               Not now
             </button>

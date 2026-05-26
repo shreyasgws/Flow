@@ -43,13 +43,13 @@ export function ConfirmBar() {
           </span>
           <button
             onClick={handleConfirm}
-            className="shrink-0 text-sm font-bold text-[var(--accent)]"
+            className="btn-ghost shrink-0 text-sm font-bold text-[var(--accent)]"
           >
             {options.confirmLabel ?? 'Delete'}
           </button>
           <button
             onClick={handleCancel}
-            className="shrink-0 text-xs text-[var(--text-muted)]"
+            className="btn-ghost shrink-0 text-xs"
           >
             {options.cancelLabel ?? 'Cancel'}
           </button>

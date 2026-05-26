@@ -74,18 +74,18 @@ export function CategoryManager() {
                     />
                   ))}
                 </div>
-                <button onClick={handleSaveEdit} className="text-xs text-[var(--accent)]">Save</button>
-                <button onClick={() => setEditingId(null)} className="text-xs text-[var(--text-muted)]">Cancel</button>
+                <button onClick={handleSaveEdit} className="btn-ghost text-xs text-[var(--accent)]">Save</button>
+                <button onClick={() => setEditingId(null)} className="btn-ghost text-xs">Cancel</button>
               </div>
             ) : (
               <>
                 <span className="text-sm">{cat.emoji}</span>
                 <div className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: cat.color }} />
                 <span className="flex-1 text-sm text-[var(--text-primary)]">{cat.name}</span>
-                <button onClick={() => startEdit(cat)} className="text-[10px] text-[var(--text-ghost)] hover:text-[var(--text-secondary)]">
+                <button onClick={() => startEdit(cat)} className="btn-ghost text-[10px]">
                   Edit
                 </button>
-                <button onClick={() => handleDelete(cat.id)} className="text-[10px] text-[var(--text-ghost)] hover:text-[var(--warn)]">
+                <button onClick={() => handleDelete(cat.id)} className="btn-ghost text-[10px] text-[var(--text-ghost)] hover:text-[var(--warn)]">
                   Delete
                 </button>
               </>
@@ -120,7 +120,7 @@ export function CategoryManager() {
         </div>
         <button
           onClick={handleAdd}
-          className="rounded-full bg-[var(--accent)] px-3 py-1 text-xs text-white transition-opacity hover:opacity-90"
+          className="btn-primary px-3 py-1 text-xs"
         >
           Add
         </button>

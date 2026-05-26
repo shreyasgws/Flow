@@ -115,7 +115,7 @@ export function SessionTransition({ onWhatNext, onReturnToPlan }: SessionTransit
             <button
               key={action.label}
               onClick={action.action}
-              className="rounded-full bg-[var(--bg-elevated)] px-5 py-2 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-elevated)]/70"
+              className="btn-secondary px-6 py-2 text-sm"
             >
               {action.label}
             </button>
@@ -125,7 +125,7 @@ export function SessionTransition({ onWhatNext, onReturnToPlan }: SessionTransit
 
       <button
         onClick={onReturnToPlan}
-        className="mt-4 text-xs text-[var(--text-ghost)] transition-colors hover:text-[var(--text-muted)]"
+        className="mt-4 btn-ghost text-xs"
       >
         Dismiss
       </button>

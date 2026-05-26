@@ -20,7 +20,7 @@ export default function Offline() {
       )}
       <button
         onClick={() => window.location.reload()}
-        className="rounded-full bg-[var(--accent)] px-5 py-2 text-sm text-white transition-opacity hover:opacity-90"
+        className="btn-primary px-6 py-2 text-sm"
       >
         Try again
       </button>

@@ -70,7 +70,7 @@ export function TemplatePicker({ open, onClose, date, onApplied }: TemplatePicke
             className="fixed inset-x-0 bottom-0 z-50 max-h-[60vh] rounded-t-2xl bg-[var(--bg-surface)] pb-8 shadow-xl"
           >
             <div className="mx-auto mb-2 mt-3 h-1 w-8 rounded-full bg-[var(--text-ghost)]" />
-            <div className="px-5">
+            <div className="px-6">
               <h2 className="mb-3 text-sm font-medium text-[var(--text-primary)]">
                 Apply Template
               </h2>

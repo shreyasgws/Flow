@@ -31,15 +31,15 @@ export function UndoSnackbar({ currentUndo, stack, onUndo, onUndoFromStack, onDi
             <span className="max-w-48 truncate text-sm text-[var(--text-primary)]">
               {currentUndo.label}
             </span>
-            <button onClick={() => { hapticGentleReturn(); onUndo() }} aria-label="Undo action" className="shrink-0 text-sm font-bold text-[var(--accent)]">
+            <button onClick={() => { hapticGentleReturn(); onUndo() }} aria-label="Undo action" className="btn-ghost shrink-0 text-sm font-bold text-[var(--accent)]">
               Undo
             </button>
             {stack.length > 1 && (
-              <button onClick={() => setExpanded(true)} aria-label={`${stack.length - 1} more actions`} className="shrink-0 text-xs text-[var(--text-muted)]">
+              <button onClick={() => setExpanded(true)} aria-label={`${stack.length - 1} more actions`} className="btn-ghost shrink-0 text-xs text-[var(--text-muted)]">
                 +{stack.length - 1}
               </button>
             )}
-            <button onClick={onDismiss} aria-label="Dismiss" className="shrink-0 text-xs text-[var(--text-muted)]">
+            <button onClick={onDismiss} aria-label="Dismiss" className="btn-ghost shrink-0 text-xs text-[var(--text-muted)]">
               Dismiss
             </button>
           </motion.div>
@@ -56,7 +56,7 @@ export function UndoSnackbar({ currentUndo, stack, onUndo, onUndoFromStack, onDi
           >
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs text-[var(--text-secondary)]">Recent actions</span>
-              <button onClick={() => setExpanded(false)} className="text-xs text-[var(--text-muted)]">
+              <button onClick={() => setExpanded(false)} className="btn-ghost text-xs">
                 Close
               </button>
             </div>
@@ -66,7 +66,7 @@ export function UndoSnackbar({ currentUndo, stack, onUndo, onUndoFromStack, onDi
                   <span className="truncate text-sm text-[var(--text-primary)]">{entry.label}</span>
                   <button
                     onClick={() => { hapticGentleReturn(); onUndoFromStack(entry.id); setExpanded(false) }}
-                    className="shrink-0 text-sm font-bold text-[var(--accent)]"
+                    className="btn-ghost shrink-0 text-sm font-bold text-[var(--accent)]"
                   >
                     Undo
                   </button>

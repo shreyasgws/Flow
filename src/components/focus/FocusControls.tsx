@@ -75,14 +75,14 @@ export function FocusControls() {
             <button
               onClick={isPaused ? resumeTimer : pauseTimer}
               aria-label={isPaused ? 'Resume timer' : 'Pause timer'}
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--bg-elevated)] px-5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-elevated)]/70"
+              className="btn-secondary px-6 py-2 text-sm"
             >
               {isPaused ? 'Resume' : 'Pause'}
             </button>
             <button
               onClick={cancelTimer}
               aria-label="Cancel timer"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--bg-elevated)] px-5 text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-elevated)]/70"
+              className="btn-secondary px-6 py-2 text-sm text-[var(--text-muted)]"
             >
               Cancel
             </button>

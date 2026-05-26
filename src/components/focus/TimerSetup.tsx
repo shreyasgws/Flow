@@ -127,13 +127,13 @@ export function FocusTimer(_props: FocusTimerProps) {
         <div className="flex gap-3">
           <button
             onClick={handleCustomConfirm}
-            className="rounded-full bg-[var(--accent)] px-6 py-2 text-sm text-white transition-opacity hover:opacity-90"
+            className="btn-primary px-6 py-2 text-sm"
           >
             Set {customMinutes} min
           </button>
           <button
             onClick={() => setShowDial(false)}
-            className="rounded-full bg-[var(--bg-elevated)] px-6 py-2 text-sm text-[var(--text-secondary)] transition-opacity hover:opacity-80"
+            className="btn-secondary px-6 py-2 text-sm"
           >
             Back
           </button>

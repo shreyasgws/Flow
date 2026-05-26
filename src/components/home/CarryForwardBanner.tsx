@@ -75,14 +75,14 @@ export function CarryForwardBanner() {
           <button
             onClick={handleCarryForward}
             disabled={pending}
-            className="rounded-full bg-[var(--accent)] px-4 py-1 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="btn-primary px-4 py-1 text-xs"
           >
             {pending ? 'Moving...' : 'Carry them forward'}
           </button>
           <button
             onClick={handleDismiss}
             disabled={pending}
-            className="rounded-full bg-[var(--bg-elevated)] px-4 py-1 text-xs text-[var(--text-secondary)] transition-opacity hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="btn-secondary px-4 py-1 text-xs"
           >
             Dismiss
           </button>

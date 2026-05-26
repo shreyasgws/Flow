@@ -150,7 +150,7 @@ export function WeekReflection({ weekStart }: WeekReflectionProps) {
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="btn-primary px-4 py-1.5"
                 >
                   {isSaving ? 'Saving...' : existing ? 'Update reflection' : 'Save reflection'}
                 </button>

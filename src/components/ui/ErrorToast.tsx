@@ -32,7 +32,7 @@ export function ErrorToast() {
                 {err.retry && (
                   <button
                     onClick={err.retry}
-                    className="mt-1 text-xs text-[var(--accent)]"
+                    className="btn-ghost mt-1 text-xs text-[var(--accent)]"
                   >
                     Try again
                   </button>
@@ -41,7 +41,7 @@ export function ErrorToast() {
               <button
                 onClick={() => dismiss(err.id)}
                 aria-label="Dismiss"
-                className="shrink-0 text-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+                className="btn-ghost shrink-0"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true">
                   <path d="M3 3l6 6M9 3l-6 6" strokeLinecap="round" />

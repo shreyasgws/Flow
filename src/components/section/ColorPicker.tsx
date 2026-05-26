@@ -19,7 +19,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
           key={color}
           onClick={() => onChange(color)}
           aria-label={`Color ${color}`}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-all hover:scale-110"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-transform duration-200 ease-out hover:scale-105"
         >
           <span
             className={`inline-block h-5 w-5 rounded-full ${

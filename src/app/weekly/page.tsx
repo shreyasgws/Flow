@@ -122,7 +122,7 @@ export default function Weekly() {
           <button
             onClick={() => navigateWeek(-1)}
             aria-label="Previous week"
-            className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
+            className="btn-ghost"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
               <path d="M8 4L5 7l3 3" strokeLinecap="round" strokeLinejoin="round" />
@@ -139,7 +139,7 @@ export default function Weekly() {
           <button
             onClick={() => navigateWeek(1)}
             aria-label="Next week"
-            className="flex min-h-11 min-w-11 items-center justify-center text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
+            className="btn-ghost"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
               <path d="M6 4l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
@@ -200,13 +200,13 @@ export default function Weekly() {
               <button
                 onClick={handlePromptSave}
                 disabled={promptSaving}
-                className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="btn-primary px-4 py-1.5"
               >
                 {promptSaving ? 'Saving...' : promptContent.trim() ? 'Save reflection' : 'Skip'}
               </button>
               <button
                 onClick={handleDismissPrompt}
-                className="rounded-full border border-[var(--bg-elevated)] px-4 py-1.5 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--text-ghost)]"
+                className="btn-secondary px-4 py-1.5"
               >
                 Dismiss
               </button>
