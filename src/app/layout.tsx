@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: 'Flow',
   description: 'A calmer way to move through your day.',
   manifest: '/manifest.json',
+  icons: [{ rel: 'icon', url: '/favicon.svg', type: 'image/svg+xml' }],
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent' },
 }
 
