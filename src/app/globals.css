@@ -401,8 +401,8 @@ body {
   background: var(--accent);
   color: white;
   font-size: 0.75rem;
-  padding: 0.375rem 1rem;
-  transition: opacity 0.2s var(--ease-out);
+  padding: 0.5rem 1rem;
+  transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out);
   cursor: pointer;
   border: none;
   font-family: var(--font-sans);
@@ -410,6 +410,7 @@ body {
 
 .btn-primary:hover {
   opacity: 0.9;
+  transform: scale(1.02);
 }
 
 .btn-primary:active {
@@ -429,8 +430,8 @@ body {
   background: var(--bg-elevated);
   color: var(--text-secondary);
   font-size: 0.75rem;
-  padding: 0.375rem 1rem;
-  transition: color 0.2s var(--ease-out), background 0.2s var(--ease-out);
+  padding: 0.5rem 1rem;
+  transition: color 0.2s var(--ease-out), background 0.2s var(--ease-out), transform 0.2s var(--ease-out);
   cursor: pointer;
   border: none;
   font-family: var(--font-sans);
@@ -439,6 +440,7 @@ body {
 .btn-secondary:hover {
   color: var(--text-primary);
   background: var(--bg-elevated);
+  transform: scale(1.02);
 }
 
 .btn-secondary:active {
@@ -453,7 +455,7 @@ body {
   min-width: 44px;
   border-radius: 9999px;
   color: var(--text-muted);
-  transition: color 0.2s var(--ease-out), background 0.2s var(--ease-out);
+  transition: color 0.2s var(--ease-out), background 0.2s var(--ease-out), transform 0.2s var(--ease-out);
   cursor: pointer;
   border: none;
   background: transparent;
@@ -463,6 +465,7 @@ body {
 .btn-ghost:hover {
   color: var(--text-secondary);
   background: transparent;
+  transform: scale(1.02);
 }
 
 .btn-ghost:active {

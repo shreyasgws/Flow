@@ -115,7 +115,7 @@ export default function Landing() {
         <button
           onClick={handleGoogleSignIn}
           disabled={authPending}
-          className="mb-4 w-full max-w-[280px] rounded-full bg-[var(--bg-surface)] px-6 py-3 text-sm font-medium text-[var(--text-primary)] transition-all duration-200 ease-out hover:bg-[var(--bg-elevated)] active:scale-[0.98] disabled:opacity-50"
+          className="btn-primary mb-4 w-full max-w-[280px] py-3 text-sm font-medium"
         >
           {authPending ? 'Signing in\u2026' : 'Continue with Google'}
         </button>
@@ -127,21 +127,9 @@ export default function Landing() {
         <button
           onClick={handleAnonymous}
           disabled={authPending}
-          className="rounded-full border border-[var(--border)] px-6 py-2 text-xs text-[var(--text-muted)] transition-all duration-200 ease-out hover:border-[var(--text-ghost)] active:scale-[0.98] disabled:opacity-50"
+          className="btn-secondary w-full max-w-[280px] px-6 py-2 text-xs"
         >
           {authPending ? 'Signing in\u2026' : 'Enter anonymously'}
-        </button>
-
-        <p className="mb-6 text-xs text-[var(--text-ghost)]">
-          or continue without an account
-        </p>
-
-        <button
-          onClick={handleAnonymous}
-          disabled={authPending}
-          className="rounded-full border border-[var(--bg-elevated)] px-6 py-2 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--text-ghost)] disabled:opacity-50"
-        >
-          {authPending ? 'Signing in…' : 'Enter anonymously'}
         </button>
 
         <p

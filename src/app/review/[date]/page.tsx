@@ -109,7 +109,7 @@ export default function DayReview({
               <button
                 key={level}
                 onClick={() => {}}
-                className="rounded-full border border-[var(--bg-elevated)] px-3 py-1 text-[10px] text-[var(--text-muted)] transition-colors hover:border-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
+                className="rounded-full border border-[var(--border)] px-3 py-1 text-[10px] text-[var(--text-muted)] transition-colors hover:border-[var(--text-ghost)] hover:text-[var(--text-secondary)]"
               >
                 {level}
               </button>
@@ -132,14 +132,14 @@ export default function DayReview({
           const sectionName = section?.name ?? 'Unsorted'
           const sorted = [...tasks].sort((a, b) => a.sortOrder - b.sortOrder)
           return (
-            <div key={secId} className="border-l border-[var(--bg-elevated)] pl-3">
+            <div key={secId} className="border-l border-[var(--border)] pl-3">
               <p className="mb-2 text-xs font-medium text-[var(--text-secondary)]">
                 {sectionName}
               </p>
               {sorted.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center gap-2 py-1.5"
+                  className="flex items-center gap-2 py-2"
                 >
                   <span
                     className={`h-3 w-3 shrink-0 rounded-full border ${
@@ -181,20 +181,20 @@ export default function DayReview({
       )}
 
       {today && active.length > 0 && showCarryForward && (
-        <div className="mt-8 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-4">
+        <div className="mt-8 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-4">
           <p className="text-sm text-[var(--text-primary)]">
             Move {active.length} unfinished task{active.length > 1 ? 's' : ''} to today?
           </p>
           <div className="mt-3 flex gap-2">
             <button
               onClick={() => {}}
-              className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+              className="btn-primary"
             >
               Carry forward
             </button>
             <button
               onClick={() => setShowCarryForward(false)}
-              className="rounded-full border border-[var(--bg-elevated)] px-4 py-1.5 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--text-ghost)]"
+              className="btn-secondary"
             >
               Dismiss
             </button>

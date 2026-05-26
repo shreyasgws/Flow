@@ -386,7 +386,7 @@ export default function Settings() {
                     type="time"
                     value={settings.quietHoursStart}
                     onChange={(e) => updateSettings({ quietHoursStart: e.target.value })}
-                    className="mt-1 w-full rounded-md border border-[var(--bg-elevated)] bg-[var(--bg-base)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg-base)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </div>
                 <div className="flex-1">
@@ -395,7 +395,7 @@ export default function Settings() {
                     type="time"
                     value={settings.quietHoursEnd}
                     onChange={(e) => updateSettings({ quietHoursEnd: e.target.value })}
-                    className="mt-1 w-full rounded-md border border-[var(--bg-elevated)] bg-[var(--bg-base)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg-base)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                   />
                 </div>
               </div>

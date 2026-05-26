@@ -71,7 +71,7 @@ export function WeekReflection({ weekStart }: WeekReflectionProps) {
     .slice(0, 2)
 
   return (
-    <div className="mt-8 border-t border-[var(--bg-elevated)] pt-6">
+    <div className="mt-8 border-t border-[var(--border)] pt-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between text-left"
@@ -118,7 +118,7 @@ export function WeekReflection({ weekStart }: WeekReflectionProps) {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Write a reflection..."
                 rows={4}
-                className="w-full resize-none rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-ghost)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-ghost)] focus:border-[var(--accent)] focus:outline-none"
               />
 
               <div className="flex flex-wrap gap-2">
@@ -157,7 +157,7 @@ export function WeekReflection({ weekStart }: WeekReflectionProps) {
               )}
 
               {weekDriftEntries.length > 0 && (
-                <div className="border-t border-[var(--bg-elevated)] pt-4">
+                <div className="border-t border-[var(--border)] pt-4">
                   <p className="mb-2 text-xs text-[var(--text-muted)]">
                     This week in drift — {weekDriftEntries.length} thought{weekDriftEntries.length > 1 ? 's' : ''}
                   </p>

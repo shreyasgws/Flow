@@ -39,7 +39,7 @@ export default function AuthCallback() {
           <p className="mb-4 text-sm text-[var(--text-secondary)]">{status}</p>
           <button
             onClick={() => router.replace('/')}
-            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+            className="btn-primary"
           >
             Back to sign in
           </button>

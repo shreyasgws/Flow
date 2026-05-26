@@ -41,7 +41,7 @@ export function SignInBanner({ onLinked }: SignInBannerProps) {
   }
 
   return (
-    <div className="mb-4 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+    <div className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3">
       <p className="mb-2 text-xs text-[var(--text-secondary)]">
         Your data only lives on this device. Sign in to keep it safe.
       </p>

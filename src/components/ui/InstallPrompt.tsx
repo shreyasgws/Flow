@@ -47,7 +47,7 @@ export function InstallPrompt() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-24 left-4 right-4 z-50 mx-auto max-w-sm rounded-xl border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-4 shadow-lg"
+          className="fixed bottom-24 left-4 right-4 z-50 mx-auto max-w-sm rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4 shadow-lg"
         >
           <p className="mb-3 text-sm text-[var(--text-primary)]">
             Flow works offline. Install for a calmer experience.

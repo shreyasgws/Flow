@@ -55,7 +55,7 @@ export function InlineComposer() {
             onKeyDown={handleKeyDown}
             placeholder="What needs to happen today?"
             disabled={loading}
-            className="flex-1 bg-transparent px-1 py-3.5 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] disabled:opacity-50"
+            className="flex-1 bg-transparent px-1 py-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] disabled:opacity-50"
           />
           <button
             onClick={submit}

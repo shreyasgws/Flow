@@ -184,7 +184,7 @@ export default function Weekly() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className="mt-6 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-4"
+            className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-4"
           >
             <p className="mb-2 font-serif text-base text-[var(--text-primary)]">
               How did this week feel?
@@ -194,7 +194,7 @@ export default function Weekly() {
               onChange={(e) => setPromptContent(e.target.value)}
               placeholder="No pressure — just a thought if you want to leave one..."
               rows={3}
-              className="w-full resize-none rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-base)] p-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-ghost)] focus:border-[var(--accent)] focus:outline-none"
+              className="w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--bg-base)] p-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-ghost)] focus:border-[var(--accent)] focus:outline-none"
             />
             <div className="mt-3 flex gap-2">
               <button

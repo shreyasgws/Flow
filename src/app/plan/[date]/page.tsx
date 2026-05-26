@@ -107,7 +107,7 @@ export default function PlanPage({
         </p>
         <button
           onClick={() => router.push('/home')}
-          className="mt-4 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+          className="btn-primary mt-4"
         >
           Back to today
         </button>
@@ -131,7 +131,7 @@ export default function PlanPage({
           </p>
           <button
             onClick={openNewSection}
-            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+            className="btn-primary"
           >
             Create your first section
           </button>
@@ -151,10 +151,10 @@ export default function PlanPage({
             <button
               onClick={openNewSection}
               aria-label="Add section"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] transition-colors hover:bg-[var(--accent)] hover:text-white"
+              className="btn-ghost"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                <path d="M6 2v8M2 6h8" strokeLinecap="round" />
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                <path d="M7 2v10M2 7h10" strokeLinecap="round" />
               </svg>
             </button>
           </div>
@@ -188,7 +188,7 @@ export default function PlanPage({
       })}
 
       {completedTasks.length > 0 && (
-        <div className="mt-8 border-t border-[var(--bg-elevated)] pt-4">
+        <div className="mt-8 border-t border-[var(--border)] pt-4">
           <button
             onClick={() => setShowCompleted(!showCompleted)}
             aria-expanded={showCompleted}
@@ -201,7 +201,7 @@ export default function PlanPage({
           </button>
 
           {showCompleted && (
-            <div className="ml-4 mt-2 border-l border-[var(--bg-elevated)] pl-3">
+            <div className="ml-4 mt-2 border-l border-[var(--border)] pl-3">
               {completedTasks.map((task) => (
                 <TaskCard
                   key={task.id}

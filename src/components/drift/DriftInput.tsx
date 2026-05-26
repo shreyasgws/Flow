@@ -33,7 +33,7 @@ export function DriftInput() {
   }
 
   return (
-    <div className="flex items-center gap-2 border-b border-[var(--bg-elevated)] pb-3">
+    <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
       <input
         ref={ref}
         type="text"

@@ -148,7 +148,7 @@ export function TaskCard({
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
         onPointerCancel={handlePointerCancel}
-        className={`group/task flex items-center gap-2 py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
+        className={`group/task flex items-center gap-2 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
           !isDone ? 'cursor-grab active:cursor-grabbing' : ''
         } ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
         style={{ touchAction: 'pan-y' }}
@@ -158,8 +158,8 @@ export function TaskCard({
           onClick={handleToggleComplete}
           disabled={isPending}
           aria-label={isDone ? `Uncomplete "${title}"` : `Complete "${title}"`}
-          whileHover={{ scale: 1.15 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.97 }}
           className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
             isDone
               ? 'border-[var(--accent)] bg-[var(--accent)]'
