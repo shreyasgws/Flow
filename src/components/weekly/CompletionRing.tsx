@@ -64,7 +64,7 @@ export function CompletionRing({ completed, total, size = 60, strokeWidth = 4, d
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: dashOffset }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         />
       </svg>
       <span className="absolute text-xs text-[var(--text-secondary)]">

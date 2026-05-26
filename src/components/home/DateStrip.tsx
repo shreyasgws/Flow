@@ -37,7 +37,7 @@ export function DateStrip({ selectedDate, onSelectDate }: DateStripProps) {
 
   return (
     <div className="mb-4 overflow-x-auto scrollbar-none">
-      <div className="flex gap-1.5 pb-1">
+      <div className="flex gap-2 pb-1">
         {dates.map((dateStr) => {
           const isToday = dateStr === today()
           const isSelected = dateStr === selectedDate

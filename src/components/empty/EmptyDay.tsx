@@ -18,7 +18,7 @@ export function EmptyDay({ variant, completedCount = 0, sectionCount = 0, onCrea
         <motion.p
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           className="text-sm text-[var(--text-secondary)]"
         >
           Welcome. Tap below to plan your first day.
@@ -27,7 +27,7 @@ export function EmptyDay({ variant, completedCount = 0, sectionCount = 0, onCrea
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.3 }}
+            transition={{ delay: 0.2, duration: 0.2 }}
             onClick={onCreateSection}
             className="btn-primary mt-4 px-4 py-2"
           >

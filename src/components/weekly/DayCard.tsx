@@ -48,7 +48,7 @@ export function DayCard({ dayName, dateNumber, completed, total, isToday, isFutu
             className="h-full rounded-full bg-[var(--accent)]"
             initial={{ width: 0 }}
             animate={{ width: `${ratio * 100}%` }}
-            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           />
         </div>
       )}

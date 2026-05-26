@@ -90,7 +90,7 @@ export default function Landing() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={showContent ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         className="relative z-10 flex flex-col items-center px-6 text-center"
       >
         <p

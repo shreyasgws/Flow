@@ -149,7 +149,7 @@ export default function FocusPage({
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.2 }}
             className="relative z-10 flex w-full max-w-md flex-col items-center px-6"
           >
             {section && (
@@ -188,7 +188,7 @@ export default function FocusPage({
             key="done"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.2 }}
             className="relative z-10 flex w-full max-w-md flex-col items-center px-6 text-center"
           >
             <SessionTransition
