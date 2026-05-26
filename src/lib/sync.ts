@@ -1,6 +1,7 @@
 import type { FlowDatabase, SyncQueueItem } from '@/lib/db'
-import { getDb, getDbNamespace } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { useSyncStore } from '@/stores/syncStore'
+import { useErrorStore } from '@/stores/errorStore'
 import { useAuthStore } from '@/stores/authStore'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -87,6 +88,10 @@ export async function flushQueue(db?: FlowDatabase) {
     } else if (item.retries >= MAX_RETRIES) {
       await target.syncQueue.update(item.id!, { status: 'failed' })
       useSyncStore.getState().setStatus('offline')
+      useErrorStore.getState().push('database', {
+        description: `${item.table.replace(/([A-Z])/g, ' $1').trim()} item still pending after ${MAX_RETRIES} attempts. Your data is saved locally.`,
+        retry: () => { flushFailed().catch(() => {}) },
+      })
     } else {
       const delay = BACKOFF_DELAYS[item.retries] ?? 4000
       await target.syncQueue.update(item.id!, { retries: item.retries + 1 })
@@ -227,53 +232,54 @@ export async function pullFromSupabase(userIdOverride?: string, isAnonymousOverr
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  // Use the override if provided (e.g. during auth transitions), otherwise detect
   const targetUserId = userIdOverride ?? user.id
   const targetIsAnonymous = isAnonymousOverride ?? (user.is_anonymous === true)
 
-  // Skip pull for anonymous users — they have no cloud data
   if (targetIsAnonymous) return
 
   const db = getDb(targetUserId, false)
   const remoteTables = ['tasks', 'flow_sections', 'drift_entries', 'reflections', 'categories', 'templates', 'settings']
 
-  // Clear local data for this user BEFORE pulling — fresh sync from server
-  await db.tasks.clear()
-  await db.flowSections.clear()
-  await db.driftEntries.clear()
-  await db.reflections.clear()
-  await db.categories.clear()
-  await db.templates.clear()
-  await db.settings.clear()
-
   for (const table of remoteTables) {
     try {
-      // Scope query by user_id — only pull the authenticated user's data
       const { data: rawData, error } = await supabase
         .from(table)
         .select('*')
         .eq('user_id', targetUserId)
       if (error) continue
-      if (!rawData || rawData.length === 0) continue
-
-      const camelData = rawData.map((r: Record<string, unknown>) => camelizeKeys(r))
+      if (!rawData) continue
 
       const localTable = TABLE_MAP_REVERSE[table]
       if (!localTable) continue
 
-      if (localTable === 'tasks') await db.tasks.bulkAdd(camelData as any[])
-      else if (localTable === 'flowSections') await db.flowSections.bulkAdd(camelData as any[])
-      else if (localTable === 'driftEntries') await db.driftEntries.bulkAdd(camelData as any[])
-      else if (localTable === 'reflections') await db.reflections.bulkAdd(camelData as any[])
-      else if (localTable === 'categories') await db.categories.bulkAdd(camelData as any[])
-      else if (localTable === 'templates') await db.templates.bulkAdd(camelData as any[])
-      else if (localTable === 'settings') {
+      const camelData = rawData.map((r: Record<string, unknown>) => camelizeKeys(r))
+
+      if (localTable === 'tasks') {
+        await db.tasks.clear()
+        if (camelData.length > 0) await db.tasks.bulkAdd(camelData as any[])
+      } else if (localTable === 'flowSections') {
+        await db.flowSections.clear()
+        if (camelData.length > 0) await db.flowSections.bulkAdd(camelData as any[])
+      } else if (localTable === 'driftEntries') {
+        await db.driftEntries.clear()
+        if (camelData.length > 0) await db.driftEntries.bulkAdd(camelData as any[])
+      } else if (localTable === 'reflections') {
+        await db.reflections.clear()
+        if (camelData.length > 0) await db.reflections.bulkAdd(camelData as any[])
+      } else if (localTable === 'categories') {
+        await db.categories.clear()
+        if (camelData.length > 0) await db.categories.bulkAdd(camelData as any[])
+      } else if (localTable === 'templates') {
+        await db.templates.clear()
+        if (camelData.length > 0) await db.templates.bulkAdd(camelData as any[])
+      } else if (localTable === 'settings') {
+        await db.settings.clear()
         for (const row of camelData) {
           await db.settings.put(row as any)
         }
       }
     } catch {
-      // Skip failed tables — continue seeding what we can
+      // Fetch failed — preserve local data for this table
     }
   }
 }

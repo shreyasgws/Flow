@@ -72,7 +72,8 @@ export async function destroyDb(namespace: string): Promise<void> {
 export async function destroyCurrentDb(userId?: string | null, isAnonymous?: boolean): Promise<void> {
   const ns = getDbNamespace(userId, isAnonymous)
   await destroyDb(ns)
-  try { await Dexie.delete('flow_ui') } catch { /* ignore */ }
+  const uiNs = !userId || isAnonymous ? 'flow_ui_anonymous' : `flow_ui_${userId}`
+  try { await Dexie.delete(uiNs) } catch { /* ignore */ }
   try { sessionStorage.clear() } catch { /* ignore */ }
 }
 

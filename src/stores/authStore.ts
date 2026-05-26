@@ -9,6 +9,7 @@ const STORED_DOMAIN_KEY = 'flow:last_domain'
 let _subscription: Subscription | null = null
 let _realtimeChannels: RealtimeChannel[] = []
 let _initLock = false
+let _signingOut = false
 
 function getStoredUserId(): string | null {
   try { return localStorage.getItem(STORED_USER_KEY) } catch { return null }
@@ -162,7 +163,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       triggerResetStores()
       set({ user: newUser, session: await getSupabase().auth.getSession().then(r => r.data.session) })
     } else if (!prevUserId) {
-      // Fresh sign-in (was null) — clear anonymous, then pull
+      // Fresh sign-in (was null) — destroy anonymous DB, then pull
+      await destroyCurrentDb(null, true)
       triggerResetStores()
       set({ user: newUser, session: await getSupabase().auth.getSession().then(r => r.data.session) })
     } else {
@@ -172,25 +174,31 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   handleSignOut: async (prevUserId: string | null, prevIsAnonymous: boolean) => {
-    const sb = getSupabase()
-
-    // Flush pending writes before signout
+    if (_signingOut) return
+    _signingOut = true
     try {
-      const { flushQueueOnce } = await import('@/lib/sync')
-      await flushQueueOnce()
-    } catch { /* best-effort */ }
+      const sb = getSupabase()
 
-    triggerResetStores()
+      // Flush pending writes before signout
+      try {
+        const { flushQueueOnce } = await import('@/lib/sync')
+        await flushQueueOnce()
+      } catch { /* best-effort */ }
 
-    await sb.auth.signOut()
+      triggerResetStores()
 
-    set({
-      session: null,
-      user: null,
-    })
+      await sb.auth.signOut()
 
-    if (prevUserId) {
-      await destroyCurrentDb(prevUserId, prevIsAnonymous)
+      set({
+        session: null,
+        user: null,
+      })
+
+      if (prevUserId) {
+        await destroyCurrentDb(prevUserId, prevIsAnonymous)
+      }
+    } finally {
+      _signingOut = false
     }
   },
 
