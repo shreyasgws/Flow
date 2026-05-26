@@ -1,9 +1,10 @@
 import { create } from 'zustand'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
 import { queueWrite } from '@/lib/sync'
+import { useAuthStore } from '@/stores/authStore'
 import type { DriftEntry } from '@/types'
 
 interface DriftStore {
@@ -17,15 +18,24 @@ interface DriftStore {
   deleteEntry: (id: string) => Promise<void>
   purgeArchived: () => Promise<void>
   getActiveEntries: () => DriftEntry[]
+  reset: () => void
+}
+
+const initialState = {
+  entries: [] as DriftEntry[],
+  isLoading: false,
+  error: null as string | null,
 }
 
 export const useDriftStore = create<DriftStore>((set, get) => ({
-  entries: [],
-  isLoading: false,
-  error: null,
+  ...initialState,
+
+  reset: () => set({ ...initialState }),
 
   loadEntries: async () => {
     set({ isLoading: true, error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     try {
       const all = await retryWithBackoff(() => db.driftEntries.toArray())
       const entries = all.filter((e) => e.isArchived !== true)
@@ -39,6 +49,8 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
 
   addEntry: async (text, source = 'manual') => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const entry: DriftEntry = {
       id: crypto.randomUUID(),
       text,
@@ -49,7 +61,7 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
     }
     try {
       await retryWithBackoff(() => db.driftEntries.add(entry))
-      queueWrite('upsert', 'driftEntries', entry.id, entry)
+      queueWrite('upsert', 'driftEntries', entry.id, entry, db)
       set((s) => ({ entries: [entry, ...s.entries] }))
       return entry
     } catch {
@@ -61,12 +73,14 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
 
   updateEntry: async (id, text) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const prev = get().entries.find((e) => e.id === id)
     if (!prev) return
     const now = Date.now()
     try {
       await retryWithBackoff(() => db.driftEntries.update(id, { text, updatedAt: now }))
-      queueWrite('upsert', 'driftEntries', id, { ...prev, text, updatedAt: now })
+      queueWrite('upsert', 'driftEntries', id, { ...prev, text, updatedAt: now }, db)
       set((s) => ({
         entries: s.entries.map((e) =>
           e.id === id ? { ...e, text, updatedAt: now } : e
@@ -74,7 +88,7 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
       }))
       pushUndo(id, `Edited drift`, async () => {
         await retryWithBackoff(() => db.driftEntries.update(id, { text: prev.text, updatedAt: Date.now() }))
-        queueWrite('upsert', 'driftEntries', id, { ...prev, text: prev.text, updatedAt: Date.now() })
+        queueWrite('upsert', 'driftEntries', id, { ...prev, text: prev.text, updatedAt: Date.now() }, db)
         set((s) => ({
           entries: s.entries.map((e) =>
             e.id === id ? { ...e, text: prev.text, updatedAt: Date.now() } : e
@@ -89,17 +103,19 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
 
   archiveEntry: async (id) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const entry = get().entries.find((e) => e.id === id)
     if (!entry) return
     try {
       await retryWithBackoff(() => db.driftEntries.update(id, { isArchived: true }))
-      queueWrite('upsert', 'driftEntries', id, { ...entry, isArchived: true })
+      queueWrite('upsert', 'driftEntries', id, { ...entry, isArchived: true }, db)
       set((s) => ({
         entries: s.entries.filter((e) => e.id !== id),
       }))
       pushUndo(id, `Archived drift`, async () => {
         await retryWithBackoff(() => db.driftEntries.update(id, { isArchived: false }))
-        queueWrite('upsert', 'driftEntries', id, { ...entry, isArchived: false })
+        queueWrite('upsert', 'driftEntries', id, { ...entry, isArchived: false }, db)
         set((s) => ({
           entries: [{ ...entry, isArchived: false }, ...s.entries],
         }))
@@ -112,16 +128,18 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
 
   deleteEntry: async (id) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const entry = get().entries.find((e) => e.id === id)
     if (!entry) return
     try {
       await retryWithBackoff(() => db.driftEntries.delete(id))
-      queueWrite('delete', 'driftEntries', id, {})
+      queueWrite('delete', 'driftEntries', id, {}, db)
       set((s) => ({ entries: s.entries.filter((e) => e.id !== id) }))
       pushUndo(id, `Deleted drift`, async () => {
         const restored = { ...entry, id: crypto.randomUUID() }
         await retryWithBackoff(() => db.driftEntries.add(restored))
-        queueWrite('upsert', 'driftEntries', restored.id, restored)
+        queueWrite('upsert', 'driftEntries', restored.id, restored, db)
         set((s) => ({
           entries: [restored, ...s.entries],
         }))
@@ -134,6 +152,8 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
 
   purgeArchived: async () => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     try {
       const all = await retryWithBackoff(() => db.driftEntries.toArray())
       const archived = all.filter((e) => e.isArchived)
@@ -141,12 +161,12 @@ export const useDriftStore = create<DriftStore>((set, get) => ({
       const ids = archived.map((e) => e.id)
       await retryWithBackoff(() => db.driftEntries.bulkDelete(ids))
       for (const entry of archived) {
-        queueWrite('delete', 'driftEntries', entry.id, {})
+        queueWrite('delete', 'driftEntries', entry.id, {}, db)
       }
       pushUndo(`purge-${Date.now()}`, `Purged ${archived.length} archived drifts`, async () => {
         await retryWithBackoff(() => db.driftEntries.bulkAdd(archived))
         for (const entry of archived) {
-          queueWrite('upsert', 'driftEntries', entry.id, entry)
+          queueWrite('upsert', 'driftEntries', entry.id, entry, db)
         }
         set((s) => ({
           entries: [...s.entries, ...archived].sort((a, b) => b.createdAt - a.createdAt),

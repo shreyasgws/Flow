@@ -1,10 +1,18 @@
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { queueWrite } from '@/lib/sync'
+import { useAuthStore } from '@/stores/authStore'
 import type { Task } from '@/types'
+
+function currentDb() {
+  const state = useAuthStore.getState()
+  return getDb(state.user?.id, state.user?.is_anonymous === true)
+}
 
 export async function shouldCreateNewInstance(task: Task, today: string): Promise<boolean> {
   if (!task.isRecurring || task.recurrenceType === 'none') return false
   if (task.status !== 'completed') return false
+
+  const db = currentDb()
 
   if (task.recurrenceType === 'daily') {
     const existing = await db.tasks.where({ recurrenceBaseId: task.id, date: today }).toArray()
@@ -34,6 +42,7 @@ export async function shouldCreateNewInstance(task: Task, today: string): Promis
 
 export async function createInstance(task: Task, date: string): Promise<Task | null> {
   if (!task.isRecurring) return null
+  const db = currentDb()
   try {
     const instance: Task = {
       id: crypto.randomUUID(),
@@ -55,7 +64,7 @@ export async function createInstance(task: Task, date: string): Promise<Task | n
       sourceDriftId: null,
     }
     await db.tasks.add(instance)
-    queueWrite('upsert', 'tasks', instance.id, instance)
+    queueWrite('upsert', 'tasks', instance.id, instance, db)
     return instance
   } catch {
     return null
@@ -64,6 +73,7 @@ export async function createInstance(task: Task, date: string): Promise<Task | n
 
 export async function processRecurringTasks(): Promise<number> {
   const today = new Date().toISOString().slice(0, 10)
+  const db = currentDb()
 
   const baseTasks = await db.tasks
     .where({ isRecurring: true })

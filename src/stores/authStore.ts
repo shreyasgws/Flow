@@ -1,21 +1,14 @@
 import { create } from 'zustand'
 import { getSupabase } from '@/lib/supabase'
-import { clearAllLocalData } from '@/lib/db'
-import type { User, Session, Subscription } from '@supabase/supabase-js'
-
-interface AuthStore {
-  session: Session | null
-  user: User | null
-  isReady: boolean
-  init: () => Promise<void>
-  signOut: () => Promise<void>
-  needsPull: boolean
-  clearNeedsPull: () => void
-}
-
-let _subscription: Subscription | null = null
+import { destroyCurrentDb } from '@/lib/db'
+import type { User, Session, Subscription, RealtimeChannel } from '@supabase/supabase-js'
 
 const STORED_USER_KEY = 'flow:last_user_id'
+const STORED_DOMAIN_KEY = 'flow:last_domain'
+
+let _subscription: Subscription | null = null
+let _realtimeChannels: RealtimeChannel[] = []
+let _initLock = false
 
 function getStoredUserId(): string | null {
   try { return localStorage.getItem(STORED_USER_KEY) } catch { return null }
@@ -28,71 +21,182 @@ function setStoredUserId(id: string | null) {
   } catch { /* ignore */ }
 }
 
+function getStoredDomain(): string | null {
+  try { return localStorage.getItem(STORED_DOMAIN_KEY) } catch { return null }
+}
+
+function setStoredDomain(domain: string | null) {
+  try {
+    if (domain) localStorage.setItem(STORED_DOMAIN_KEY, domain)
+    else localStorage.removeItem(STORED_DOMAIN_KEY)
+  } catch { /* ignore */ }
+}
+
+function getCurrentOrigin(): string {
+  try { return window.location.origin } catch { return '' }
+}
+
+export function attachRealtimeChannel(channel: RealtimeChannel): void {
+  _realtimeChannels.push(channel)
+}
+
+export function getRealtimeChannels(): RealtimeChannel[] {
+  return _realtimeChannels
+}
+
+interface AuthStoreActions {
+  resetAllStores: () => void
+}
+
+let _resetAllStores: (() => void) | null = null
+
+export function registerResetAllStores(fn: () => void): void {
+  _resetAllStores = fn
+}
+
+function triggerResetStores(): void {
+  _resetAllStores?.()
+}
+
+export function setupAuthListener(): void {
+  if (_subscription) return
+  const sb = getSupabase()
+  const { data: { subscription } } = sb.auth.onAuthStateChange(async (event, session) => {
+    const { useAuthStore: store } = await import('./authStore')
+    const prevUser = store.getState().user
+    const newUser = session?.user ?? null
+
+    if (event === 'SIGNED_OUT') {
+      const prevId = prevUser?.id ?? null
+      const prevIsAnonymous = prevUser?.is_anonymous === true
+      store.getState().handleSignOut(prevId, prevIsAnonymous)
+    } else if (event === 'SIGNED_IN' && newUser) {
+      store.getState().handleSignIn(newUser, prevUser?.id ?? null)
+    } else if (event === 'TOKEN_REFRESHED' && newUser) {
+      setStoredUserId(newUser.id)
+      setStoredDomain(getCurrentOrigin())
+      store.setState({ session, user: newUser })
+    } else if (event === 'USER_UPDATED' && newUser) {
+      store.setState({ session, user: newUser })
+    }
+  })
+  _subscription = subscription
+}
+
+export async function detachAuthListener(): Promise<void> {
+  if (_subscription) {
+    _subscription.unsubscribe()
+    _subscription = null
+  }
+}
+
+export async function clearAuthState(): Promise<void> {
+  _realtimeChannels.forEach((ch) => {
+    try { ch.unsubscribe() } catch { /* ignore */ }
+  })
+  _realtimeChannels = []
+  setStoredUserId(null)
+  setStoredDomain(null)
+}
+
+interface AuthStore {
+  session: Session | null
+  user: User | null
+  isReady: boolean
+  init: () => Promise<void>
+  signOut: () => Promise<void>
+  handleSignIn: (user: User, prevUserId: string | null) => Promise<void>
+  handleSignOut: (prevUserId: string | null, prevIsAnonymous: boolean) => Promise<void>
+}
+
 export const useAuthStore = create<AuthStore>((set, get) => ({
   session: null,
   user: null,
   isReady: false,
-  needsPull: false,
-
-  clearNeedsPull: () => set({ needsPull: false }),
 
   init: async () => {
-    if (get().isReady) return
+    if (get().isReady || _initLock) return
+    _initLock = true
     let sb
-    try { sb = getSupabase() } catch { return }
+    try { sb = getSupabase() } catch { _initLock = false; return }
     const { data: { session } } = await sb.auth.getSession()
-    const currentUserId = session?.user?.id ?? null
+    const currentUser = session?.user ?? null
+    const currentUserId = currentUser?.id ?? null
 
-    // If a different user was signed in last time on this domain,
-    // clear stale local data before loading anything.
+    // Detect domain change — clear everything if domain differs
+    const storedDomain = getStoredDomain()
+    const currentDomain = getCurrentOrigin()
+    if (storedDomain && storedDomain !== currentDomain) {
+      await destroyCurrentDb(currentUserId, currentUser?.is_anonymous === true)
+      setStoredUserId(null)
+      setStoredDomain(currentDomain)
+    }
+
+    // Detect user switch on same domain
     const storedUserId = getStoredUserId()
     if (currentUserId && storedUserId && currentUserId !== storedUserId) {
-      await clearAllLocalData()
+      await destroyCurrentDb(storedUserId, false)
     }
 
-    // Trigger a pull on page load if already signed in.
-    // This syncs data across domains (e.g. flow-gws → old domain).
+    setupAuthListener()
+
     if (currentUserId) {
       setStoredUserId(currentUserId)
-      set({ needsPull: true })
+      setStoredDomain(currentDomain)
     }
 
-    set({ session, user: session?.user ?? null, isReady: true })
-    if (_subscription) return
-    const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
-      const prevUser = get().user
-      const newUser = session?.user ?? null
-
-      set({ session, user: newUser })
-
-      if (event === 'SIGNED_OUT') {
-        clearAllLocalData()
-        setStoredUserId(null)
-      } else if (event === 'SIGNED_IN' && newUser) {
-        setStoredUserId(newUser.id)
-        if (prevUser && prevUser.id !== newUser.id) {
-          // Switching to a different user — clear stale local data first,
-          // then pull fresh data from the server for the new user
-          clearAllLocalData().then(() => {
-            get().clearNeedsPull()
-            set({ needsPull: true })
-          })
-        } else {
-          set({ needsPull: true })
-        }
-      }
-    })
-    _subscription = subscription
+    set({ session, user: currentUser, isReady: true })
+    _initLock = false
   },
 
-  signOut: async () => {
+  handleSignIn: async (newUser: User, prevUserId: string | null) => {
+    setStoredUserId(newUser.id)
+    setStoredDomain(getCurrentOrigin())
+
+    const newIsAnonymous = newUser.is_anonymous === true
+    const prevWasAnonymous = prevUserId !== null && (get().user?.is_anonymous === true)
+
+    if (prevUserId && prevUserId !== newUser.id) {
+      // Different user signed in — destroy previous user's DB, pull fresh
+      await destroyCurrentDb(prevUserId, prevWasAnonymous)
+      triggerResetStores()
+      set({ user: newUser, session: await getSupabase().auth.getSession().then(r => r.data.session) })
+    } else if (!prevUserId) {
+      // Fresh sign-in (was null) — clear anonymous, then pull
+      triggerResetStores()
+      set({ user: newUser, session: await getSupabase().auth.getSession().then(r => r.data.session) })
+    } else {
+      // Same user — update session
+      set({ user: newUser, session: await getSupabase().auth.getSession().then(r => r.data.session) })
+    }
+  },
+
+  handleSignOut: async (prevUserId: string | null, prevIsAnonymous: boolean) => {
+    const sb = getSupabase()
+
+    // Flush pending writes before signout
     try {
       const { flushQueueOnce } = await import('@/lib/sync')
       await flushQueueOnce()
-    } catch { /* proceed even if sync fails */ }
-    setStoredUserId(null)
-    try { await clearAllLocalData() } catch { /* ignore */ }
-    try { await getSupabase().auth.signOut() } catch { /* ignore network errors */ }
-    set({ session: null, user: null, needsPull: false })
+    } catch { /* best-effort */ }
+
+    triggerResetStores()
+
+    await sb.auth.signOut()
+
+    set({
+      session: null,
+      user: null,
+    })
+
+    if (prevUserId) {
+      await destroyCurrentDb(prevUserId, prevIsAnonymous)
+    }
+  },
+
+  signOut: async () => {
+    const { user } = get()
+    if (!user) return
+    await get().handleSignOut(user.id, user.is_anonymous === true)
   },
 }))

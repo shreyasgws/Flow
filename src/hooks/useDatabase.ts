@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { db, seedDefaultSections } from '@/lib/db'
+import { getDb, seedDefaultSections } from '@/lib/db'
 
 export function useDatabase() {
   const [isReady, setIsReady] = useState(false)
@@ -12,6 +12,7 @@ export function useDatabase() {
 
     async function init() {
       try {
+        const db = getDb()
         await db.open()
         if (cancelled) return
         await seedDefaultSections()

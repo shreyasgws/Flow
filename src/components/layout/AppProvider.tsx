@@ -6,62 +6,99 @@ import { useFlowSectionStore } from '@/stores/flowSectionStore'
 import { useDriftStore } from '@/stores/driftStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useCategoryStore } from '@/stores/categoryStore'
-import { useAuthStore } from '@/stores/authStore'
+import { useTemplateStore } from '@/stores/templateStore'
+import { useReflectionStore } from '@/stores/reflectionStore'
+import { useAuthStore, registerResetAllStores } from '@/stores/authStore'
 import { useDatabase } from '@/hooks/useDatabase'
 import { useSync } from '@/hooks/useSync'
 import { useServiceWorker } from '@/hooks/useServiceWorker'
 import { processRecurringTasks } from '@/lib/recurring'
 import { pullFromSupabase } from '@/lib/sync'
 import { useUiStateStore } from '@/stores/uiStateStore'
+import { seedDefaultSections } from '@/lib/db'
 import { Shell } from '@/components/layout/Shell'
+
+function loadLocalData() {
+  const today = new Date().toISOString().slice(0, 10)
+  useUiStateStore.getState().load()
+  useTaskStore.getState().loadTasks(today)
+  useFlowSectionStore.getState().loadSections()
+  useDriftStore.getState().loadEntries()
+  useSettingsStore.getState().loadSettings()
+  useCategoryStore.getState().loadCategories()
+  useTemplateStore.getState().loadTemplates()
+  useReflectionStore.getState().loadReflections()
+}
+
+function loadAuthenticatedData(userId: string) {
+  const today = new Date().toISOString().slice(0, 10)
+  pullFromSupabase(userId, false).then(() => {
+    seedDefaultSections(userId, false)
+    useUiStateStore.getState().load()
+    useTaskStore.getState().loadTasks(today)
+    useFlowSectionStore.getState().loadSections()
+    useDriftStore.getState().loadEntries()
+    useSettingsStore.getState().loadSettings()
+    useCategoryStore.getState().loadCategories()
+    useTemplateStore.getState().loadTemplates()
+    useReflectionStore.getState().loadReflections()
+  })
+}
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const db = useDatabase()
-  const loadTasks = useTaskStore((s) => s.loadTasks)
-  const loadSections = useFlowSectionStore((s) => s.loadSections)
-  const loadDrift = useDriftStore((s) => s.loadEntries)
-  const loadSettings = useSettingsStore((s) => s.loadSettings)
-  const loadCategories = useCategoryStore((s) => s.loadCategories)
   const initAuth = useAuthStore((s) => s.init)
-  const needsPull = useAuthStore((s) => s.needsPull)
-  const clearNeedsPull = useAuthStore((s) => s.clearNeedsPull)
-  const loadUiState = useUiStateStore((s) => s.load)
+  const user = useAuthStore((s) => s.user)
+  const isReady = useAuthStore((s) => s.isReady)
   const initialized = useRef(false)
+  const prevUserId = useRef<string | null>(null)
 
   useSync()
   useServiceWorker()
 
+  // Register global reset — called by authStore on login/logout
+  useEffect(() => {
+    registerResetAllStores(() => {
+      useTaskStore.getState().reset()
+      useFlowSectionStore.getState().reset()
+      useDriftStore.getState().reset()
+      useSettingsStore.getState().reset()
+      useCategoryStore.getState().reset()
+      useTemplateStore.getState().reset()
+      useReflectionStore.getState().reset()
+      useUiStateStore.getState().reset()
+    })
+  }, [])
+
+  // Initialize auth
   useEffect(() => {
     if (!db.isReady || initialized.current) return
     initialized.current = true
+    initAuth()
+  }, [db.isReady, initAuth])
 
-    ;(async () => {
-      await initAuth()
-      loadUiState()
+  // When auth is ready, load data for the current user
+  useEffect(() => {
+    if (!db.isReady || !isReady) return
 
-      const today = new Date().toISOString().slice(0, 10)
-      loadTasks(today)
-      loadSections()
-      loadDrift()
-      loadSettings()
-      loadCategories()
-    })()
-  }, [db.isReady, initAuth, loadTasks, loadSections, loadDrift, loadSettings, loadCategories, loadUiState])
+    const currentId = user?.id ?? null
+    const previousId = prevUserId.current
+    prevUserId.current = currentId
+
+    // Skip if same user (prevents re-fetch on unrelated re-renders)
+    if (currentId === previousId && previousId !== null) return
+
+    if (user && !user.is_anonymous) {
+      // Authenticated user
+      loadAuthenticatedData(user.id)
+    } else {
+      // Anonymous or no user
+      seedDefaultSections()
+      loadLocalData()
+    }
+  }, [user, isReady, db.isReady])
 
   const settings = useSettingsStore((s) => s.settings)
-
-  useEffect(() => {
-    if (!needsPull) return
-    clearNeedsPull()
-    pullFromSupabase().then(() => {
-      const today = new Date().toISOString().slice(0, 10)
-      loadTasks(today)
-      loadSections()
-      loadDrift()
-      loadSettings()
-      loadCategories()
-    })
-  }, [needsPull, clearNeedsPull, loadTasks, loadSections, loadDrift, loadSettings, loadCategories])
 
   useEffect(() => {
     if (!db.isReady) return
@@ -80,11 +117,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Will retry next scheduled check
       }
       const today = new Date().toISOString().slice(0, 10)
-      loadTasks(today)
+      useTaskStore.getState().loadTasks(today)
     }, msUntilCheck)
 
     return () => clearTimeout(timer)
-  }, [db.isReady, loadTasks, settings.dayStartHour])
+  }, [db.isReady, settings.dayStartHour])
 
   if (db.error) {
     return (

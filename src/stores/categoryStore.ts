@@ -1,10 +1,11 @@
 import { create } from 'zustand'
 import type { Category } from '@/types'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
 import { queueWrite } from '@/lib/sync'
+import { useAuthStore } from '@/stores/authStore'
 
 const PRESET_COLORS = [
   '#E05454', '#E08054', '#E0B054', '#8AB854',
@@ -21,15 +22,24 @@ interface CategoryStore {
   updateCategory: (id: string, data: Partial<Pick<Category, 'name' | 'color' | 'emoji'>>) => Promise<void>
   deleteCategory: (id: string) => Promise<void>
   reorderCategories: (updates: { id: string; sortOrder: number }[]) => Promise<void>
+  reset: () => void
+}
+
+const initialState = {
+  categories: [] as Category[],
+  isLoading: false,
+  error: null as string | null,
 }
 
 export const useCategoryStore = create<CategoryStore>((set, get) => ({
-  categories: [],
-  isLoading: false,
-  error: null,
+  ...initialState,
+
+  reset: () => set({ ...initialState }),
 
   loadCategories: async () => {
     set({ isLoading: true, error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     try {
       const categories = await retryWithBackoff(() => db.categories.toArray())
       categories.sort((a, b) => a.sortOrder - b.sortOrder)
@@ -42,6 +52,8 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
 
   addCategory: async (name, color, emoji) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const maxOrder = get().categories.reduce((m, c) => Math.max(m, c.sortOrder), -1)
     const category: Category = {
       id: crypto.randomUUID(),
@@ -53,7 +65,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     }
     try {
       await retryWithBackoff(() => db.categories.add(category))
-      queueWrite('upsert', 'categories', category.id, category)
+      queueWrite('upsert', 'categories', category.id, category, db)
       set((s) => ({ categories: [...s.categories, category] }))
       return category
     } catch {
@@ -65,11 +77,13 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
 
   updateCategory: async (id, data) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const prev = get().categories.find((c) => c.id === id)
     if (!prev) return
     try {
       await retryWithBackoff(() => db.categories.update(id, data))
-      queueWrite('upsert', 'categories', id, { ...prev, ...data })
+      queueWrite('upsert', 'categories', id, { ...prev, ...data }, db)
       set((s) => ({
         categories: s.categories.map((c) =>
           c.id === id ? { ...c, ...data } : c
@@ -78,7 +92,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
       pushUndo(id, `Updated category "${prev.name}"`, async () => {
         const revert = Object.fromEntries(Object.keys(data).map((k) => [k, (prev as unknown as Record<string, unknown>)[k]]))
         await retryWithBackoff(() => db.categories.update(id, revert))
-        queueWrite('upsert', 'categories', id, prev)
+        queueWrite('upsert', 'categories', id, prev, db)
         set((s) => ({
           categories: s.categories.map((c) =>
             c.id === id ? { ...c, ...revert } : c
@@ -92,16 +106,18 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   },
 
   deleteCategory: async (id) => {
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const category = get().categories.find((c) => c.id === id)
     if (!category) return
     try {
       await retryWithBackoff(() => db.categories.delete(id))
-      queueWrite('delete', 'categories', id, {})
+      queueWrite('delete', 'categories', id, {}, db)
       set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }))
       pushUndo(id, `Deleted category "${category.name}"`, async () => {
         const restored = { ...category, id: crypto.randomUUID() }
         await retryWithBackoff(() => db.categories.add(restored))
-        queueWrite('upsert', 'categories', restored.id, restored)
+        queueWrite('upsert', 'categories', restored.id, restored, db)
         set((s) => ({
           categories: [...s.categories, restored].sort((a, b) => a.sortOrder - b.sortOrder),
         }))
@@ -113,6 +129,8 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   },
 
   reorderCategories: async (updates) => {
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const prevStates = updates.map((u) => {
       const c = get().categories.find((cat) => cat.id === u.id)
       return c ? { id: c.id, sortOrder: c.sortOrder } : null
@@ -122,7 +140,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
         for (const u of updates) {
           await db.categories.update(u.id, { sortOrder: u.sortOrder })
           const cat = get().categories.find((c) => c.id === u.id)
-          if (cat) queueWrite('upsert', 'categories', u.id, { ...cat, sortOrder: u.sortOrder })
+          if (cat) queueWrite('upsert', 'categories', u.id, { ...cat, sortOrder: u.sortOrder }, db)
         }
       }))
       set((s) => ({
@@ -138,7 +156,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
           for (const p of prevStates) {
             await db.categories.update(p.id, { sortOrder: p.sortOrder })
             const cat = get().categories.find((c) => c.id === p.id)
-            if (cat) queueWrite('upsert', 'categories', p.id, { ...cat, sortOrder: p.sortOrder })
+            if (cat) queueWrite('upsert', 'categories', p.id, { ...cat, sortOrder: p.sortOrder }, db)
           }
         }))
       })

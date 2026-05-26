@@ -23,8 +23,8 @@ export class FlowDatabase extends Dexie {
   templates!: EntityTable<Template, 'id'>
   syncQueue!: EntityTable<SyncQueueItem, 'id'>
 
-  constructor() {
-    super('flow')
+  constructor(namespace: string) {
+    super(namespace)
     this.version(5).stores({
       tasks: 'id, date, flowSectionId, categoryId, status, sortOrder',
       flowSections: 'id, sortOrder',
@@ -39,23 +39,45 @@ export class FlowDatabase extends Dexie {
   }
 }
 
-export const db = new FlowDatabase()
+const instances = new Map<string, FlowDatabase>()
 
-export async function clearAllLocalData(): Promise<void> {
-  await db.tasks.clear()
-  await db.flowSections.clear()
-  await db.driftEntries.clear()
-  await db.reflections.clear()
-  await db.undoHistory.clear()
-  await db.settings.clear()
-  await db.categories.clear()
-  await db.templates.clear()
-  await db.syncQueue.clear()
+export function getDbNamespace(userId?: string | null, isAnonymous?: boolean): string {
+  if (!userId || isAnonymous) return 'flow_anonymous'
+  return `flow_user_${userId}`
+}
+
+function ensureDb(ns: string): FlowDatabase {
+  let db = instances.get(ns)
+  if (!db) {
+    db = new FlowDatabase(ns)
+    instances.set(ns, db)
+  }
+  return db
+}
+
+export function getDb(userId?: string | null, isAnonymous?: boolean): FlowDatabase {
+  const ns = getDbNamespace(userId, isAnonymous)
+  return ensureDb(ns)
+}
+
+export async function destroyDb(namespace: string): Promise<void> {
+  const db = instances.get(namespace)
+  if (db) {
+    db.close()
+    instances.delete(namespace)
+  }
+  await Dexie.delete(namespace)
+}
+
+export async function destroyCurrentDb(userId?: string | null, isAnonymous?: boolean): Promise<void> {
+  const ns = getDbNamespace(userId, isAnonymous)
+  await destroyDb(ns)
   try { await Dexie.delete('flow_ui') } catch { /* ignore */ }
   try { sessionStorage.clear() } catch { /* ignore */ }
 }
 
-export async function seedDefaultSections(userId: string = 'default'): Promise<string[]> {
+export async function seedDefaultSections(userId?: string | null, isAnonymous?: boolean): Promise<string[]> {
+  const db = getDb(userId, isAnonymous)
   const count = await db.flowSections.count()
   if (count > 0) return []
 

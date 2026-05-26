@@ -18,17 +18,22 @@ interface UiStateStore {
   setComposerDraft: (text: string) => void
   setSectionExpanded: (sectionId: string, expanded: boolean) => void
   setShowCompletedTasks: (show: boolean) => void
+  reset: () => void
+}
+
+const initialUi: UiState = {
+  lastActiveDate: new Date().toISOString().slice(0, 10),
+  lastFocusTaskId: null,
+  composerDraft: '',
+  sectionsExpanded: {},
+  showCompletedTasks: false,
+  loaded: false,
 }
 
 export const useUiStateStore = create<UiStateStore>((set, get) => ({
-  ui: {
-    lastActiveDate: new Date().toISOString().slice(0, 10),
-    lastFocusTaskId: null,
-    composerDraft: '',
-    sectionsExpanded: {},
-    showCompletedTasks: false,
-    loaded: false,
-  },
+  ui: { ...initialUi },
+
+  reset: () => set({ ui: { ...initialUi } }),
 
   load: async () => {
     const lastActiveDate = await getUiState<string>('lastActiveDate')

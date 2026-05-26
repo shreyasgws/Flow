@@ -187,7 +187,7 @@ export default function Home() {
           </p>
           <button
             onClick={openNewSection}
-            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+            className="btn-primary"
           >
             Create your first section
           </button>
@@ -207,7 +207,7 @@ export default function Home() {
             <button
               onClick={() => setTemplatePickerOpen(true)}
               aria-label="Apply template"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
+              className="btn-ghost"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
                 <path d="M3 2h8a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" />
@@ -218,7 +218,7 @@ export default function Home() {
               <button
                 onClick={handleSaveAsTemplate}
                 aria-label="Save as template"
-                className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
+                className="btn-ghost"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
                   <path d="M11 2H3a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1z" strokeLinecap="round" />
@@ -229,10 +229,10 @@ export default function Home() {
             <button
               onClick={openNewSection}
               aria-label="Add section"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] transition-colors hover:bg-[var(--accent)] hover:text-white"
+              className="btn-ghost"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                <path d="M6 2v8M2 6h8" strokeLinecap="round" />
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                <path d="M7 2v10M2 7h10" strokeLinecap="round" />
               </svg>
             </button>
           </div>
@@ -240,13 +240,13 @@ export default function Home() {
       </header>
 
       {!authUser ? (
-        <div className="mb-4 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+        <div className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3">
           <p className="mb-2 text-xs text-[var(--text-secondary)]">
             Your data only lives on this device. Sign in to keep it safe.
           </p>
           <button
             onClick={() => router.push('/')}
-            className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+            className="btn-primary"
           >
             Sign in
           </button>
@@ -256,7 +256,7 @@ export default function Home() {
       ) : null}
 
       {templateAppliedMsg && (
-        <div className="mb-3 rounded-lg bg-[var(--bg-surface)] p-3 text-xs text-[var(--text-secondary)]">
+        <div className="mb-3 rounded-lg bg-[var(--bg-surface)] px-3 py-2.5 text-xs text-[var(--text-secondary)] ring-1 ring-[var(--border)]">
           Template applied.
         </div>
       )}
@@ -300,7 +300,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.3 }}
-              className="mb-4 ml-4 border-l border-[var(--bg-elevated)] pl-3"
+              className="mb-4 ml-4 border-l border-[var(--border)] pl-3"
               onClick={(e) => e.stopPropagation()}
             >
               <motion.div
@@ -328,7 +328,7 @@ export default function Home() {
               )}
               <button
                 onClick={() => { setShowTransition(false); setLastCompletedId(null) }}
-                className="mt-2 text-[10px] text-[var(--text-ghost)] transition-colors hover:text-[var(--text-muted)]"
+                className="mt-2 text-[10px] text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
               >
                 Dismiss
               </button>
@@ -338,7 +338,7 @@ export default function Home() {
       </AnimatePresence>
 
       {completedTasks.length > 0 && (
-        <div className="mt-8 border-t border-[var(--bg-elevated)] pt-4">
+        <div className="mt-8 border-t border-[var(--border)] pt-4">
           <button
             onClick={() => setShowCompleted(!showCompleted)}
             aria-expanded={showCompleted}
@@ -351,7 +351,7 @@ export default function Home() {
           </button>
 
           {showCompleted && (
-            <div className="ml-4 mt-2 border-l border-[var(--bg-elevated)] pl-3">
+            <div className="ml-4 mt-2 border-l border-[var(--border)] pl-3">
               <AnimatePresence mode="popLayout">
                 {completedTasks.map((task) => (
                   <TaskCard

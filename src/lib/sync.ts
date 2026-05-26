@@ -1,6 +1,13 @@
-import { db, type SyncQueueItem } from '@/lib/db'
+import type { FlowDatabase, SyncQueueItem } from '@/lib/db'
+import { getDb, getDbNamespace } from '@/lib/db'
 import { useSyncStore } from '@/stores/syncStore'
-import type { SupabaseClient, User } from '@supabase/supabase-js'
+import { useAuthStore } from '@/stores/authStore'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+function getCurrentDb(): FlowDatabase {
+  const state = useAuthStore.getState()
+  return getDb(state.user?.id, state.user?.is_anonymous === true)
+}
 
 const DEBOUNCE_MS = 500
 const MAX_RETRIES = 3
@@ -8,13 +15,19 @@ const BACKOFF_DELAYS = [1000, 2000, 4000]
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
+/**
+ * queueWrite — stores pass the db from their user context.
+ * Falls back to getCurrentDb() if no db provided.
+ */
 export function queueWrite(
   action: SyncQueueItem['action'],
   table: string,
   recordId: string,
   payload: unknown,
+  db?: FlowDatabase,
 ) {
-  db.syncQueue.add({
+  const target = db ?? getCurrentDb()
+  target.syncQueue.add({
     action,
     table,
     recordId,
@@ -32,6 +45,13 @@ function debouncedFlush() {
   debounceTimer = setTimeout(flushQueue, DEBOUNCE_MS)
 }
 
+let _realtimeSubscriptions: { unsubscribe: () => void }[] = []
+
+export function detachAllRealtime(): void {
+  _realtimeSubscriptions.forEach((s) => { try { s.unsubscribe() } catch {} })
+  _realtimeSubscriptions = []
+}
+
 function tryBroadcastChange() {
   if (typeof BroadcastChannel === 'undefined') return
   try {
@@ -42,8 +62,9 @@ function tryBroadcastChange() {
   }
 }
 
-export async function flushQueue() {
-  const pending = await db.syncQueue
+export async function flushQueue(db?: FlowDatabase) {
+  const target = db ?? getCurrentDb()
+  const pending = await target.syncQueue
     .where('status')
     .equals('pending')
     .sortBy('timestamp')
@@ -62,18 +83,18 @@ export async function flushQueue() {
   for (const item of pending) {
     const success = await processItem(item, supabase, user.id)
     if (success) {
-      await db.syncQueue.update(item.id!, { status: 'synced' })
+      await target.syncQueue.update(item.id!, { status: 'synced' })
     } else if (item.retries >= MAX_RETRIES) {
-      await db.syncQueue.update(item.id!, { status: 'failed' })
+      await target.syncQueue.update(item.id!, { status: 'failed' })
       useSyncStore.getState().setStatus('offline')
     } else {
       const delay = BACKOFF_DELAYS[item.retries] ?? 4000
-      await db.syncQueue.update(item.id!, { retries: item.retries + 1 })
+      await target.syncQueue.update(item.id!, { retries: item.retries + 1 })
       await new Promise((r) => setTimeout(r, delay))
     }
   }
 
-  const remaining = await db.syncQueue.where('status').equals('pending').count()
+  const remaining = await target.syncQueue.where('status').equals('pending').count()
   if (remaining === 0) {
     useSyncStore.getState().setStatus('saved')
     useSyncStore.getState().setLastSynced(Date.now())
@@ -145,8 +166,9 @@ function mapTable(local: string): string {
   return map[local] ?? local
 }
 
-export async function flushQueueOnce(): Promise<void> {
-  const pending = await db.syncQueue
+export async function flushQueueOnce(db?: FlowDatabase): Promise<void> {
+  const target = db ?? getCurrentDb()
+  const pending = await target.syncQueue
     .where('status')
     .equals('pending')
     .sortBy('timestamp')
@@ -174,15 +196,16 @@ export async function flushQueueOnce(): Promise<void> {
         if (error) continue
 
       }
-      await db.syncQueue.update(item.id!, { status: 'synced' })
+      await target.syncQueue.update(item.id!, { status: 'synced' })
     } catch { /* skip retries — best effort for sign-out */ }
   }
 }
 
 export async function flushFailed() {
-  const failed = await db.syncQueue.where('status').equals('failed').toArray()
+  const _db = getCurrentDb()
+  const failed = await _db.syncQueue.where('status').equals('failed').toArray()
   for (const item of failed) {
-    await db.syncQueue.update(item.id!, { retries: 0, status: 'pending' })
+    await _db.syncQueue.update(item.id!, { retries: 0, status: 'pending' })
   }
   debouncedFlush()
 }
@@ -197,62 +220,39 @@ const TABLE_MAP_REVERSE: Record<string, string> = {
   settings: 'settings',
 }
 
-async function mergeRemoteIntoLocal(
-  localTable: string,
-  remoteRows: any[]
-): Promise<any[]> {
-  const table = db[localTable as keyof typeof db] as any
-  if (!table?.toArray) return remoteRows
-
-  const localRows: any[] = await table.toArray()
-  const localMap = new Map<string, any>()
-  for (const row of localRows) {
-    localMap.set(row.id, row)
-  }
-
-  function toMs(ts: any): number {
-    if (typeof ts === 'number') return ts
-    if (typeof ts === 'string') return new Date(ts).getTime()
-    return 0
-  }
-
-  const merged: any[] = []
-  const seen = new Set<string>()
-
-  for (const remote of remoteRows) {
-    const id = remote.id as string
-    seen.add(id)
-    const local = localMap.get(id)
-    if (!local) {
-      merged.push(remote)
-    } else {
-      const remoteTime = toMs(remote.createdAt)
-      const localTime = toMs(local.createdAt)
-      merged.push(remoteTime >= localTime ? remote : local)
-    }
-  }
-
-  for (const local of localRows) {
-    if (!seen.has(local.id)) {
-      merged.push(local)
-    }
-  }
-
-  return merged
-}
-
-export async function pullFromSupabase(): Promise<void> {
+export async function pullFromSupabase(userIdOverride?: string, isAnonymousOverride?: boolean): Promise<void> {
   const { getSupabase } = await import('@/lib/supabase')
   let supabase
   try { supabase = getSupabase() } catch { return }
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
+  // Use the override if provided (e.g. during auth transitions), otherwise detect
+  const targetUserId = userIdOverride ?? user.id
+  const targetIsAnonymous = isAnonymousOverride ?? (user.is_anonymous === true)
+
+  // Skip pull for anonymous users — they have no cloud data
+  if (targetIsAnonymous) return
+
+  const db = getDb(targetUserId, false)
   const remoteTables = ['tasks', 'flow_sections', 'drift_entries', 'reflections', 'categories', 'templates', 'settings']
+
+  // Clear local data for this user BEFORE pulling — fresh sync from server
+  await db.tasks.clear()
+  await db.flowSections.clear()
+  await db.driftEntries.clear()
+  await db.reflections.clear()
+  await db.categories.clear()
+  await db.templates.clear()
+  await db.settings.clear()
 
   for (const table of remoteTables) {
     try {
-      const { data: rawData, error } = await supabase.from(table).select('*')
+      // Scope query by user_id — only pull the authenticated user's data
+      const { data: rawData, error } = await supabase
+        .from(table)
+        .select('*')
+        .eq('user_id', targetUserId)
       if (error) continue
       if (!rawData || rawData.length === 0) continue
 
@@ -261,18 +261,19 @@ export async function pullFromSupabase(): Promise<void> {
       const localTable = TABLE_MAP_REVERSE[table]
       if (!localTable) continue
 
-      const merged = await mergeRemoteIntoLocal(localTable, camelData as any[])
-      if (localTable === 'tasks') await db.tasks.bulkPut(merged)
-      else if (localTable === 'flowSections') await db.flowSections.bulkPut(merged as any[])
-      else if (localTable === 'driftEntries') await db.driftEntries.bulkPut(merged as any[])
-      else if (localTable === 'reflections') await db.reflections.bulkPut(merged as any[])
-      else if (localTable === 'categories') await db.categories.bulkPut(merged as any[])
-      else if (localTable === 'templates') await db.templates.bulkPut(merged as any[])
+      if (localTable === 'tasks') await db.tasks.bulkAdd(camelData as any[])
+      else if (localTable === 'flowSections') await db.flowSections.bulkAdd(camelData as any[])
+      else if (localTable === 'driftEntries') await db.driftEntries.bulkAdd(camelData as any[])
+      else if (localTable === 'reflections') await db.reflections.bulkAdd(camelData as any[])
+      else if (localTable === 'categories') await db.categories.bulkAdd(camelData as any[])
+      else if (localTable === 'templates') await db.templates.bulkAdd(camelData as any[])
       else if (localTable === 'settings') {
-        for (const row of merged) {
+        for (const row of camelData) {
           await db.settings.put(row as any)
         }
       }
-    } catch {}
+    } catch {
+      // Skip failed tables — continue seeding what we can
+    }
   }
 }

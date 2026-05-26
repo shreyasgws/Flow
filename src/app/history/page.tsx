@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
+import { useAuthStore } from '@/stores/authStore'
 import { TimelineMonth } from '@/components/history/TimelineMonth'
 import { TimelineDay } from '@/components/history/TimelineDay'
 import type { Task, FlowSection, DriftEntry, Reflection } from '@/types'
@@ -42,11 +43,13 @@ export default function History() {
     setIsLoading(true)
     const dates = getDateRange(startFrom, DAYS_PER_BATCH)
 
+    const { user } = useAuthStore.getState()
+    const _db = getDb(user?.id, user?.is_anonymous === true)
     const [allTasks, allSections, allDrift, allReflections] = await Promise.all([
-      db.tasks.where('date').anyOf(dates).toArray(),
-      db.flowSections.toArray(),
-      db.driftEntries.toArray(),
-      db.reflections.toArray(),
+      _db.tasks.where('date').anyOf(dates).toArray(),
+      _db.flowSections.toArray(),
+      _db.driftEntries.toArray(),
+      _db.reflections.toArray(),
     ])
 
     setDays((prev) => {

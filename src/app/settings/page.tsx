@@ -84,7 +84,7 @@ export default function Settings() {
       </header>
 
       {authUser ? (
-        <section className="mb-6 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+        <section className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3">
           <div className="flex items-center gap-3">
             {authUser.user_metadata?.avatar_url ? (
               <img
@@ -107,14 +107,14 @@ export default function Settings() {
             </div>
             <button
               onClick={() => setShowSignOutConfirm(true)}
-              className="rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-[10px] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              className="btn-secondary"
             >
               Sign out
             </button>
           </div>
         </section>
       ) : (
-        <section className="mb-6 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+        <section className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3">
           <p className="mb-3 text-xs text-[var(--text-secondary)]">
             Your data only lives on this device. Sign in to keep it safe.
           </p>
@@ -131,13 +131,13 @@ export default function Settings() {
                 } catch { setSignInPending(false) }
               }}
               disabled={signInPending}
-              className="rounded-full bg-[var(--bg-elevated)] px-4 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] disabled:opacity-50"
+              className="btn-secondary"
             >
-              {signInPending ? 'Signing in…' : 'Continue without account'}
+              {signInPending ? 'Signing in\u2026' : 'Continue without account'}
             </button>
             <button
               onClick={() => router.push('/')}
-              className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+              className="btn-primary"
             >
               Sign in with Google
             </button>
@@ -173,7 +173,7 @@ export default function Settings() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowSignOutConfirm(false)}
-                    className="flex-1 rounded-full bg-[var(--bg-elevated)] py-3 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                    className="btn-secondary flex-1 py-3 text-sm"
                   >
                     Cancel
                   </button>
@@ -183,7 +183,7 @@ export default function Settings() {
                       await signOut()
                       router.replace('/')
                     }}
-                    className="flex-1 rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                    className="btn-primary flex-1 py-3 text-sm"
                   >
                     Sign out
                   </button>
@@ -290,7 +290,7 @@ export default function Settings() {
         </p>
       </section>
 
-      <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
+      <section className="mb-6 border-t border-[var(--border)] pt-6">
         <h2 className="mb-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
           Notifications
         </h2>
@@ -302,13 +302,13 @@ export default function Settings() {
         )}
 
         {notifSupported && notifPermission !== 'granted' && (
-          <div className="mb-3 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+          <div className="mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3">
             <p className="mb-2 text-xs text-[var(--text-secondary)]">
               Flow can send a quiet daily nudge so you never lose track of your day.
             </p>
             <button
               onClick={handleRequestNotification}
-              className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90"
+              className="btn-primary"
             >
               Enable notifications
             </button>
@@ -375,7 +375,7 @@ export default function Settings() {
               </button>
             </label>
 
-            <div className="mt-3 rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] p-3">
+            <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3">
               <p className="mb-1 text-[10px] text-[var(--text-ghost)]">
                 Quiet hours
               </p>
@@ -404,15 +404,15 @@ export default function Settings() {
         )}
       </section>
 
-      <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
+      <section className="mb-6 border-t border-[var(--border)] pt-6">
         <CategoryManager />
       </section>
 
-      <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
+      <section className="mb-6 border-t border-[var(--border)] pt-6">
         <TemplateManager />
       </section>
 
-      <section className="mb-6 border-t border-[var(--bg-elevated)] pt-6">
+      <section className="mb-6 border-t border-[var(--border)] pt-6">
         <h2 className="mb-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
           Data
         </h2>
@@ -425,7 +425,7 @@ export default function Settings() {
                 onConfirm: exportToJSON,
               })
             }}
-            className="w-full rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
           >
             Export to JSON
           </button>
@@ -437,7 +437,7 @@ export default function Settings() {
                 onConfirm: exportToCSV,
               })
             }}
-            className="w-full rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
           >
             Export to CSV
           </button>
@@ -451,7 +451,7 @@ export default function Settings() {
                 onConfirm: () => useTaskStore.getState().clearCompleted(),
               })
             }}
-            className="w-full rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
           >
             Clear completed tasks
           </button>
@@ -463,7 +463,7 @@ export default function Settings() {
                 onConfirm: () => useDriftStore.getState().purgeArchived(),
               })
             }}
-            className="w-full rounded-lg border border-[var(--bg-elevated)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
           >
             Purge archived drift
           </button>

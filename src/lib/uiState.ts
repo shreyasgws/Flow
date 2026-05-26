@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { useAuthStore } from '@/stores/authStore'
 
 export interface UiStateEntry {
   id: string
@@ -6,12 +7,40 @@ export interface UiStateEntry {
   updatedAt: number
 }
 
-const uiDb = new Dexie('flow_ui') as Dexie & {
-  state: EntityTable<UiStateEntry, 'id'>
+function getUiDbName(): string {
+  const state = useAuthStore.getState()
+  const ns = state.user?.id && !state.user?.is_anonymous
+    ? `flow_ui_${state.user.id}`
+    : 'flow_ui_anonymous'
+  return ns
 }
-uiDb.version(1).stores({
-  state: 'id, updatedAt',
-})
+
+function getUiDb(): Dexie & { state: EntityTable<UiStateEntry, 'id'> } {
+  const name = getUiDbName()
+  let db = Dexie.getDatabaseNames().then(names => names.includes(name)).catch(() => false)
+  const uiDb = new Dexie(name) as Dexie & {
+    state: EntityTable<UiStateEntry, 'id'>
+  }
+  uiDb.version(1).stores({
+    state: 'id, updatedAt',
+  })
+  return uiDb
+}
+
+const uiDbs = new Map<string, Dexie & { state: EntityTable<UiStateEntry, 'id'> }>()
+
+function getOrCreateUiDb(): Dexie & { state: EntityTable<UiStateEntry, 'id'> } {
+  const name = getUiDbName()
+  let db = uiDbs.get(name)
+  if (!db) {
+    db = new Dexie(name) as Dexie & { state: EntityTable<UiStateEntry, 'id'> }
+    db.version(1).stores({
+      state: 'id, updatedAt',
+    })
+    uiDbs.set(name, db)
+  }
+  return db
+}
 
 const pendingWrites = new Map<string, { value: unknown; timer: ReturnType<typeof setTimeout> }>()
 
@@ -22,7 +51,8 @@ export async function persistUiState(key: string, value: unknown): Promise<void>
   const timer = setTimeout(async () => {
     pendingWrites.delete(key)
     try {
-      await uiDb.state.put({ id: key, value, updatedAt: Date.now() })
+      const db = getOrCreateUiDb()
+      await db.state.put({ id: key, value, updatedAt: Date.now() })
     } catch {
       /* silent */
     }
@@ -33,7 +63,8 @@ export async function persistUiState(key: string, value: unknown): Promise<void>
 
 export async function getUiState<T>(key: string): Promise<T | undefined> {
   try {
-    const entry = await uiDb.state.get(key)
+    const db = getOrCreateUiDb()
+    const entry = await db.state.get(key)
     return entry?.value as T | undefined
   } catch {
     return undefined

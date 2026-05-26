@@ -1,9 +1,10 @@
 import { create } from 'zustand'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { pushUndo } from '@/lib/undo'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
 import { queueWrite } from '@/lib/sync'
+import { useAuthStore } from '@/stores/authStore'
 import type { Task } from '@/types'
 
 interface TaskStore {
@@ -20,15 +21,24 @@ interface TaskStore {
   batchReorder: (updates: { id: string; sortOrder: number; flowSectionId: string }[]) => Promise<void>
   clearCompleted: () => Promise<void>
   getTasksForDate: (date: string) => Task[]
+  reset: () => void
+}
+
+const initialState = {
+  tasks: [] as Task[],
+  isLoading: false,
+  error: null as string | null,
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
-  tasks: [],
-  isLoading: false,
-  error: null,
+  ...initialState,
+
+  reset: () => set({ ...initialState }),
 
   loadTasks: async (date: string) => {
     set({ isLoading: true, error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     try {
       const tasks = await retryWithBackoff(() => db.tasks.where({ date }).toArray())
       tasks.sort((a, b) => a.sortOrder - b.sortOrder)
@@ -41,6 +51,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   addTask: async (partial) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const task: Task = {
       ...partial,
       id: crypto.randomUUID(),
@@ -50,7 +62,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
     try {
       await retryWithBackoff(() => db.tasks.add(task))
-      queueWrite('upsert', 'tasks', task.id, task)
+      queueWrite('upsert', 'tasks', task.id, task, db)
       set((s) => ({ tasks: [...s.tasks, task] }))
       return task
     } catch {
@@ -62,12 +74,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   updateTask: async (id, data) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const prev = get().tasks.find((t) => t.id === id)
     if (!prev) return
     try {
       await retryWithBackoff(() => db.tasks.update(id, data))
       const updated = { ...prev, ...data }
-      queueWrite('upsert', 'tasks', id, updated)
+      queueWrite('upsert', 'tasks', id, updated, db)
       set((s) => ({
         tasks: s.tasks.map((t) =>
           t.id === id ? updated : t
@@ -77,7 +91,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       pushUndo(id, label, async () => {
         const revert = Object.fromEntries(Object.keys(data).map((k) => [k, (prev as unknown as Record<string, unknown>)[k]]))
         await retryWithBackoff(() => db.tasks.update(id, revert))
-        queueWrite('upsert', 'tasks', id, prev)
+        queueWrite('upsert', 'tasks', id, prev, db)
         set((s) => ({
           tasks: s.tasks.map((t) =>
             t.id === id ? { ...t, ...revert } : t
@@ -92,11 +106,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   uncompleteTask: async (id: string) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const task = get().tasks.find((t) => t.id === id)
     if (!task) return
     try {
       await retryWithBackoff(() => db.tasks.update(id, { status: 'active', completedAt: null }))
-      queueWrite('upsert', 'tasks', id, { ...task, status: 'active', completedAt: null })
+      queueWrite('upsert', 'tasks', id, { ...task, status: 'active', completedAt: null }, db)
       set((s) => ({
         tasks: s.tasks.map((t) =>
           t.id === id ? { ...t, status: 'active' as const, completedAt: null } : t
@@ -104,7 +120,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }))
       pushUndo(id, `Uncompleted "${task.title}"`, async () => {
         await retryWithBackoff(() => db.tasks.update(id, { status: 'completed', completedAt: Date.now() }))
-        queueWrite('upsert', 'tasks', id, { ...task, status: 'completed', completedAt: Date.now() })
+        queueWrite('upsert', 'tasks', id, { ...task, status: 'completed', completedAt: Date.now() }, db)
         set((s) => ({
           tasks: s.tasks.map((t) =>
             t.id === id ? { ...t, status: 'completed' as const, completedAt: Date.now() } : t
@@ -119,12 +135,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   completeTask: async (id: string) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const task = get().tasks.find((t) => t.id === id)
     if (!task) return
     const now = Date.now()
     try {
       await retryWithBackoff(() => db.tasks.update(id, { status: 'completed', completedAt: now }))
-      queueWrite('upsert', 'tasks', id, { ...task, status: 'completed', completedAt: now })
+      queueWrite('upsert', 'tasks', id, { ...task, status: 'completed', completedAt: now }, db)
       set((s) => ({
         tasks: s.tasks.map((t) =>
           t.id === id ? { ...t, status: 'completed' as const, completedAt: now } : t
@@ -132,7 +150,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }))
       pushUndo(id, `Completed "${task.title}"`, async () => {
         await retryWithBackoff(() => db.tasks.update(id, { status: 'active' as const, completedAt: null }))
-        queueWrite('upsert', 'tasks', id, { ...task, status: 'active', completedAt: null })
+        queueWrite('upsert', 'tasks', id, { ...task, status: 'active', completedAt: null }, db)
         set((s) => ({
           tasks: s.tasks.map((t) =>
             t.id === id ? { ...t, status: 'active' as const, completedAt: null } : t
@@ -147,16 +165,18 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   deleteTask: async (id: string) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const task = get().tasks.find((t) => t.id === id)
     if (!task) return
     try {
       await retryWithBackoff(() => db.tasks.delete(id))
-      queueWrite('delete', 'tasks', id, {})
+      queueWrite('delete', 'tasks', id, {}, db)
       set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
       pushUndo(id, `Deleted "${task.title}"`, async () => {
         const restored = { ...task, id: crypto.randomUUID() }
         await retryWithBackoff(() => db.tasks.add(restored))
-        queueWrite('upsert', 'tasks', restored.id, restored)
+        queueWrite('upsert', 'tasks', restored.id, restored, db)
         set((s) => ({
           tasks: [...s.tasks, restored].sort((a, b) => a.sortOrder - b.sortOrder),
         }))
@@ -169,11 +189,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   reorderTask: async (id: string, sortOrder: number, flowSectionId: string) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const prev = get().tasks.find((t) => t.id === id)
     if (!prev) return
     try {
       await retryWithBackoff(() => db.tasks.update(id, { sortOrder, flowSectionId }))
-      queueWrite('upsert', 'tasks', id, { ...prev, sortOrder, flowSectionId })
+      queueWrite('upsert', 'tasks', id, { ...prev, sortOrder, flowSectionId }, db)
       set((s) => ({
         tasks: s.tasks
           .map((t) => (t.id === id ? { ...t, sortOrder, flowSectionId } : t))
@@ -181,7 +203,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }))
       pushUndo(id, `Moved "${prev.title}"`, async () => {
         await retryWithBackoff(() => db.tasks.update(id, { sortOrder: prev.sortOrder, flowSectionId: prev.flowSectionId }))
-        queueWrite('upsert', 'tasks', id, prev)
+        queueWrite('upsert', 'tasks', id, prev, db)
         set((s) => ({
           tasks: s.tasks
             .map((t) => (t.id === id ? { ...t, sortOrder: prev.sortOrder, flowSectionId: prev.flowSectionId } : t))
@@ -196,6 +218,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   batchReorder: async (updates) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     const prevStates = updates.map((u) => {
       const t = get().tasks.find((task) => task.id === u.id)
       return t ? { id: t.id, sortOrder: t.sortOrder, flowSectionId: t.flowSectionId } : null
@@ -206,7 +230,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           await db.tasks.update(u.id, { sortOrder: u.sortOrder, flowSectionId: u.flowSectionId })
           const task = get().tasks.find((t) => t.id === u.id)
           if (task) {
-            queueWrite('upsert', 'tasks', u.id, { ...task, sortOrder: u.sortOrder, flowSectionId: u.flowSectionId })
+            queueWrite('upsert', 'tasks', u.id, { ...task, sortOrder: u.sortOrder, flowSectionId: u.flowSectionId }, db)
           }
         }
       }))
@@ -224,7 +248,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
             await db.tasks.update(p.id, { sortOrder: p.sortOrder, flowSectionId: p.flowSectionId })
             const task = get().tasks.find((t) => t.id === p.id)
             if (task) {
-              queueWrite('upsert', 'tasks', p.id, { ...task, sortOrder: p.sortOrder, flowSectionId: p.flowSectionId })
+              queueWrite('upsert', 'tasks', p.id, { ...task, sortOrder: p.sortOrder, flowSectionId: p.flowSectionId }, db)
             }
           }
         }))
@@ -243,6 +267,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   clearCompleted: async () => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     try {
       const allCompleted = await retryWithBackoff(() =>
         db.tasks.where('status').equals('completed').toArray(),
@@ -251,13 +277,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const ids = allCompleted.map((t) => t.id)
       await retryWithBackoff(() => db.tasks.bulkDelete(ids))
       for (const task of allCompleted) {
-        queueWrite('delete', 'tasks', task.id, {})
+        queueWrite('delete', 'tasks', task.id, {}, db)
       }
       set((s) => ({ tasks: s.tasks.filter((t) => t.status !== 'completed') }))
       pushUndo(`clear-${Date.now()}`, `Cleared ${allCompleted.length} completed tasks`, async () => {
         await retryWithBackoff(() => db.tasks.bulkAdd(allCompleted))
         for (const task of allCompleted) {
-          queueWrite('upsert', 'tasks', task.id, task)
+          queueWrite('upsert', 'tasks', task.id, task, db)
         }
         set((s) => ({
           tasks: [...s.tasks, ...allCompleted].sort((a, b) => a.sortOrder - b.sortOrder),

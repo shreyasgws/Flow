@@ -1,5 +1,11 @@
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
+import { useAuthStore } from '@/stores/authStore'
 import { useErrorStore } from '@/stores/errorStore'
+
+function currentDb() {
+  const state = useAuthStore.getState()
+  return getDb(state.user?.id, state.user?.is_anonymous === true)
+}
 
 function download(filename: string, blob: Blob) {
   const url = URL.createObjectURL(blob)
@@ -14,13 +20,14 @@ function download(filename: string, blob: Blob) {
 
 export async function exportToJSON() {
   try {
+    const _db = currentDb()
     const [tasks, flowSections, driftEntries, reflections, categories, settings] = await Promise.all([
-      db.tasks.toArray(),
-      db.flowSections.toArray(),
-      db.driftEntries.toArray(),
-      db.reflections.toArray(),
-      db.categories.toArray(),
-      db.settings.toArray(),
+      _db.tasks.toArray(),
+      _db.flowSections.toArray(),
+      _db.driftEntries.toArray(),
+      _db.reflections.toArray(),
+      _db.categories.toArray(),
+      _db.settings.toArray(),
     ])
 
     const payload = {
@@ -46,7 +53,8 @@ export async function exportToJSON() {
 
 export async function exportToCSV() {
   try {
-    const tasks = await db.tasks.toArray()
+    const _db = currentDb()
+    const tasks = await _db.tasks.toArray()
 
     const headers = [
       'id',

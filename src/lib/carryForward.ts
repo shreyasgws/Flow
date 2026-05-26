@@ -1,6 +1,12 @@
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { queueWrite } from '@/lib/sync'
+import { useAuthStore } from '@/stores/authStore'
 import type { Task } from '@/types'
+
+function currentDb() {
+  const state = useAuthStore.getState()
+  return getDb(state.user?.id, state.user?.is_anonymous === true)
+}
 
 export function getYesterday(): string {
   const d = new Date()
@@ -9,12 +15,14 @@ export function getYesterday(): string {
 }
 
 export async function getUnfinishedYesterday(): Promise<Task[]> {
+  const db = currentDb()
   const yesterday = getYesterday()
   const allTasks = await db.tasks.where({ date: yesterday }).toArray()
   return allTasks.filter((t) => t.status === 'active' && !t.isRecurring)
 }
 
 export async function carryForwardTasks(taskIds: string[]): Promise<number> {
+  const db = currentDb()
   const today = new Date().toISOString().slice(0, 10)
   let count = 0
 
@@ -43,7 +51,7 @@ export async function carryForwardTasks(taskIds: string[]): Promise<number> {
     }
 
     await db.tasks.add(newTask)
-    queueWrite('upsert', 'tasks', newTask.id, newTask)
+    queueWrite('upsert', 'tasks', newTask.id, newTask, db)
     count++
   }
 

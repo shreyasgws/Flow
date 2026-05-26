@@ -195,7 +195,7 @@ export function TaskSection({ section, tasks, date, onEditSection, onTaskComplet
         }}
       />
 
-      <div ref={containerRef} className="ml-4 border-l border-[var(--bg-elevated)] pl-3" onDragLeave={handleDragLeave}>
+      <div ref={containerRef} className="ml-4 border-l border-[var(--border)] pl-3" onDragLeave={handleDragLeave}>
         {tasks.length === 0 && !isAdding && (
           <button
             onClick={() => setIsAdding(true)}

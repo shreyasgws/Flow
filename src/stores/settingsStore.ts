@@ -1,10 +1,11 @@
 import { create } from 'zustand'
 import type { AppSettings } from '@/types'
 import { DEFAULT_SETTINGS } from '@/types'
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import { useErrorStore } from '@/stores/errorStore'
 import { retryWithBackoff } from '@/lib/retry'
 import { queueWrite } from '@/lib/sync'
+import { useAuthStore } from '@/stores/authStore'
 
 interface SettingsStore {
   settings: AppSettings
@@ -12,6 +13,7 @@ interface SettingsStore {
   error: string | null
   loadSettings: () => Promise<void>
   updateSettings: (partial: Partial<AppSettings>) => Promise<void>
+  reset: () => void
 }
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
@@ -19,8 +21,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   isLoading: false,
   error: null,
 
+  reset: () => set({ settings: DEFAULT_SETTINGS, isLoading: false, error: null }),
+
   loadSettings: async () => {
     set({ isLoading: true, error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     try {
       const stored = await retryWithBackoff(() => db.settings.toArray())
       if (stored.length > 0) {
@@ -37,10 +43,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   updateSettings: async (partial: Partial<AppSettings>) => {
     set({ error: null })
+    const { user } = useAuthStore.getState()
+    const db = getDb(user?.id, user?.is_anonymous === true)
     try {
       const updated = { ...get().settings, ...partial }
       await retryWithBackoff(() => db.settings.put(updated))
-      queueWrite('upsert', 'settings', updated.id, updated)
+      queueWrite('upsert', 'settings', updated.id, updated, db)
       set({ settings: updated })
     } catch {
       set({ error: 'Failed to save settings' })

@@ -1,4 +1,10 @@
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db'
+import { useAuthStore } from '@/stores/authStore'
+
+function currentDb() {
+  const state = useAuthStore.getState()
+  return getDb(state.user?.id, state.user?.is_anonymous === true)
+}
 
 type UndoFn = () => void | Promise<void>
 
@@ -21,7 +27,8 @@ export async function pushUndo(id: string, label: string, undo: UndoFn) {
   listeners.forEach((fn) => fn({ id, label, undo }))
 
   try {
-    await db.undoHistory.add({
+    const _db = currentDb()
+    await _db.undoHistory.add({
       id,
       type: 'user_action',
       entityType: 'unknown',
@@ -37,7 +44,8 @@ export async function pushUndo(id: string, label: string, undo: UndoFn) {
 
 export async function removeUndoFromDb(id: string) {
   try {
-    await db.undoHistory.delete(id)
+    const _db = currentDb()
+    await _db.undoHistory.delete(id)
   } catch (e) {
     console.error('Failed to remove undo:', e)
   }
