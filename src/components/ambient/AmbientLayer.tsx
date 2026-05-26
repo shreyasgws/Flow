@@ -15,7 +15,7 @@ function getTimeConfig(hour: number, warmth: number) {
   if (hour >= 8 && hour < 17) {
     return {
       base: '#0D0D11',
-      bloom: '#5B8CFF',
+      bloom: '#8B7FD6',
       bloomPosition: '50% 50%',
       bloomOpacity: 0.06 * warmth,
     }
@@ -23,14 +23,14 @@ function getTimeConfig(hour: number, warmth: number) {
   if (hour >= 17 && hour < 20) {
     return {
       base: '#0B0D12',
-      bloom: '#3A5A7A',
+      bloom: '#6B5FA8',
       bloomPosition: '20% 80%',
       bloomOpacity: 0.08 * warmth,
     }
   }
   return {
     base: '#09090F',
-    bloom: '#4A3070',
+    bloom: '#5B4F96',
     bloomPosition: '50% 60%',
     bloomOpacity: 0.07 * warmth,
   }
@@ -129,26 +129,17 @@ export function AmbientLayer() {
     >
       <LandscapeSilhouette color={config.bloom} opacity={getOpacityVar('--ambient-silhouette-op')} />
       <div
-        className="ambient-haze"
+        className="ambient-drift"
         style={{
           position: 'absolute',
           inset: 0,
-          background: `radial-gradient(ellipse 100% 80% at ${config.bloomPosition}, ${config.bloom}0D 0%, transparent 60%)`,
+          background: `
+            radial-gradient(ellipse 100% 80% at ${config.bloomPosition}, ${config.bloom}0D 0%, transparent 60%),
+            radial-gradient(circle 200px at ${config.bloomPosition}, ${config.bloom}08 0%, transparent 70%)
+          `,
           filter: 'blur(60px)',
           opacity: getOpacityVar('--ambient-haze-op'),
-          animation: 'ambientDrift2 40s ease-in-out infinite',
-          animationPlayState: getOpacityVar('--ambient-play-state'),
-          willChange: 'transform',
-        }}
-      />
-      <div
-        className="ambient-bloom"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: `radial-gradient(circle 200px at ${config.bloomPosition}, ${config.bloom}08 0%, transparent 70%)`,
-          opacity: getOpacityVar('--ambient-bloom-op'),
-          animation: 'ambientDrift3 25s ease-in-out infinite',
+          animation: 'ambientDrift2 35s ease-in-out infinite',
           animationPlayState: getOpacityVar('--ambient-play-state'),
           willChange: 'transform',
         }}

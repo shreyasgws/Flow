@@ -87,7 +87,7 @@ export function TemplatePicker({ open, onClose, date, onApplied }: TemplatePicke
                     key={t.id}
                     onClick={() => handleApply(t.id, t.tasks)}
                     disabled={applying === t.id}
-                    className="w-full rounded-lg px-3 py-2.5 text-left text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-elevated)] disabled:opacity-50"
+                    className="w-full rounded-lg px-3 py-3 text-left text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-elevated)] disabled:opacity-50"
                   >
                     <span>{t.name}</span>
                     <span className="ml-2 text-[10px] text-[var(--text-muted)]">

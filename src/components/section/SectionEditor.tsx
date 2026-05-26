@@ -138,7 +138,7 @@ export function SectionEditor({ open, initial, onSave, onClose, title }: Section
 
               <div>
                 <label className="mb-1 block text-[10px] text-[var(--text-muted)] uppercase">Energy</label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {ENERGY_LABELS.map((e) => (
                     <button
                       key={e.value}

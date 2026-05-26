@@ -81,7 +81,7 @@ export function WeekReflection({ weekStart }: WeekReflectionProps) {
           <p className="font-serif text-base text-[var(--text-primary)]">
             How was your week?
           </p>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             {getWeekRange(weekStart)}
           </p>
         </div>
@@ -150,7 +150,7 @@ export function WeekReflection({ weekStart }: WeekReflectionProps) {
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="btn-primary px-4 py-1.5"
+                  className="btn-primary px-4 py-2"
                 >
                   {isSaving ? 'Saving...' : existing ? 'Update reflection' : 'Save reflection'}
                 </button>

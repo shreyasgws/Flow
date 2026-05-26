@@ -62,7 +62,7 @@ export function UndoSnackbar({ currentUndo, stack, onUndo, onUndoFromStack, onDi
             </div>
             <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
               {stack.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-[var(--bg-elevated)]">
+                <div key={entry.id} className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-[var(--bg-elevated)]">
                   <span className="truncate text-sm text-[var(--text-primary)]">{entry.label}</span>
                   <button
                     onClick={() => { hapticGentleReturn(); onUndoFromStack(entry.id); setExpanded(false) }}

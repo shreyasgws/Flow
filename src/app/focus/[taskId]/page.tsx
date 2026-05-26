@@ -154,7 +154,7 @@ export default function FocusPage({
           >
             {section && (
               <div
-                className="mb-4 rounded-full px-3 py-0.5 text-[10px] tracking-wide"
+                className="mb-4 rounded-full px-3 py-1 text-[10px] tracking-wide"
                 style={{
                   backgroundColor: `${section.atmosphereColor}20`,
                   color: section.atmosphereColor,
@@ -177,7 +177,7 @@ export default function FocusPage({
             <div className="mt-8 flex gap-4">
               <button
                 onClick={handleComplete}
-                className="btn-secondary px-8 py-2.5 text-sm"
+                className="btn-secondary px-8 py-3 text-sm"
               >
                 Done
               </button>

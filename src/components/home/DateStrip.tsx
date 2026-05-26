@@ -45,7 +45,7 @@ export function DateStrip({ selectedDate, onSelectDate }: DateStripProps) {
             <button
               key={dateStr}
               onClick={() => onSelectDate(dateStr)}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-center text-[11px] transition-all ${
+              className={`shrink-0 rounded-lg px-3 py-2 text-center text-[11px] transition-all ${
                 isSelected
                   ? 'bg-[var(--accent)] text-white'
                   : isToday

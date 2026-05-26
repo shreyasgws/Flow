@@ -29,7 +29,7 @@ export function EmptyDay({ variant, completedCount = 0, sectionCount = 0, onCrea
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.3 }}
             onClick={onCreateSection}
-            className="btn-primary mt-4 px-4 py-1.5"
+            className="btn-primary mt-4 px-4 py-2"
           >
             Create your first section
           </motion.button>
@@ -47,7 +47,7 @@ export function EmptyDay({ variant, completedCount = 0, sectionCount = 0, onCrea
         <p className="mt-1 text-xs text-[var(--text-muted)]">
           {completedCount} task{completedCount > 1 ? 's' : ''} completed across {sectionCount} section{sectionCount > 1 ? 's' : ''}.
         </p>
-        <p className="mt-0.5 text-xs text-[var(--text-ghost)]">
+        <p className="mt-1 text-xs text-[var(--text-ghost)]">
           The day feels quieter now.
         </p>
       </div>

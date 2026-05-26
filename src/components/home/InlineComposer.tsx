@@ -48,7 +48,7 @@ export function InlineComposer() {
   return (
     <div className="fixed bottom-20 left-0 right-0 z-30 px-4">
       <div className="mx-auto max-w-lg">
-        <div className="flex items-center gap-1.5 rounded-full bg-[var(--bg-surface)]/85 px-3 ring-1 ring-[var(--border)] backdrop-blur-lg transition-all focus-within:ring-[var(--border-active)]">
+        <div className="flex items-center gap-2 rounded-full bg-[var(--bg-surface)]/85 px-3 ring-1 ring-[var(--border)] backdrop-blur-lg transition-all focus-within:ring-[var(--border-active)]">
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}

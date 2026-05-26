@@ -20,7 +20,7 @@ export function ErrorToast() {
             className="pointer-events-auto w-full max-w-sm rounded-2xl bg-[var(--bg-surface)] px-4 py-3 shadow-lg ring-1 ring-[var(--bg-elevated)]"
           >
             <div className="flex items-start gap-3">
-              <span className="mt-0.5 shrink-0 text-[var(--warn)]">
+              <span className="mt-1 shrink-0 text-[var(--warn)]">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true">
                   <circle cx="7" cy="7" r="6" />
                   <path d="M7 4.5v3M7 10v.01" strokeLinecap="round" />

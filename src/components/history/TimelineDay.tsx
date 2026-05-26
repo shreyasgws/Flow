@@ -37,14 +37,14 @@ export function TimelineDay({ date, tasks, sections, drift, reflection }: Timeli
     >
       <h3 className="mb-2 text-xs font-medium text-[var(--text-secondary)]">{formatDayHeader(date)}</h3>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {sections.map((s) => (
           <div key={s.id} className="flex items-center gap-2 rounded-lg bg-[var(--bg-surface)] px-3 py-2">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: s.atmosphereColor }} />
             <span className="text-sm text-[var(--text-primary)]">{s.name}</span>
             <span className="text-[10px] text-[var(--text-muted)]">{s.startTime}–{s.endTime}</span>
             {s.energyType && (
-              <span className="ml-auto rounded-full bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">
+              <span className="ml-auto rounded-full bg-[var(--bg-elevated)] px-2 py-1 text-[9px] text-[var(--text-muted)]">
                 {s.energyType.replace('_', ' ')}
               </span>
             )}
@@ -84,7 +84,7 @@ export function TimelineDay({ date, tasks, sections, drift, reflection }: Timeli
         {reflection && (
           <div className="rounded-lg bg-[var(--bg-surface)] px-3 py-2">
             <p className="text-xs text-[var(--text-muted)]">Reflection</p>
-            <p className="mt-0.5 text-sm text-[var(--text-primary)] line-clamp-2">{reflection.content}</p>
+            <p className="mt-1 text-sm text-[var(--text-primary)] line-clamp-2">{reflection.content}</p>
           </div>
         )}
       </div>

@@ -30,19 +30,25 @@ function loadLocalData() {
   useReflectionStore.getState().loadReflections()
 }
 
-function loadAuthenticatedData(userId: string) {
+async function loadAuthenticatedData(userId: string) {
   const today = new Date().toISOString().slice(0, 10)
-  pullFromSupabase(userId, false).then(() => {
-    seedDefaultSections(userId, false)
-    useUiStateStore.getState().load()
-    useTaskStore.getState().loadTasks(today)
-    useFlowSectionStore.getState().loadSections()
-    useDriftStore.getState().loadEntries()
-    useSettingsStore.getState().loadSettings()
-    useCategoryStore.getState().loadCategories()
-    useTemplateStore.getState().loadTemplates()
-    useReflectionStore.getState().loadReflections()
-  })
+  try {
+    // First pull from Supabase (merge into Dexie)
+    await pullFromSupabase(userId, false)
+  } catch {
+    // Supabase pull failed — local data is preserved
+  }
+  // Then seed defaults if needed (no-op if sections exist)
+  await seedDefaultSections(userId, false)
+  // Then load everything from Dexie (now has merged data)
+  useUiStateStore.getState().load()
+  useTaskStore.getState().loadTasks(today)
+  useFlowSectionStore.getState().loadSections()
+  useDriftStore.getState().loadEntries()
+  useSettingsStore.getState().loadSettings()
+  useCategoryStore.getState().loadCategories()
+  useTemplateStore.getState().loadTemplates()
+  useReflectionStore.getState().loadReflections()
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {

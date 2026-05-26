@@ -148,7 +148,7 @@ export function AddTaskForm({
           Esc
         </button>
       </div>
-      <div className="ml-7 mt-1.5">
+      <div className="ml-8 mt-2">
         <RecurrencePicker value={recurrence} onChange={setRecurrence} />
       </div>
     </motion.div>

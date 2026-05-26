@@ -99,14 +99,14 @@ export function CategoryManager() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="New category name"
-          className="flex-1 rounded-md bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-ghost)]"
+          className="flex-1 rounded-md bg-[var(--bg-elevated)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-ghost)]"
         />
         <input
           value={newEmoji}
           onChange={(e) => setNewEmoji(e.target.value)}
           placeholder="Emoji"
           maxLength={2}
-          className="w-12 rounded-md bg-[var(--bg-elevated)] px-2 py-1.5 text-xs text-[var(--text-primary)] outline-none"
+          className="w-12 rounded-md bg-[var(--bg-elevated)] px-2 py-2 text-xs text-[var(--text-primary)] outline-none"
         />
         <div className="flex gap-1">
           {PRESET_COLORS.slice(0, 6).map((c) => (

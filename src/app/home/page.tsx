@@ -263,7 +263,7 @@ export default function Home() {
       ) : null}
 
       {templateAppliedMsg && (
-        <div className="mb-3 rounded-lg bg-[var(--bg-surface)] px-3 py-2.5 text-xs text-[var(--text-secondary)] ring-1 ring-[var(--border)]">
+        <div className="mb-3 rounded-lg bg-[var(--bg-surface)] px-3 py-3 text-xs text-[var(--text-secondary)] ring-1 ring-[var(--border)]">
           Template applied.
         </div>
       )}

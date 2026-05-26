@@ -74,12 +74,12 @@ export function SectionHeader({
       <h2 className="text-sm font-medium text-[var(--text-primary)]">{section.name}</h2>
 
       {/* Details — hidden by default, shown on hover */}
-      <span className="flex items-center gap-1.5 opacity-0 transition-opacity group-hover/section:opacity-100 focus-within:opacity-100">
+      <span className="flex items-center gap-2 opacity-0 transition-opacity group-hover/section:opacity-100 focus-within:opacity-100">
         <span className="text-[10px] text-[var(--text-muted)]">
           {section.startTime}–{section.endTime}
         </span>
         {section.energyType && (
-          <span className="rounded-full bg-[var(--bg-elevated)] px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">
+          <span className="rounded-full bg-[var(--bg-elevated)] px-2 py-1 text-[9px] text-[var(--text-muted)]">
             {ENERGY_LABELS[section.energyType]}
           </span>
         )}

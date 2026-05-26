@@ -90,7 +90,7 @@ export default function DayReview({
             {completionLabel}
           </p>
           {dateTasks.length > 0 && (
-            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
               {active.length > 0
                 ? `${active.length} task${active.length > 1 ? 's' : ''} remaining`
                 : 'The day feels quieter now.'}

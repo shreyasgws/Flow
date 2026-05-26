@@ -190,7 +190,7 @@ export function TaskCard({
         </span>
 
         {/* Metadata — hidden by default, shown on hover/focus */}
-        <span className="task-card-metadata items-center gap-1.5">
+        <span className="task-card-metadata items-center gap-2">
           {estimatedMinutes && (
             <span className="text-[10px] text-[var(--text-ghost)]">
               {estimatedMinutes}m
@@ -203,13 +203,13 @@ export function TaskCard({
           )}
           {!isDone && taskCategory && (
             <span
-              className="inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[9px]"
+              className="inline-flex shrink-0 items-center rounded-full px-2 py-1 text-[9px]"
               style={{
                 backgroundColor: `${taskCategory.color}18`,
                 color: taskCategory.color,
               }}
             >
-              {taskCategory.emoji && <span className="mr-0.5">{taskCategory.emoji}</span>}
+              {taskCategory.emoji && <span className="mr-1">{taskCategory.emoji}</span>}
               {taskCategory.name}
             </span>
           )}

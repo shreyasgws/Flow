@@ -78,7 +78,7 @@ export default function Settings() {
         <h1 className="font-serif text-2xl tracking-tight text-[var(--text-primary)]">
           Settings
         </h1>
-        <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
           Shape the space
         </p>
       </header>
@@ -202,7 +202,7 @@ export default function Settings() {
         <div className="flex gap-2">
           <button
             onClick={() => updateSettings({ theme: 'dark' })}
-            className={`rounded-full px-4 py-1.5 text-xs transition-colors ${
+            className={`rounded-full px-4 py-2 text-xs transition-colors ${
               settings.theme === 'dark'
                 ? 'bg-[var(--accent)] text-white'
                 : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
@@ -212,7 +212,7 @@ export default function Settings() {
           </button>
           <button
             onClick={() => updateSettings({ theme: 'light' })}
-            className={`rounded-full px-4 py-1.5 text-xs transition-colors ${
+            className={`rounded-full px-4 py-2 text-xs transition-colors ${
               settings.theme === 'light'
                 ? 'bg-[var(--accent)] text-white'
                 : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
@@ -230,7 +230,7 @@ export default function Settings() {
         <div className="flex gap-2">
           <button
             onClick={() => { updateSettings({ environmentMode: 'ambient' }); setMode('ambient') }}
-            className={`rounded-full px-4 py-1.5 text-xs transition-colors ${
+            className={`rounded-full px-4 py-2 text-xs transition-colors ${
               settings.environmentMode === 'ambient'
                 ? 'bg-[var(--accent)] text-white'
                 : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
@@ -240,7 +240,7 @@ export default function Settings() {
           </button>
           <button
             onClick={() => { updateSettings({ environmentMode: 'static' }); setMode('static') }}
-            className={`rounded-full px-4 py-1.5 text-xs transition-colors ${
+            className={`rounded-full px-4 py-2 text-xs transition-colors ${
               settings.environmentMode === 'static'
                 ? 'bg-[var(--accent)] text-white'
                 : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
@@ -260,7 +260,7 @@ export default function Settings() {
             <button
               key={level}
               onClick={() => { updateSettings({ ambientIntensity: level }); setIntensity(level) }}
-              className={`rounded-full px-4 py-1.5 text-xs capitalize transition-colors ${
+              className={`rounded-full px-4 py-2 text-xs capitalize transition-colors ${
                 settings.ambientIntensity === level
                   ? 'bg-[var(--accent)] text-white'
                   : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
@@ -270,6 +270,39 @@ export default function Settings() {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="mb-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
+          Motion
+        </h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => updateSettings({ motionPreference: 'standard' })}
+            className={`rounded-full px-4 py-2 text-xs transition-colors ${
+              settings.motionPreference === 'standard'
+                ? 'bg-[var(--accent)] text-white'
+                : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+            }`}
+          >
+            Standard
+          </button>
+          <button
+            onClick={() => updateSettings({ motionPreference: 'reduced' })}
+            className={`rounded-full px-4 py-2 text-xs transition-colors ${
+              settings.motionPreference === 'reduced'
+                ? 'bg-[var(--accent)] text-white'
+                : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+            }`}
+          >
+            Reduced
+          </button>
+        </div>
+        {settings.motionPreference === 'reduced' && (
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Disables ambient particles, grain, blur, and simplifies motion.
+          </p>
+        )}
       </section>
 
       <section className="mb-6">

@@ -162,13 +162,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       await destroyCurrentDb(prevUserId, prevWasAnonymous)
       triggerResetStores()
       set({ user: newUser, session: await getSupabase().auth.getSession().then(r => r.data.session) })
-    } else if (!prevUserId) {
-      // Fresh sign-in (was null) — destroy anonymous DB, then pull
-      await destroyCurrentDb(null, true)
-      triggerResetStores()
-      set({ user: newUser, session: await getSupabase().auth.getSession().then(r => r.data.session) })
     } else {
-      // Same user — update session
+      // Same user or fresh sign-in — update session and let AppProvider handle data loading
       set({ user: newUser, session: await getSupabase().auth.getSession().then(r => r.data.session) })
     }
   },
@@ -194,9 +189,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         user: null,
       })
 
-      if (prevUserId) {
-        await destroyCurrentDb(prevUserId, prevIsAnonymous)
-      }
+      // Keep Dexie data as local cache — don't destroy on signout
+      // This ensures tasks survive logout/login cycles
+      // Dexie is only destroyed on explicit user switch
     } finally {
       _signingOut = false
     }

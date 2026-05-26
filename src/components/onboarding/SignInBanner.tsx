@@ -49,7 +49,7 @@ export function SignInBanner({ onLinked }: SignInBannerProps) {
       <button
         onClick={handleSignIn}
         disabled={isPending}
-        className="btn-primary px-4 py-1.5"
+        className="btn-primary px-4 py-2"
       >
         {isPending ? 'Signing in…' : 'Sign in'}
       </button>

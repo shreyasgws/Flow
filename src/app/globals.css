@@ -17,10 +17,10 @@
   --text-muted: #6b6b78;
   --text-ghost: #3f3f48;
 
-  --accent: #5b8cff;
+  --accent: #8B7FD6;
   --warn: #e6a817;
 
-  --ambient-glow: rgba(91, 140, 255, 0.06);
+  --ambient-glow: rgba(139, 127, 214, 0.06);
   --border: rgba(255, 255, 255, 0.08);
   --border-active: rgba(255, 255, 255, 0.15);
 
@@ -33,7 +33,7 @@
   font-family: var(--font-sans);
   color-scheme: dark;
 
-  /* Time-based ambient gradients */
+  /* Time-based ambient gradients — atmospheric, deep, soft */
   --gradient-morning: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 30%, #3d2b1a 60%, #2a1f1f 100%);
   --gradient-afternoon: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #1a1a2e 60%, #16213e 100%);
   --gradient-evening: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 30%, #1a1a2e 60%, #0f0f1a 100%);
@@ -54,10 +54,10 @@
   --text-muted: #9E9686;
   --text-ghost: #C2BDB1;
 
-  --accent: #5b8cff;
+  --accent: #7B6FC0;
   --warn: #d4a017;
 
-  --ambient-glow: rgba(91, 140, 255, 0.04);
+  --ambient-glow: rgba(123, 111, 192, 0.04);
   --border: #DED7CC;
   --border-active: rgba(0, 0, 0, 0.15);
 
@@ -397,7 +397,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
+  border-radius: 0.625rem;
   background: var(--accent);
   color: white;
   font-size: 0.75rem;
@@ -406,6 +406,8 @@ body {
   cursor: pointer;
   border: none;
   font-family: var(--font-sans);
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .btn-primary:hover {
@@ -426,7 +428,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
+  border-radius: 0.625rem;
   background: var(--bg-elevated);
   color: var(--text-secondary);
   font-size: 0.75rem;

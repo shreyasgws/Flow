@@ -21,7 +21,7 @@ export default function SettingsError({
         </p>
         <button
           onClick={reset}
-          className="btn-primary px-4 py-1.5"
+          className="btn-primary px-4 py-2"
         >
           Try again
         </button>

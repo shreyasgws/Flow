@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react'
 import { useEnvironmentStore, type PerformanceMode } from '@/stores/environmentStore'
-import { applyDeviceTier } from '@/lib/deviceTier'
+import { useSettingsStore } from '@/stores/settingsStore'
+import { applyDeviceTier, TIERS } from '@/lib/deviceTier'
 import { startPerformanceMonitor, stopPerformanceMonitor } from '@/lib/performanceMonitor'
 
 interface NavigatorWithMemory extends Navigator {
@@ -23,6 +24,7 @@ function detectPerformance(): PerformanceMode {
 
 export function AdaptivePerformance() {
   const setPerformance = useEnvironmentStore((s) => s.setPerformance)
+  const motionPreference = useSettingsStore((s) => s.settings.motionPreference)
 
   useEffect(() => {
     applyDeviceTier()
@@ -31,6 +33,16 @@ export function AdaptivePerformance() {
     startPerformanceMonitor()
     return () => stopPerformanceMonitor()
   }, [setPerformance])
+
+  // When user sets motionPreference to 'reduced', force minimal tier
+  useEffect(() => {
+    if (motionPreference === 'reduced') {
+      document.documentElement.dataset.tier = TIERS.MINIMAL
+    } else {
+      // Re-detect and apply the correct tier
+      applyDeviceTier()
+    }
+  }, [motionPreference])
 
   return null
 }

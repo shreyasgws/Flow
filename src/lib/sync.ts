@@ -240,6 +240,35 @@ export async function pullFromSupabase(userIdOverride?: string, isAnonymousOverr
   const db = getDb(targetUserId, false)
   const remoteTables = ['tasks', 'flow_sections', 'drift_entries', 'reflections', 'categories', 'templates', 'settings']
 
+  // First, verify Supabase connection and table existence
+  let hasTables = false
+  try {
+    const { count, error } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', targetUserId)
+    hasTables = !error
+  } catch {
+    // Tables don't exist yet — preserve local data
+    return
+  }
+
+  if (!hasTables) return
+
+  // Flush any pending local changes to Supabase before pulling
+  // This ensures local data isn't overwritten by stale remote
+  try {
+    await flushQueue(db)
+    // Also retry failed items
+    const failedItems = await db.syncQueue.where('status').equals('failed').toArray()
+    for (const item of failedItems) {
+      await db.syncQueue.update(item.id!, { retries: 0, status: 'pending' })
+    }
+    await flushQueue(db)
+  } catch {
+    // Best effort — proceed with pull even if flush fails
+  }
+
   for (const table of remoteTables) {
     try {
       const { data: rawData, error } = await supabase
@@ -255,27 +284,43 @@ export async function pullFromSupabase(userIdOverride?: string, isAnonymousOverr
       const camelData = rawData.map((r: Record<string, unknown>) => camelizeKeys(r))
 
       if (localTable === 'tasks') {
-        await db.tasks.clear()
-        if (camelData.length > 0) await db.tasks.bulkAdd(camelData as any[])
+        // Merge: only replace local with remote when remote has data
+        // This prevents clearing local tasks if remote sync failed
+        if (camelData.length > 0) {
+          await db.tasks.clear()
+          await db.tasks.bulkAdd(camelData as any[])
+        }
       } else if (localTable === 'flowSections') {
-        await db.flowSections.clear()
-        if (camelData.length > 0) await db.flowSections.bulkAdd(camelData as any[])
+        if (camelData.length > 0) {
+          await db.flowSections.clear()
+          await db.flowSections.bulkAdd(camelData as any[])
+        }
       } else if (localTable === 'driftEntries') {
-        await db.driftEntries.clear()
-        if (camelData.length > 0) await db.driftEntries.bulkAdd(camelData as any[])
+        if (camelData.length > 0) {
+          await db.driftEntries.clear()
+          await db.driftEntries.bulkAdd(camelData as any[])
+        }
       } else if (localTable === 'reflections') {
-        await db.reflections.clear()
-        if (camelData.length > 0) await db.reflections.bulkAdd(camelData as any[])
+        if (camelData.length > 0) {
+          await db.reflections.clear()
+          await db.reflections.bulkAdd(camelData as any[])
+        }
       } else if (localTable === 'categories') {
-        await db.categories.clear()
-        if (camelData.length > 0) await db.categories.bulkAdd(camelData as any[])
+        if (camelData.length > 0) {
+          await db.categories.clear()
+          await db.categories.bulkAdd(camelData as any[])
+        }
       } else if (localTable === 'templates') {
-        await db.templates.clear()
-        if (camelData.length > 0) await db.templates.bulkAdd(camelData as any[])
+        if (camelData.length > 0) {
+          await db.templates.clear()
+          await db.templates.bulkAdd(camelData as any[])
+        }
       } else if (localTable === 'settings') {
-        await db.settings.clear()
-        for (const row of camelData) {
-          await db.settings.put(row as any)
+        if (camelData.length > 0) {
+          await db.settings.clear()
+          for (const row of camelData) {
+            await db.settings.put(row as any)
+          }
         }
       }
     } catch {

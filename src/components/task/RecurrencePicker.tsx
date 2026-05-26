@@ -22,7 +22,7 @@ export function RecurrencePicker({ value, onChange }: RecurrencePickerProps) {
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
-          className={`rounded-full px-2.5 py-0.5 text-[10px] transition-all ${
+          className={`rounded-full px-3 py-1 text-[10px] transition-all ${
             value === opt.value
               ? 'bg-[var(--accent)] text-white'
               : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'

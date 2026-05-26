@@ -86,7 +86,7 @@ export function BottomNav() {
               <Link
                 href={item.href === '/focus' && isFocusActive ? `/focus/${activeTaskId}` : item.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-[10px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
+                className={`flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
                   isActive
                     ? 'text-[var(--accent)]'
                     : item.href === '/focus' && isFocusActive
